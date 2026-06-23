@@ -36,25 +36,25 @@ const containerVariants = {
 function GridMesh() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      {/* Dimmed radial glow blobs */}
+      {/* Dimmed radial glow blobs — stay inside hero */}
       <motion.div
-        className="absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-primary/4 blur-[140px]"
-        animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.4, 0.3] }}
+        className="absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-primary/5 blur-[130px]"
+        animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.45, 0.3] }}
         transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute -top-20 right-0 h-[360px] w-[360px] rounded-full bg-border/20 blur-[120px]"
+        className="absolute -top-20 right-0 h-[360px] w-[360px] rounded-full bg-border/25 blur-[110px]"
         animate={{ scale: [1, 1.03, 1], opacity: [0.2, 0.3, 0.2] }}
         transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
       />
-      {/* Subtle grid pattern */}
+      {/* Grid pattern — slightly more visible for intentional texture */}
       <svg
-        className="absolute inset-0 h-full w-full opacity-[0.025]"
+        className="absolute inset-0 h-full w-full opacity-[0.04]"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="white" strokeWidth="1" />
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="white" strokeWidth="0.8" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -68,7 +68,7 @@ export default function LandingPage() {
   const shouldReduce = useReducedMotion();
 
   return (
-    <div className="relative min-h-screen bg-background text-text-primary transition-colors duration-300 overflow-x-hidden">
+    <div className="relative min-h-screen bg-background text-text-primary transition-colors duration-300 overflow-hidden">
       {/* 3D Canvas Background */}
       <R3FBackground />
 
@@ -89,14 +89,15 @@ export default function LandingPage() {
           The standard for combat athletes
         </motion.div>
 
-        {/* Headline */}
+        {/* Headline — forced clean 2-line break */}
         <motion.h1
           variants={shouldReduce ? {} : fadeUp(0.1)}
           initial="hidden"
           animate="visible"
-          className="text-4xl sm:text-7xl font-bold tracking-tight leading-[1.05] max-w-4xl font-sans text-text-primary"
+          className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] max-w-3xl font-sans text-text-primary"
         >
-          Booking, brackets, and progress tracking for combat sports
+          Booking, brackets, and progress tracking<br />
+          for combat sports
         </motion.h1>
 
         {/* Subhead */}
@@ -104,9 +105,9 @@ export default function LandingPage() {
           variants={shouldReduce ? {} : fadeUp(0.2)}
           initial="hidden"
           animate="visible"
-          className="mt-6 text-base sm:text-lg text-text-secondary max-w-2xl leading-relaxed"
+          className="mt-5 text-base sm:text-lg text-text-secondary max-w-xl leading-relaxed"
         >
-          Athlix helps academies, coaches, and athletes manage training schedules, schedule private sessions, and run tournaments on a single, clean workspace.
+          Manage training schedules, run tournaments, and track athlete progress — all in one workspace.
         </motion.p>
 
         {/* CTAs */}
@@ -114,7 +115,7 @@ export default function LandingPage() {
           variants={shouldReduce ? {} : fadeUp(0.3)}
           initial="hidden"
           animate="visible"
-          className="mt-8 flex flex-wrap gap-3.5 justify-center"
+          className="mt-6 flex flex-wrap gap-3 justify-center"
         >
           <Link href="/signup">
             <MagneticButton
@@ -139,8 +140,14 @@ export default function LandingPage() {
           variants={shouldReduce ? {} : fadeUp(0.4)}
           initial="hidden"
           animate="visible"
-          className="mt-20 w-full max-w-5xl rounded-xl border border-border bg-secondary/40 backdrop-blur shadow-2xl overflow-hidden text-left"
+          className="relative mt-12 w-full max-w-5xl"
         >
+          {/* Soft lift glow beneath the card */}
+          <div
+            className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-3/4 h-16 blur-2xl rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse, rgba(255,90,61,0.08) 0%, transparent 70%)' }}
+          />
+          <div className="relative rounded-xl border border-white/[0.08] bg-secondary/50 backdrop-blur-md shadow-[0_24px_80px_-12px_rgba(0,0,0,0.6)] overflow-hidden text-left">
           {/* Browser Chrome Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-secondary/80 border-b border-border/80">
             {/* Window Controls */}
@@ -309,6 +316,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </motion.div>
       </section>

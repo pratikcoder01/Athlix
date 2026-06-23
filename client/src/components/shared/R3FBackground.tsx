@@ -81,13 +81,13 @@ export const R3FBackground: React.FC = () => {
 
   return (
     <div className="absolute inset-0 z-0 h-full w-full pointer-events-none select-none overflow-hidden">
-      {/* Premium glow spot - extremely dimmed */}
-      <div className="absolute -top-1/4 -right-1/4 h-[50%] w-[50%] bg-primary/3 blur-[140px] rounded-full z-0" />
-      <div className="absolute -bottom-1/4 -left-1/4 h-[50%] w-[50%] bg-border/20 blur-[140px] rounded-full z-0" />
+      {/* Glow blobs — contained within the hero, no overflow above viewport */}
+      <div className="absolute top-0 right-0 h-[40%] w-[40%] bg-primary/3 blur-[120px] rounded-full z-0" />
+      <div className="absolute bottom-0 left-0 h-[40%] w-[40%] bg-border/15 blur-[120px] rounded-full z-0" />
       
       <Canvas
         camera={{ position: [0, 0, 5], fov: 60 }}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', width: '100%', height: '100%' }}
         gl={{ alpha: true, antialias: true }}
       >
         <ambientLight intensity={0.4} />
