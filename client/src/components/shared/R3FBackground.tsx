@@ -11,19 +11,19 @@ const FloatingCage = () => {
   useFrame((state) => {
     if (!meshRef.current) return;
     const t = state.clock.getElapsedTime();
-    meshRef.current.rotation.x = t * 0.05;
-    meshRef.current.rotation.y = t * 0.08;
-    meshRef.current.position.y = Math.sin(t) * 0.15;
+    meshRef.current.rotation.x = t * 0.03;
+    meshRef.current.rotation.y = t * 0.04;
+    meshRef.current.position.y = Math.sin(t) * 0.1;
   });
 
   return (
     <mesh ref={meshRef}>
-      <octahedronGeometry args={[2.5, 1]} />
+      <octahedronGeometry args={[2.2, 1]} />
       <meshBasicMaterial 
-        color="#FF5A3D" 
+        color="#fafafa" 
         wireframe 
         transparent 
-        opacity={0.12} 
+        opacity={0.03} 
         blending={THREE.AdditiveBlending}
       />
     </mesh>
@@ -33,18 +33,18 @@ const FloatingCage = () => {
 // Animated floating dust particles
 const FloatingStars = () => {
   const pointsRef = useRef<THREE.Points>(null);
-  const particleCount = 200;
+  const particleCount = 120;
   const positions = new Float32Array(particleCount * 3);
 
   // Distribute particles in space
   for (let i = 0; i < particleCount * 3; i++) {
-    positions[i] = (Math.random() - 0.5) * 10;
+    positions[i] = (Math.random() - 0.5) * 8;
   }
 
   useFrame((state) => {
     if (!pointsRef.current) return;
     const t = state.clock.getElapsedTime();
-    pointsRef.current.rotation.y = t * 0.02;
+    pointsRef.current.rotation.y = t * 0.01;
   });
 
   return (
@@ -56,11 +56,11 @@ const FloatingStars = () => {
         />
       </bufferGeometry>
       <pointsMaterial
-        color="#F7B500"
-        size={0.03}
+        color="#ffffff"
+        size={0.02}
         sizeAttenuation
         transparent
-        opacity={0.3}
+        opacity={0.08}
       />
     </points>
   );
@@ -81,17 +81,17 @@ export const R3FBackground: React.FC = () => {
 
   return (
     <div className="absolute inset-0 z-0 h-full w-full pointer-events-none select-none overflow-hidden">
-      {/* Premium glow spot */}
-      <div className="absolute -top-1/4 -right-1/4 h-[50%] w-[50%] glow-premium z-0" />
-      <div className="absolute -bottom-1/4 -left-1/4 h-[50%] w-[50%] glow-premium z-0" style={{ backgroundImage: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)' }} />
+      {/* Premium glow spot - extremely dimmed */}
+      <div className="absolute -top-1/4 -right-1/4 h-[50%] w-[50%] bg-primary/3 blur-[140px] rounded-full z-0" />
+      <div className="absolute -bottom-1/4 -left-1/4 h-[50%] w-[50%] bg-border/20 blur-[140px] rounded-full z-0" />
       
       <Canvas
         camera={{ position: [0, 0, 5], fov: 60 }}
         style={{ background: 'transparent' }}
         gl={{ alpha: true, antialias: true }}
       >
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1.5} />
+        <ambientLight intensity={0.4} />
+        <pointLight position={[10, 10, 10]} intensity={1.0} />
         <FloatingCage />
         <FloatingStars />
       </Canvas>

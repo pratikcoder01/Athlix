@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   Award, ChevronRight, Activity, Calendar, Sparkles,
-  MapPin, Shield, Zap, BrainCircuit,
+  MapPin, Shield, BrainCircuit, Check, BarChart3, Clock,
+  ArrowRight, Search, Star, User, Zap
 } from 'lucide-react';
 import Navbar from '../components/shared/Navbar';
 import Footer from '../components/shared/Footer';
@@ -18,143 +19,42 @@ import StatsBar from '../components/shared/StatsBar';
 const EASE_OUT = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 const fadeUp = (delay = 0) => ({
-  hidden: { y: 32, opacity: 0 },
+  hidden: { y: 12, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
-    transition: { delay, duration: 0.55, ease: EASE_OUT },
+    transition: { delay, duration: 0.35, ease: EASE_OUT },
   },
 });
 
 const containerVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.05 } },
 };
-
-const cardVariants = {
-  hidden: { y: 40, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.45, ease: EASE_OUT },
-  },
-};
-
-/* ─────────────────────── feature card data ─────────────────────── */
-const features = [
-  {
-    icon: Activity,
-    title: 'Athlete Progression',
-    desc: 'Track belt levels, sparring clips, weight categories, and workout performance analytics in an interactive timeline interface.',
-    color: 'primary',
-    glow: 'rgba(255, 90, 61, 0.15)',
-    href: '/features#progression',
-  },
-  {
-    icon: Calendar,
-    title: 'Real-Time Bookings',
-    desc: 'Schedule private training slots instantly. Coaches customize pricing structures and availability with automated alerts.',
-    color: 'gold',
-    glow: 'rgba(247, 181, 0, 0.15)',
-    href: '/features#bookings',
-  },
-  {
-    icon: Award,
-    title: 'Tournament Brackets',
-    desc: 'Generate digital single/double elimination brackets automatically. Organizers manage rules, entries, and publish live results.',
-    color: 'success',
-    glow: 'rgba(34, 197, 94, 0.15)',
-    href: '/features#brackets',
-  },
-  {
-    icon: MapPin,
-    title: 'Academy Finder',
-    desc: 'Discover top-rated martial arts academies near you with maps, review aggregates, style tags, and direct booking links.',
-    color: 'primary',
-    glow: 'rgba(255, 90, 61, 0.12)',
-    href: '/features#academies',
-  },
-  {
-    icon: Shield,
-    title: 'Coach Verification',
-    desc: 'Every listed coach goes through credential and rank verification — so athletes train with trusted professionals only.',
-    color: 'gold',
-    glow: 'rgba(247, 181, 0, 0.12)',
-    href: '/features#coaches',
-  },
-  {
-    icon: BrainCircuit,
-    title: 'Smart Analytics',
-    desc: 'AI-powered performance dashboards with win/loss trends, training load heatmaps, and auto-generated fight camp reports.',
-    color: 'success',
-    glow: 'rgba(34, 197, 94, 0.12)',
-    href: '/features#analytics',
-  },
-];
-
-const colorMap: Record<string, string> = {
-  primary: 'text-primary',
-  gold: 'text-gold',
-  success: 'text-success',
-};
-const bgColorMap: Record<string, string> = {
-  primary: 'bg-primary/10',
-  gold: 'bg-gold/10',
-  success: 'bg-success/10',
-};
-
-/* ─────────────────────── word-by-word headline ─────────────────── */
-function SplitHeadline({ text, accent }: { text: string; accent?: string }) {
-  const shouldReduce = useReducedMotion();
-  const words = text.split(' ');
-  return (
-    <span className="inline">
-      {words.map((word, i) =>
-        shouldReduce ? (
-          <span key={i} className={accent && word === accent ? 'text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-accent to-gold' : ''}>
-            {word}{' '}
-          </span>
-        ) : (
-          <motion.span
-            key={i}
-            variants={fadeUp(i * 0.1)}
-            className={`inline-block mr-[0.25em] ${
-              accent && word === accent
-                ? 'text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-accent to-gold'
-                : ''
-            }`}
-          >
-            {word}
-          </motion.span>
-        )
-      )}
-    </span>
-  );
-}
 
 /* ─────────────────────── animated grid mesh bg ─────────────────── */
 function GridMesh() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      {/* Radial glow blobs */}
+      {/* Dimmed radial glow blobs */}
       <motion.div
-        className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary/8 blur-[120px]"
-        animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.7, 0.5] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-primary/4 blur-[140px]"
+        animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.4, 0.3] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute -top-20 right-0 h-[400px] w-[400px] rounded-full bg-secondary-accent/6 blur-[100px]"
-        animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.6, 0.4] }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+        className="absolute -top-20 right-0 h-[360px] w-[360px] rounded-full bg-border/20 blur-[120px]"
+        animate={{ scale: [1, 1.03, 1], opacity: [0.2, 0.3, 0.2] }}
+        transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
       />
-      {/* Subtle grid lines */}
+      {/* Subtle grid pattern */}
       <svg
-        className="absolute inset-0 h-full w-full opacity-[0.04]"
+        className="absolute inset-0 h-full w-full opacity-[0.025]"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" strokeWidth="1" />
+          <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="white" strokeWidth="1" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -168,118 +68,274 @@ export default function LandingPage() {
   const shouldReduce = useReducedMotion();
 
   return (
-    <div className="relative min-h-screen bg-background text-text-primary transition-colors duration-300 overflow-hidden">
-      {/* 3D WebGL Background */}
+    <div className="relative min-h-screen bg-background text-text-primary transition-colors duration-300 overflow-x-hidden">
+      {/* 3D Canvas Background */}
       <R3FBackground />
 
       <Navbar />
 
-      {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-28 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center min-h-[85vh]">
+      {/* ── Hero Section ─────────────────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pt-32 pb-40 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center">
         <GridMesh />
 
-        {/* Badge */}
+        {/* Small Eyebrow Badge */}
         <motion.div
           variants={shouldReduce ? {} : fadeUp(0)}
           initial="hidden"
           animate="visible"
-          className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-4 py-1.5 text-xs font-bold text-primary tracking-widest uppercase mb-8 font-mono"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-[11px] font-medium text-text-secondary tracking-wide uppercase mb-6 font-sans"
         >
-          <Sparkles className="h-3.5 w-3.5 animate-spin" />
-          THE NEW STANDARD FOR COMBAT SPORTS
+          <Sparkles className="h-3 w-3 text-primary" />
+          The standard for combat athletes
         </motion.div>
 
-        {/* Word-by-word animated headline */}
+        {/* Headline */}
         <motion.h1
-          variants={shouldReduce ? {} : containerVariants}
+          variants={shouldReduce ? {} : fadeUp(0.1)}
           initial="hidden"
           animate="visible"
-          className="text-5xl sm:text-8xl font-black font-display tracking-tight leading-[0.9] max-w-4xl"
+          className="text-4xl sm:text-7xl font-bold tracking-tight leading-[1.05] max-w-4xl font-sans text-text-primary"
         >
-          <SplitHeadline text="THE COMBAT" />
-          <br />
-          <SplitHeadline text="SPORTS ENGINE" accent="ENGINE" />
+          Booking, brackets, and progress tracking for combat sports
         </motion.h1>
 
-        {/* Subheading */}
+        {/* Subhead */}
         <motion.p
-          variants={shouldReduce ? {} : fadeUp(0.6)}
+          variants={shouldReduce ? {} : fadeUp(0.2)}
           initial="hidden"
           animate="visible"
-          className="mt-7 text-lg sm:text-xl text-text-secondary max-w-2xl leading-relaxed"
-          style={{ color: 'rgba(220, 225, 240, 0.85)' }}
+          className="mt-6 text-base sm:text-lg text-text-secondary max-w-2xl leading-relaxed"
         >
-          ATHLIX is a premium next-gen tech ecosystem for martial artists, coaches, academies, and
-          tournament organizers. Level up calendars, brackets, and social feed in one unified dark
-          premium engine.
+          Athlix helps academies, coaches, and athletes manage training schedules, schedule private sessions, and run tournaments on a single, clean workspace.
         </motion.p>
 
-        {/* CTA buttons */}
+        {/* CTAs */}
         <motion.div
-          variants={shouldReduce ? {} : fadeUp(0.75)}
+          variants={shouldReduce ? {} : fadeUp(0.3)}
           initial="hidden"
           animate="visible"
-          className="mt-10 flex flex-wrap gap-4 justify-center"
+          className="mt-8 flex flex-wrap gap-3.5 justify-center"
         >
           <Link href="/signup">
             <MagneticButton
               variant="primary"
-              className="py-3.5 px-8 rounded-md font-bebas tracking-widest text-sm"
+              className="py-2.5 px-6 rounded-md text-sm font-medium"
             >
-              CREATE ATHLETE PROFILE
+              Get started
             </MagneticButton>
           </Link>
           <Link href="/about">
             <MagneticButton
               variant="ghost"
-              className="py-3.5 px-8 rounded-md font-bebas tracking-widest text-sm"
+              className="py-2.5 px-6 rounded-md text-sm font-medium"
             >
-              EXPLORE PLATFORM
+              See how it works
             </MagneticButton>
           </Link>
         </motion.div>
 
-        {/* Scroll hint */}
+        {/* Hero Product Mockup (Focal Point) */}
         <motion.div
-          variants={shouldReduce ? {} : fadeUp(1.0)}
+          variants={shouldReduce ? {} : fadeUp(0.4)}
           initial="hidden"
           animate="visible"
-          className="mt-16"
+          className="mt-20 w-full max-w-5xl rounded-xl border border-border bg-secondary/40 backdrop-blur shadow-2xl overflow-hidden text-left"
         >
-          <motion.div
-            animate={shouldReduce ? {} : { y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-            className="mx-auto h-8 w-5 rounded-full border border-border flex items-start justify-center pt-1.5"
-          >
-            <div className="h-1.5 w-1 rounded-full bg-primary/60" />
-          </motion.div>
+          {/* Browser Chrome Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-secondary/80 border-b border-border/80">
+            {/* Window Controls */}
+            <div className="flex gap-2">
+              <span className="w-3 h-3 rounded-full bg-border-strong opacity-40"></span>
+              <span className="w-3 h-3 rounded-full bg-border-strong opacity-40"></span>
+              <span className="w-3 h-3 rounded-full bg-border-strong opacity-40"></span>
+            </div>
+            {/* URL bar */}
+            <div className="w-72 h-6 rounded bg-background/50 border border-border/40 text-[10px] text-text-tertiary flex items-center justify-center font-sans tracking-wide">
+              athlix.com/dashboard
+            </div>
+            <div className="w-12"></div> {/* Spacer */}
+          </div>
+
+          {/* Browser content area */}
+          <div className="grid grid-cols-1 md:grid-cols-4 min-h-[440px] bg-background/30 text-text-primary text-xs">
+            {/* Mock Sidebar */}
+            <div className="border-r border-border/50 p-4 flex flex-col justify-between hidden md:flex">
+              <div className="flex flex-col gap-4">
+                <div className="font-semibold text-text-primary px-2 py-1 bg-secondary/60 rounded border border-border/30">Athlix Hub</div>
+                <nav className="flex flex-col gap-1 text-text-secondary">
+                  <div className="px-2 py-1.5 hover:text-text-primary transition-colors flex items-center gap-2 cursor-pointer"><User className="w-3.5 h-3.5" /> Athletes</div>
+                  <div className="px-2 py-1.5 hover:text-text-primary transition-colors flex items-center gap-2 cursor-pointer text-text-primary font-medium bg-secondary/40 rounded"><Calendar className="w-3.5 h-3.5" /> Bookings</div>
+                  <div className="px-2 py-1.5 hover:text-text-primary transition-colors flex items-center gap-2 cursor-pointer"><Award className="w-3.5 h-3.5" /> Brackets</div>
+                  <div className="px-2 py-1.5 hover:text-text-primary transition-colors flex items-center gap-2 cursor-pointer"><Activity className="w-3.5 h-3.5" /> Progression</div>
+                </nav>
+              </div>
+
+              {/* Sidebar Profile Card */}
+              <div className="p-2 border border-border/40 rounded bg-secondary/20 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-[10px]">MS</div>
+                <div>
+                  <div className="font-medium text-text-primary">Marcus Silva</div>
+                  <div className="text-[10px] text-text-secondary flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span> Blue Belt
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mock Main Dashboard Area */}
+            <div className="col-span-3 p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Column 1: Weekly training calendar */}
+              <div className="md:col-span-1 bg-secondary/30 rounded-lg p-4 border border-border/50 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-text-primary flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-text-secondary" /> Calendar</h3>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-medium">Active camp</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    <div className="p-2.5 rounded bg-background/50 border border-border/40 hover:border-border transition-colors">
+                      <div className="font-medium text-text-primary">Private BJJ Sparring</div>
+                      <div className="text-[10px] text-text-secondary mt-1 flex justify-between">
+                        <span>Coach Leo</span>
+                        <span className="text-primary font-medium">Mon 10:00 AM</span>
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded bg-background/50 border border-border/40 hover:border-border transition-colors">
+                      <div className="font-medium text-text-primary">Wrestling Drills</div>
+                      <div className="text-[10px] text-text-secondary mt-1 flex justify-between">
+                        <span>Academy main mat</span>
+                        <span>Wed 06:00 PM</span>
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded bg-background/50 border border-border/40 hover:border-border transition-colors">
+                      <div className="font-medium text-text-primary">Open Mat Session</div>
+                      <div className="text-[10px] text-text-secondary mt-1 flex justify-between">
+                        <span>All levels welcome</span>
+                        <span>Fri 04:00 PM</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button className="w-full py-1.5 mt-4 rounded border border-border hover:bg-secondary text-[10px] font-medium text-text-primary transition-all text-center">
+                  Book new session
+                </button>
+              </div>
+
+              {/* Column 2: Tournament bracket */}
+              <div className="md:col-span-1 bg-secondary/30 rounded-lg p-4 border border-border/50 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-text-primary flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-text-secondary" /> Live bracket</h3>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-border text-text-secondary font-medium">Semifinals</span>
+                  </div>
+                  <div className="flex flex-col gap-4 py-2 relative">
+                    {/* Semi Match 1 */}
+                    <div className="flex flex-col gap-1 border-l-2 border-primary/40 pl-2">
+                      <div className="p-1.5 bg-background/60 rounded border border-border/50 flex justify-between items-center">
+                        <span className="font-medium text-text-primary">Marcus Silva</span>
+                        <span className="text-[9px] text-primary font-bold">W (Armbar)</span>
+                      </div>
+                      <div className="p-1.5 bg-background/30 rounded border border-border/30 opacity-60 flex justify-between items-center">
+                        <span>John Doe</span>
+                        <span className="text-[9px] text-text-tertiary">L</span>
+                      </div>
+                    </div>
+
+                    {/* Semi Match 2 */}
+                    <div className="flex flex-col gap-1 border-l-2 border-border pl-2">
+                      <div className="p-1.5 bg-background/60 rounded border border-border/50 flex justify-between items-center">
+                        <span className="font-medium text-text-primary">Ryan Gracie</span>
+                        <span className="text-[9px] text-text-secondary font-medium">W (Points)</span>
+                      </div>
+                      <div className="p-1.5 bg-background/30 rounded border border-border/30 opacity-60 flex justify-between items-center">
+                        <span>Kevin Lee</span>
+                        <span className="text-[9px] text-text-tertiary">L</span>
+                      </div>
+                    </div>
+
+                    {/* Final Match Indicator */}
+                    <div className="mt-2 p-2 bg-primary/5 rounded border border-primary/20 flex justify-between items-center">
+                      <div className="font-medium text-text-primary flex flex-col">
+                        <span>Silva vs Gracie</span>
+                        <span className="text-[9px] text-text-secondary font-normal mt-0.5">Final Match • Fri 10:00 AM</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[9px] text-text-tertiary text-center italic mt-2">
+                  Updates update in real-time
+                </div>
+              </div>
+
+              {/* Column 3: Athlete progression timeline */}
+              <div className="md:col-span-1 bg-secondary/30 rounded-lg p-4 border border-border/50 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-semibold text-text-primary flex items-center gap-1.5 mb-4"><Activity className="w-3.5 h-3.5 text-text-secondary" /> Progress tracking</h3>
+                  
+                  {/* Vertical Progression Items */}
+                  <div className="flex flex-col gap-3 pl-2.5 relative border-l border-border/60 ml-2">
+                    <div className="relative">
+                      <span className="absolute -left-[14.5px] top-1 w-2.5 h-2.5 rounded-full bg-border-strong border border-background"></span>
+                      <div className="font-medium text-text-primary">Blue Belt promotion</div>
+                      <div className="text-[9px] text-text-tertiary">6 months ago</div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute -left-[14.5px] top-1 w-2.5 h-2.5 rounded-full bg-border-strong border border-background"></span>
+                      <div className="font-medium text-text-primary">First Stripe added</div>
+                      <div className="text-[9px] text-text-tertiary">3 months ago</div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute -left-[14.5px] top-1 w-2.5 h-2.5 rounded-full bg-border-strong border border-background"></span>
+                      <div className="font-medium text-text-primary">Second Stripe added</div>
+                      <div className="text-[9px] text-text-tertiary">1 month ago</div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute -left-[14.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-primary border border-background animate-pulse"></span>
+                      <div className="font-medium text-text-primary flex items-center gap-1">Purple Belt target <span className="text-[9px] text-primary font-semibold">(65%)</span></div>
+                      <div className="text-[9px] text-text-secondary">Expected camp: 3 months</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Visual completion progress bar */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-[9px] text-text-secondary mb-1">
+                    <span>Rank progress tracker</span>
+                    <span>65%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-border-strong overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: '65%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </section>
 
-      {/* ── Stats Bar ──────────────────────────────────────────────── */}
+      {/* ── Stats Section ──────────────────────────────────────────── */}
       <StatsBar />
 
-      {/* ── Feature Cards ──────────────────────────────────────────── */}
-      <section className="relative z-10 mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-border">
-        <div className="text-center mb-16">
+      {/* ── Feature Cards Section (Show, Don't Just Tell) ───────────── */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-36 sm:px-6 lg:px-8">
+        <div className="text-center mb-20">
           <motion.h2
             variants={shouldReduce ? {} : fadeUp()}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-80px' }}
-            className="text-3xl sm:text-5xl font-extrabold font-display tracking-wide uppercase"
+            className="text-3xl sm:text-5xl font-bold tracking-tight text-text-primary"
           >
-            ENGINEERED TO BUILD CHAMPIONS
+            Built for everyday training
           </motion.h2>
           <motion.p
             variants={shouldReduce ? {} : fadeUp(0.1)}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-80px' }}
-            className="mt-4 max-w-2xl mx-auto leading-relaxed"
-            style={{ color: 'rgba(220, 225, 240, 0.75)' }}
+            className="mt-4 max-w-xl mx-auto text-text-secondary text-base leading-relaxed"
           >
-            Six core pillars that power every combat sports academy, coach, and fighter on the ATHLIX platform.
+            A cohesive workflow for academies, coaches, and athletes. Focus on performance instead of administration.
           </motion.p>
         </div>
 
@@ -290,66 +346,234 @@ export default function LandingPage() {
           viewport={{ once: true, margin: '-60px' }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <motion.div key={feature.title} variants={shouldReduce ? {} : cardVariants}>
-                <Link href={feature.href} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
-                  <SpotlightCard
-                    className={`h-full border border-border bg-secondary flex flex-col justify-between`}
-                    glowColor={feature.glow}
-                  >
-                    <div>
-                      <div className={`h-12 w-12 rounded-lg ${bgColorMap[feature.color]} flex items-center justify-center mb-6`}>
-                        <Icon className={`h-6 w-6 ${colorMap[feature.color]}`} />
+          {/* Card 1: Athlete Progression */}
+          <motion.div variants={shouldReduce ? {} : fadeUp()}>
+            <Link href="/features#progression" className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+              <SpotlightCard className="h-full border border-border bg-secondary flex flex-col justify-between p-6">
+                <div>
+                  {/* Feature Visual Mini-Preview */}
+                  <div className="h-28 rounded-lg bg-background/50 border border-border/40 p-4 mb-6 flex flex-col justify-center">
+                    <div className="flex flex-col gap-2.5 pl-2 relative border-l border-border/60">
+                      <div className="text-[10px] text-text-primary font-medium flex justify-between">
+                        <span>Blue Belt promotion</span>
+                        <span className="text-text-tertiary">Completed</span>
                       </div>
-                      <h3 className="text-xl font-bold font-display tracking-wide mb-3 uppercase text-text-primary">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm leading-relaxed" style={{ color: 'rgba(220, 225, 240, 0.7)' }}>
-                        {feature.desc}
-                      </p>
+                      <div className="text-[10px] text-text-primary font-medium flex justify-between relative">
+                        <span className="absolute -left-[12px] top-1 w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                        <span className="text-primary font-semibold">Stripe evaluation</span>
+                        <span className="text-primary">Next Week</span>
+                      </div>
                     </div>
-                    <div className={`mt-6 inline-flex items-center text-xs font-bold ${colorMap[feature.color]} tracking-widest font-bebas`}>
-                      LEARN MORE <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                    Athlete progression
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Follow your training timeline with rank milestones, sparring clips, and weight progress.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
+                  Learn more <ChevronRight className="h-3 w-3" />
+                </div>
+              </SpotlightCard>
+            </Link>
+          </motion.div>
+
+          {/* Card 2: Real-Time Bookings */}
+          <motion.div variants={shouldReduce ? {} : fadeUp()}>
+            <Link href="/features#bookings" className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+              <SpotlightCard className="h-full border border-border bg-secondary flex flex-col justify-between p-6">
+                <div>
+                  {/* Feature Visual Mini-Preview */}
+                  <div className="h-28 rounded-lg bg-background/50 border border-border/40 p-3 mb-6 flex flex-col justify-center gap-1.5">
+                    <div className="flex justify-between items-center text-[9px] text-text-secondary border-b border-border/30 pb-1.5 mb-1.5">
+                      <span>Coach Leo Slots</span>
+                      <span>Tomorrow</span>
                     </div>
-                  </SpotlightCard>
-                </Link>
-              </motion.div>
-            );
-          })}
+                    <div className="grid grid-cols-3 gap-1.5 text-center text-[9px]">
+                      <span className="py-1 rounded bg-secondary/80 text-text-secondary cursor-not-allowed line-through">09:00 AM</span>
+                      <span className="py-1 rounded bg-primary/10 text-primary border border-primary/20 font-medium cursor-pointer">10:30 AM</span>
+                      <span className="py-1 rounded bg-secondary/80 border border-border/40 text-text-primary cursor-pointer hover:border-border">02:00 PM</span>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                    Real-time bookings
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Book sessions instantly with coaches based on real-time availability and custom pricing.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
+                  Learn more <ChevronRight className="h-3 w-3" />
+                </div>
+              </SpotlightCard>
+            </Link>
+          </motion.div>
+
+          {/* Card 3: Tournament Brackets */}
+          <motion.div variants={shouldReduce ? {} : fadeUp()}>
+            <Link href="/features#brackets" className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+              <SpotlightCard className="h-full border border-border bg-secondary flex flex-col justify-between p-6">
+                <div>
+                  {/* Feature Visual Mini-Preview */}
+                  <div className="h-28 rounded-lg bg-background/50 border border-border/40 p-3 mb-6 flex flex-col justify-center gap-2">
+                    <div className="flex items-center justify-between text-[9px] text-text-secondary">
+                      <span>Matches</span>
+                      <span>Single Elimination</span>
+                    </div>
+                    <div className="flex flex-col gap-1 pl-1.5 border-l border-primary/60 text-[9px]">
+                      <div className="flex justify-between items-center text-text-primary">
+                        <span>M. Silva</span>
+                        <span className="font-semibold text-primary">Win</span>
+                      </div>
+                      <div className="flex justify-between items-center text-text-tertiary">
+                        <span>J. Doe</span>
+                        <span>Loss</span>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                    Tournament brackets
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Run single or double elimination tournaments with automatic seeding and live bracket updates.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
+                  Learn more <ChevronRight className="h-3 w-3" />
+                </div>
+              </SpotlightCard>
+            </Link>
+          </motion.div>
+
+          {/* Card 4: Academy Finder */}
+          <motion.div variants={shouldReduce ? {} : fadeUp()}>
+            <Link href="/features#academies" className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+              <SpotlightCard className="h-full border border-border bg-secondary flex flex-col justify-between p-6">
+                <div>
+                  {/* Feature Visual Mini-Preview */}
+                  <div className="h-28 rounded-lg bg-background/50 border border-border/40 p-3 mb-6 flex flex-col justify-center gap-1.5">
+                    <div className="font-semibold text-text-primary text-[10px]">Gracie Academy</div>
+                    <div className="flex items-center gap-1 text-[9px] text-text-secondary">
+                      <MapPin className="w-2.5 h-2.5 text-text-tertiary" /> 1.2 miles away
+                    </div>
+                    <div className="flex gap-1.5 mt-1">
+                      <span className="px-1.5 py-0.5 rounded bg-secondary/80 text-[8px] text-text-secondary font-medium">BJJ</span>
+                      <span className="px-1.5 py-0.5 rounded bg-secondary/80 text-[8px] text-text-secondary font-medium">Judo</span>
+                      <span className="px-1.5 py-0.5 rounded bg-secondary/80 text-[8px] text-text-secondary font-medium">No-Gi</span>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                    Academy discovery
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Find verified academies near you with style tags, member reviews, and direct sign-ups.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
+                  Learn more <ChevronRight className="h-3 w-3" />
+                </div>
+              </SpotlightCard>
+            </Link>
+          </motion.div>
+
+          {/* Card 5: Coach Verification */}
+          <motion.div variants={shouldReduce ? {} : fadeUp()}>
+            <Link href="/features#coaches" className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+              <SpotlightCard className="h-full border border-border bg-secondary flex flex-col justify-between p-6">
+                <div>
+                  {/* Feature Visual Mini-Preview */}
+                  <div className="h-28 rounded-lg bg-background/50 border border-border/40 p-3 mb-6 flex flex-col justify-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-text-secondary text-[10px]">LC</div>
+                      <div>
+                        <div className="font-semibold text-text-primary text-[10px] flex items-center gap-1">Leo Cavalcanti <Check className="w-3 h-3 text-primary" /></div>
+                        <div className="text-[8px] text-text-secondary mt-0.5">3rd Degree Black Belt</div>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                    Verified credentials
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Train with confidence knowing every coach's rank and credentials are fully verified.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
+                  Learn more <ChevronRight className="h-3 w-3" />
+                </div>
+              </SpotlightCard>
+            </Link>
+          </motion.div>
+
+          {/* Card 6: Smart Analytics */}
+          <motion.div variants={shouldReduce ? {} : fadeUp()}>
+            <Link href="/features#analytics" className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+              <SpotlightCard className="h-full border border-border bg-secondary flex flex-col justify-between p-6">
+                <div>
+                  {/* Feature Visual Mini-Preview */}
+                  <div className="h-28 rounded-lg bg-background/50 border border-border/40 p-3 mb-6 flex items-center justify-center gap-4">
+                    {/* Win/Loss Pie representation */}
+                    <div className="flex flex-col gap-1 text-[9px] w-full">
+                      <div className="flex justify-between mb-1 text-text-secondary">
+                        <span>Win ratio</span>
+                        <span className="font-semibold text-text-primary">72%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-border-strong overflow-hidden flex">
+                        <div className="h-full bg-primary" style={{ width: '72%' }}></div>
+                        <div className="h-full bg-secondary/80" style={{ width: '28%' }}></div>
+                      </div>
+                      <div className="flex gap-2.5 mt-1.5 text-[8px] text-text-tertiary">
+                        <span>Wins: 18</span>
+                        <span>Losses: 7</span>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                    Training analytics
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Analyze your performance with automated sparring logs, win/loss stats, and volume tracking.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
+                  Learn more <ChevronRight className="h-3 w-3" />
+                </div>
+              </SpotlightCard>
+            </Link>
+          </motion.div>
         </motion.div>
       </section>
 
       {/* ── CTA Section ────────────────────────────────────────────── */}
-      <section className="relative z-10 mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8 text-center">
+      <section className="relative z-10 mx-auto max-w-5xl px-4 py-36 sm:px-6 lg:px-8 text-center">
         <motion.div
           variants={shouldReduce ? {} : fadeUp()}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-80px' }}
-          className="bg-secondary border border-border rounded-2xl p-8 sm:p-16 relative overflow-hidden shadow-2xl"
+          className="bg-secondary/40 backdrop-blur border border-border rounded-2xl p-8 sm:p-16 relative overflow-hidden shadow-xl"
         >
-          {/* Decorative blobs */}
-          <div className="absolute top-0 right-0 h-48 w-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 h-32 w-32 bg-secondary-accent/8 rounded-full blur-2xl pointer-events-none" />
+          {/* Faint decorative blobs */}
+          <div className="absolute top-0 right-0 h-48 w-48 bg-primary/2 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 h-32 w-32 bg-border/5 rounded-full blur-2xl pointer-events-none" />
 
-          <Zap className="mx-auto h-10 w-10 text-primary mb-4 opacity-80" />
-          <h2 className="text-3xl sm:text-5xl font-black font-display tracking-tight uppercase leading-none">
-            READY TO JOIN THE ARENA?
+          <Zap className="mx-auto h-8 w-8 text-primary mb-4 opacity-60" />
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-text-primary">
+            Ready to start?
           </h2>
-          <p className="mt-4 max-w-xl mx-auto leading-relaxed text-sm sm:text-base" style={{ color: 'rgba(220, 225, 240, 0.75)' }}>
-            Create your profile as an athlete, list your academy directory, or organize structural brackets in seconds.
+          <p className="mt-3 max-w-md mx-auto leading-relaxed text-sm text-text-secondary">
+            Create your athlete profile, manage your academy schedule, or run your next tournament in seconds.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4 justify-center">
+          <div className="mt-8 flex flex-wrap gap-3.5 justify-center">
             <Link href="/signup">
-              <MagneticButton variant="primary" className="py-3 px-8 rounded-md font-bebas tracking-widest text-sm">
-                GET STARTED NOW
+              <MagneticButton variant="primary" className="py-2.5 px-6 rounded-md text-sm font-medium">
+                Get started
               </MagneticButton>
             </Link>
             <Link href="/contact">
-              <MagneticButton variant="ghost" className="py-3 px-8 rounded-md font-bebas tracking-widest text-sm">
-                TALK TO FOUNDER
+              <MagneticButton variant="ghost" className="py-2.5 px-6 rounded-md text-sm font-medium">
+                Talk to founder
               </MagneticButton>
             </Link>
           </div>
