@@ -1,7 +1,7 @@
 {
-  "name": "dojopro-monorepo",
+  "name": "athlix-monorepo",
   "version": "1.0.0",
-  "description": "DojoPro - MERN Stack Sports-Tech Platform for Martial Artists",
+  "description": "ATHLIX - Startup MVP & Production Foundation for Martial Artists & Combat Sports",
   "private": true,
   "workspaces": [
     "client",

@@ -16,6 +16,16 @@ export default {
           success: '#27ae60',    // Emerald Green (approved booking)
           text: '#ffffff',       // High-contrast white
           muted: '#a0a0b0',      // Muted secondary text
+        },
+        athlix: {
+          dark: '#0D0D1A',       // Deep midnight titanium
+          card: '#1A1A2E',       // Combat sleek charcoal blue
+          border: '#2E2E4F',     // Dark slate grid border
+          primary: '#E74C3C',    // Crimson Red
+          secondary: '#F39C12',  // Belt Gold
+          success: '#27AE60',    // Success Emerald
+          text: '#FFFFFF',
+          muted: '#A0A0B0',
         }
       },
       fontFamily: {
