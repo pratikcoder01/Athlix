@@ -4,6 +4,7 @@ import QueryProvider from '../context/QueryProvider';
 import SocketProvider from '../context/SocketContext';
 import ThemeProvider from '../components/shared/ThemeProvider';
 import SmoothScrollProvider from '../components/shared/SmoothScrollProvider';
+import PageTransitionProvider from '../components/shared/PageTransitionProvider';
 
 export const metadata: Metadata = {
   title: 'ATHLIX | Next-Gen Combat Sports Tech Platform',
@@ -30,7 +31,9 @@ export default function RootLayout({
           <SocketProvider>
             <ThemeProvider>
               <SmoothScrollProvider>
-                {children}
+                <PageTransitionProvider>
+                  {children}
+                </PageTransitionProvider>
               </SmoothScrollProvider>
             </ThemeProvider>
           </SocketProvider>

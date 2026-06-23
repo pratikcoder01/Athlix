@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -17,18 +18,16 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isFocused, setIsFocused] = useState(false);
+  const shouldReduce = useReducedMotion();
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    setCoords({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    setCoords({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
   return (
-    <div
+    <motion.div
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseEnter={(e) => {
@@ -39,10 +38,14 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
         setIsFocused(false);
         props.onMouseLeave?.(e);
       }}
-      className={`relative overflow-hidden rounded-xl border border-border bg-secondary p-6 shadow-sm transition-all duration-300 ${className}`}
-      {...props}
+      whileHover={shouldReduce ? {} : { scale: 1.03, y: -4 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className={`relative overflow-hidden rounded-xl border border-border bg-secondary p-6 shadow-sm transition-colors duration-200 cursor-pointer ${className}`}
+      style={{ borderColor: isFocused ? glowColor.replace('0.15', '0.5') : undefined }}
+      tabIndex={0}
+      role="article"
     >
-      {isFocused && (
+      {isFocused && !shouldReduce && (
         <div
           className="pointer-events-none absolute -inset-px transition duration-300"
           style={{
@@ -51,7 +54,7 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
         />
       )}
       <div className="relative z-10">{children}</div>
-    </div>
+    </motion.div>
   );
 };
 export default SpotlightCard;
