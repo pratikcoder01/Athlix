@@ -19,13 +19,9 @@ const footerLinks = {
   ],
 };
 
-const colVariants = {
+const colFade = {
   hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: 'easeOut' },
-  }),
+  visible: { opacity: 1, y: 0 },
 };
 
 export const Footer: React.FC = () => {
@@ -36,10 +32,10 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12 items-start">
           {/* Brand column */}
           <motion.div
-            custom={0}
-            variants={colVariants}
+            variants={colFade}
             initial="hidden"
             whileInView="visible"
+            transition={{ delay: 0, duration: 0.4, ease: 'easeOut' }}
             viewport={{ once: true }}
             className="md:col-span-1"
           >
@@ -58,10 +54,10 @@ export const Footer: React.FC = () => {
           {Object.entries(footerLinks).map(([col, links], i) => (
             <motion.div
               key={col}
-              custom={i + 1}
-              variants={colVariants}
+              variants={colFade}
               initial="hidden"
               whileInView="visible"
+              transition={{ delay: (i + 1) * 0.08, duration: 0.4, ease: 'easeOut' }}
               viewport={{ once: true }}
             >
               <h4 className="text-xs font-bold text-text-primary uppercase tracking-widest font-display mb-5">
@@ -85,10 +81,10 @@ export const Footer: React.FC = () => {
 
           {/* Newsletter column */}
           <motion.div
-            custom={3}
-            variants={colVariants}
+            variants={colFade}
             initial="hidden"
             whileInView="visible"
+            transition={{ delay: 0.24, duration: 0.4, ease: 'easeOut' }}
             viewport={{ once: true }}
           >
             <h4 className="text-xs font-bold text-text-primary uppercase tracking-widest font-display mb-5">

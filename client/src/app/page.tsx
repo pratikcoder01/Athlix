@@ -15,12 +15,14 @@ import R3FBackground from '../components/shared/R3FBackground';
 import StatsBar from '../components/shared/StatsBar';
 
 /* ─────────────────────── animation helpers ─────────────────────── */
+const EASE_OUT = [0.22, 1, 0.36, 1] as [number, number, number, number];
+
 const fadeUp = (delay = 0) => ({
   hidden: { y: 32, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
-    transition: { delay, duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+    transition: { delay, duration: 0.55, ease: EASE_OUT },
   },
 });
 
@@ -34,7 +36,7 @@ const cardVariants = {
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.45, ease: EASE_OUT },
   },
 };
 
