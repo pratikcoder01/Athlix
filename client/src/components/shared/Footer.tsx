@@ -8,9 +8,12 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <span className="text-2xl font-extrabold tracking-wider font-display text-primary uppercase">
-              ATHLIX
-            </span>
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="ATHLIX Logo" className="h-8 w-auto object-contain" />
+              <span className="text-2xl font-extrabold tracking-wider font-display text-primary uppercase">
+                ATHLIX
+              </span>
+            </div>
             <p className="mt-4 text-sm text-text-secondary leading-relaxed max-w-xs">
               Handcrafted next-gen sports technology platform designed to elevate combat athletes, coaching calendars, and digital tournament bracket registries.
             </p>

@@ -42,7 +42,10 @@ export default function ResetPasswordPage() {
           <Link href="/login" className="text-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" /> BACK TO LOGIN
           </Link>
-          <span className="text-xs font-bold font-mono text-primary uppercase">ATHLIX SECURITY</span>
+          <div className="flex items-center gap-1.5">
+            <img src="/logo.png" alt="ATHLIX Logo" className="h-6 w-auto object-contain" />
+            <span className="text-xs font-bold font-mono text-primary uppercase">SECURITY</span>
+          </div>
         </div>
 
         <div className="mb-8">

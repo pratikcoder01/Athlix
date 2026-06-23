@@ -31,7 +31,8 @@ export const Navbar: React.FC = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="ATHLIX Logo" className="h-8 w-auto object-contain" />
               <span className="text-2xl font-extrabold tracking-wider font-display text-primary uppercase">
                 ATHLIX<span className="text-secondary-accent font-bebas">.</span>
               </span>

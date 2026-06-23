@@ -65,7 +65,8 @@ export default function SignupPage() {
         <div className="absolute top-0 right-0 h-96 w-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 h-96 w-96 bg-secondary-accent/10 rounded-full blur-3xl" />
         
-        <div className="relative z-10">
+        <div className="relative z-10 flex items-center gap-2.5">
+          <img src="/logo.png" alt="ATHLIX Logo" className="h-8 w-auto object-contain" />
           <span className="text-2xl font-extrabold tracking-wider font-display text-primary uppercase">
             ATHLIX<span className="text-secondary-accent font-bebas">.</span>
           </span>
@@ -90,6 +91,7 @@ export default function SignupPage() {
       <div className="flex items-center justify-center p-8 sm:p-12">
         <div className="w-full max-w-md">
           <div className="mb-6">
+            <img src="/logo.png" alt="ATHLIX Logo" className="h-10 w-auto mb-4 lg:hidden" />
             <h2 className="text-4xl font-extrabold font-display uppercase tracking-wide">
               CREATE PROFILE
             </h2>
