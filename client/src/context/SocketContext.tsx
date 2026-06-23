@@ -1,6 +1,8 @@
+'use client';
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from './AuthContext';
+import { useAuthStore } from '../store/authStore';
 
 interface NotificationItem {
   id: string;
@@ -24,7 +26,7 @@ const SocketContext = createContext<SocketContextProps>({
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
@@ -37,7 +39,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const newSocket = io(socketUrl);
 
     newSocket.on('connect', () => {
@@ -66,3 +68,4 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     </SocketContext.Provider>
   );
 };
+export default SocketProvider;

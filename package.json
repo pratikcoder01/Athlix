@@ -16,6 +16,8 @@
     "start": "npm start --prefix server"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }
