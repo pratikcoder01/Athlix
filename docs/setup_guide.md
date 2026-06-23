@@ -26,8 +26,8 @@ This guide walks through running the **ATHLIX** monorepo locally and deploying i
    ```bash
    npm run dev
    ```
-   - Frontend client runs on: `http://localhost:5173`
-   - Backend API runs on: `http://localhost:5000`
+   - **Frontend Client (Next.js)** runs on: `http://localhost:3000`
+   - **Backend API (Express)** runs on: `http://localhost:5000`
 
 ---
 
@@ -55,8 +55,8 @@ CLOUDINARY_API_SECRET=abcdefg-hijklmnop-qrstuv
 ### Frontend Client (`client/.env`)
 Create a file named `.env` in the `/client` directory:
 ```env
-# Api Gateway
-VITE_API_URL=http://localhost:5000
+# API Gateway URL (Points to the live Express server API gateway)
+NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
 ---
@@ -81,12 +81,31 @@ VITE_API_URL=http://localhost:5000
 4. Add all Backend environment variables (`MONGO_URI`, `JWT_SECRET`, etc.) to Render's **Environment** tab.
 
 ### 3. Frontend Client: Vercel
-1. Sign up on [Vercel](https://vercel.com).
-2. Import a new Project from your GitHub Repository.
-3. Configure the following build details:
-   - **Framework Preset**: `Vite`
-   - **Root Directory**: `client`
-   - **Build Command**: `npm run build` (runs tsc and vite build)
-   - **Output Directory**: `dist`
-4. Add the frontend environment variable:
-   - `VITE_API_URL` set to the live URL of your deployed Render Web Service.
+
+The **ATHLIX** frontend has been optimized and made deployment-ready for **Vercel** with support for dual deployment paths.
+
+#### Option A (Recommended: Subdirectory Deployment)
+Vercel natively supports Next.js monorepos when targeting subfolders:
+1. Log in to [Vercel](https://vercel.com) and click **Add New Project**.
+2. Select your repository from GitHub.
+3. In the project setup, expand **Configure Project** and configure:
+   - **Framework Preset**: `Next.js`
+   - **Root Directory**: Click "Edit" and choose `client`.
+   - **Build Command**: `next build` (Vercel default)
+   - **Output Directory**: `.next` (Vercel default)
+4. Under **Environment Variables**, add:
+   - `NEXT_PUBLIC_API_URL` set to the live URL of your deployed Render Web Service (e.g., `https://athlix-server.onrender.com`).
+5. Click **Deploy**. Vercel will install workspace dependencies from the root and build the client application with caching.
+
+#### Option B (Zero-Config Root Deployment)
+If you deploy the repository directly from the root directory without specifying `client` as the root:
+- The project includes a root [vercel.json](file:///vercel.json) configuration that maps the build directory automatically:
+  ```json
+  {
+    "version": 2,
+    "buildCommand": "npm run build --prefix client",
+    "outputDirectory": "client/.next",
+    "framework": "nextjs"
+  }
+  ```
+- Simply add `NEXT_PUBLIC_API_URL` to Vercel's Environment Variables and deploy!

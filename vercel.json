@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build --prefix client",
+  "outputDirectory": "client/.next",
+  "framework": "nextjs"
+}

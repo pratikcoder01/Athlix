@@ -1,5 +1,5 @@
 # ATHLIX 🥋
-> Premium Sports-Tech Platform for Combat Sports Athletes, Coaches, Academies, and Tournament Organizers.
+> Premium Next-Gen Sports-Tech Platform for Combat Sports Athletes, Coaches, Academies, and Tournament Organizers.
 
 ATHLIX is a production-grade, startup-ready MERN platform connecting martial artists and combat sports enthusiasts in one unified workspace. The platform blends professional coaching bookings, real-time social feeds, geospatial academy discovery, and digital tournament bracket registries.
 
@@ -10,31 +10,13 @@ ATHLIX is a production-grade, startup-ready MERN platform connecting martial art
 ```text
 athlix/
 ├── .github/                       # Pull Request and Issue templates
-├── client/                        # Vite + React 19 + TypeScript Frontend
-│   ├── src/
-│   │   ├── components/            # UI layout elements and protected gates
-│   │   ├── context/               # AuthContext & real-time SocketContext
-│   │   ├── pages/                 # Public, Protected, and Admin view panels
-│   │   ├── routes/                # Client-side router mapping (AppRoutes)
-│   │   └── main.tsx               # Mounting root
-│   ├── tsconfig.json              # Client compilation config
-│   └── tailwind.config.js         # Custom theme configuration (#0D0D1A, etc.)
-│
+├── client/                        # Next.js 15 + React 19 + TypeScript Frontend
 ├── server/                        # Express + TypeScript API Backend
-│   ├── src/
-│   │   ├── config/                # Mongoose DB connections & Cloudinary settings
-│   │   ├── controllers/           # Endpoint handlers (Auth, Profile, Bookings, etc.)
-│   │   ├── middleware/            # JWT validation, error formatting, rate limiters
-│   │   ├── models/                # TypeScript Mongoose indexed models
-│   │   ├── routes/                # Express routing layers
-│   │   └── index.ts               # HTTP & Socket.io server listener
-│   └── tsconfig.json              # Server compilation config
-│
 ├── docs/                          # Architecture design and deployment details
 │   ├── db_design.md               # MongoDB collection structure and ERD
 │   ├── api_map.md                 # Route endpoint map & Socket.io channels
 │   └── setup_guide.md             # Local environment & production deployments
-│
+├── vercel.json                    # Root Vercel zero-config deploy schema
 ├── CONTRIBUTING.md                # Scoped branch workflows & commit style
 └── package.json                   # Root monorepo workspace coordinator
 ```
@@ -44,17 +26,18 @@ athlix/
 ## 🛠️ Tech Stack & Design System
 
 ### Technology Stack
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, React Router DOM, React Query (TanStack Query), React Hook Form, Zod, Framer Motion, Lucide Icons
-- **Backend**: Node.js, Express.js, TypeScript, MongoDB Atlas, Mongoose, JWT, bcrypt, Cloudinary, Multer, Socket.io
-- **Deployment**: Vercel (Frontend), Render (Backend)
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion, GSAP, Three.js, React Three Fiber, Lenis Smooth Scroll, React Query (TanStack Query), React Hook Form, Zod, Zustand, Socket.io Client.
+- **Backend**: Node.js, Express.js, TypeScript, MongoDB Atlas, Mongoose, JWT, bcrypt, Cloudinary, Multer, Socket.io.
+- **Deployment**: Vercel (Frontend), Render (Backend), MongoDB Atlas.
 
 ### Theme Palette (Dark Premium)
-- **Background**: `#0D0D1A` (Midnight Titanium Blue)
-- **Cards**: `#1A1A2E` (Combat Sleek Navy-Grey)
-- **Primary Accent**: `#E74C3C` (Fiery Crimson Red - combat energy)
-- **Secondary Accent**: `#F39C12` (Belt Gold - rank achievements)
-- **Success Accent**: `#27AE60` (Emerald Green - approved states)
-- **Typography**: `Bebas Neue` (Headers), `Inter` (Body)
+- **Background**: `#0B1020` (Midnight Titanium Blue)
+- **Cards**: `#12182B` (Combat Sleek Navy-Grey)
+- **Primary Accent**: `#FF5A3D` (Fiery Crimson Orange - combat energy)
+- **Secondary Accent**: `#FF8A3D` (Belt Orange - rank achievements)
+- **Gold Accent**: `#F7B500` (Belt Gold - achievement badges)
+- **Success Accent**: `#22C55E` (Emerald Green - approved states)
+- **Typography**: `Bebas Neue` (Accent Headers), `Clash Display` (Sleek UI Headers), `Inter` (Body Text)
 
 ---
 
@@ -79,7 +62,7 @@ To run both backend and frontend concurrently in development mode:
 npm run dev
 ```
 
-* **Frontend Client (Vite)**: `http://localhost:5173`
+* **Frontend Client (Next.js)**: `http://localhost:3000`
 * **Backend Server (Express)**: `http://localhost:5000`
 
 For full configuration keys and cloud deployment setup guides, refer to the [Setup Guide](file:///docs/setup_guide.md).
