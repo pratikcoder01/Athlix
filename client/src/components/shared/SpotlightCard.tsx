@@ -38,10 +38,10 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
         setIsFocused(false);
         props.onMouseLeave?.(e);
       }}
-      whileHover={shouldReduce ? {} : { scale: 1.03, y: -4 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      whileHover={shouldReduce ? {} : { y: -2 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       className={`relative overflow-hidden rounded-xl border border-border bg-secondary p-6 shadow-sm transition-colors duration-200 cursor-pointer ${className}`}
-      style={{ borderColor: isFocused ? glowColor.replace('0.15', '0.5') : undefined }}
+      style={{ borderColor: isFocused ? glowColor.replace('0.15', '0.35') : undefined }}
       tabIndex={0}
       role="article"
     >

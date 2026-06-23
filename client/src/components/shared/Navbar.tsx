@@ -25,23 +25,11 @@ const NavLink = ({
     <Link
       href={href}
       onClick={onClick}
-      className={`relative text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded ${
-        active ? 'text-primary font-bold' : 'text-text-secondary hover:text-primary'
+      className={`relative text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-2 py-1 ${
+        active ? 'text-primary font-medium' : 'text-text-secondary hover:text-text-primary'
       }`}
     >
       {children}
-      {/* Animated underline */}
-      {!shouldReduce && (
-        <motion.span
-          className="absolute -bottom-0.5 left-0 h-[2px] rounded-full bg-primary"
-          initial={false}
-          animate={{ width: active ? '100%' : '0%' }}
-          transition={{ duration: 0.22, ease: 'easeOut' }}
-        />
-      )}
-      {shouldReduce && active && (
-        <span className="absolute -bottom-0.5 left-0 h-[2px] w-full rounded-full bg-primary" />
-      )}
     </Link>
   );
 };
@@ -59,7 +47,6 @@ export const Navbar: React.FC = () => {
     { name: 'Features', href: '/features' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Contact', href: '/contact' },
   ];
 
   const isActive = (path: string) => pathname === path;
@@ -71,77 +58,74 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md transition-all duration-300">
+    <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border transition-colors duration-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-14 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
-              <img src="/logo.png" alt="ATHLIX Logo" className="h-8 w-auto object-contain" />
-              <span className="text-2xl font-extrabold tracking-wider font-display text-primary uppercase">
-                ATHLIX<span className="text-secondary-accent font-bebas">.</span>
+            <Link href="/" className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
+              <span className="text-lg font-bold tracking-tight text-text-primary">
+                Athlix
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:block">
-            <div className="flex items-center gap-7">
-              {navLinks.map((link) => (
-                <NavLink key={link.name} href={link.href} active={isActive(link.href)}>
-                  {link.name}
-                </NavLink>
-              ))}
-            </div>
+          <div className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+            {navLinks.map((link) => (
+              <NavLink key={link.name} href={link.href} active={isActive(link.href)}>
+                {link.name}
+              </NavLink>
+            ))}
           </div>
 
           {/* CTA & Actions */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 hover:bg-surface transition-colors cursor-pointer text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="rounded-full p-1.5 hover:bg-surface transition-colors cursor-pointer text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Toggle Theme"
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Link
                   href="/dashboard"
-                  className="text-sm font-semibold text-text-primary hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  className="text-[13px] font-medium text-text-primary hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
-                  <User className="h-4 w-4 text-primary" /> Dashboard
+                  <User className="h-3.5 w-3.5 text-text-secondary" /> Dashboard
                 </Link>
                 {user?.role === 'admin' && (
                   <Link
                     href="/admin/users"
-                    className="text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 border border-border px-2.5 py-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="text-[13px] font-medium text-text-secondary hover:text-primary transition-colors flex items-center gap-1 border border-border px-2 py-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <Shield className="h-3.5 w-3.5" /> Admin
+                    <Shield className="h-3 w-3" /> Admin
                   </Link>
                 )}
-                <MagneticButton
+                <button
                   onClick={logout}
-                  className="bg-surface hover:bg-opacity-80 text-text-primary text-xs py-2 px-4 rounded-md"
+                  className="text-[13px] text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  <LogOut className="h-3.5 w-3.5 mr-1 inline" /> LOGOUT
-                </MagneticButton>
+                  Logout
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <Link
                   href="/login"
-                  className="text-sm font-semibold text-text-secondary hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-1"
+                  className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-1"
                 >
-                  LOGIN
+                  Log in
                 </Link>
                 <Link href="/signup">
                   <MagneticButton
                     variant="primary"
-                    className="text-xs font-bold py-2 px-5 rounded-md font-bebas tracking-widest"
+                    className="text-[13px] font-medium py-1.5 px-4 rounded-md"
                   >
-                    JOIN PLATFORM
+                    Get started
                   </MagneticButton>
                 </Link>
               </div>
@@ -149,17 +133,17 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <div className="flex items-center gap-4 md:hidden">
+          <div className="flex items-center gap-3 md:hidden">
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 hover:bg-surface text-text-secondary"
+              className="rounded-full p-1.5 hover:bg-surface text-text-secondary"
               aria-label="Toggle Theme"
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="rounded-md p-2 hover:bg-surface text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="rounded-md p-1.5 hover:bg-surface text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isOpen}
             >
@@ -171,7 +155,7 @@ export const Navbar: React.FC = () => {
                   exit={shouldReduce ? {} : { opacity: 0, rotate: 90 }}
                   transition={{ duration: 0.15 }}
                 >
-                  {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </motion.span>
               </AnimatePresence>
             </button>
@@ -190,14 +174,14 @@ export const Navbar: React.FC = () => {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="overflow-hidden border-t border-border bg-background px-4 py-4 md:hidden"
           >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`text-base font-semibold transition-colors ${
-                    isActive(link.href) ? 'text-primary' : 'text-text-secondary hover:text-primary'
+                  className={`text-[14px] transition-colors ${
+                    isActive(link.href) ? 'text-primary font-medium' : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   {link.name}
@@ -205,33 +189,33 @@ export const Navbar: React.FC = () => {
               ))}
               <hr className="border-border my-2" />
               {isAuthenticated ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   <Link
                     href="/dashboard"
                     onClick={() => setIsOpen(false)}
-                    className="text-base font-semibold text-text-primary flex items-center gap-2"
+                    className="text-[14px] text-text-primary flex items-center gap-2"
                   >
-                    <User className="h-5 w-5 text-primary" /> Dashboard Panel
+                    <User className="h-4 w-4 text-text-secondary" /> Dashboard
                   </Link>
                   <button
                     onClick={() => { logout(); setIsOpen(false); }}
-                    className="flex items-center gap-2 text-left text-base font-semibold text-primary"
+                    className="flex items-center gap-2 text-left text-[14px] text-text-secondary"
                   >
-                    <LogOut className="h-5 w-5" /> LOGOUT
+                    <LogOut className="h-4 w-4" /> Logout
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="text-base font-semibold text-text-secondary"
+                    className="text-[14px] text-text-secondary"
                   >
-                    LOGIN
+                    Log in
                   </Link>
                   <Link href="/signup" onClick={() => setIsOpen(false)}>
-                    <button className="w-full bg-primary hover:brightness-110 text-white font-bold py-2.5 rounded-md font-bebas tracking-widest text-sm transition-all shadow-lg shadow-primary/20">
-                      JOIN PLATFORM
+                    <button className="w-full bg-primary hover:brightness-110 text-white font-medium py-2 rounded-md text-[14px] transition-all">
+                      Get started
                     </button>
                   </Link>
                 </div>

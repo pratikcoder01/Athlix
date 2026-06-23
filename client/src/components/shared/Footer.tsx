@@ -12,10 +12,10 @@ const footerLinks = {
     { label: 'Social Activity Feed', href: '/feed' },
   ],
   Product: [
-    { label: 'About Story', href: '/about' },
-    { label: 'Core Features', href: '/features' },
-    { label: 'Elite Subscriptions', href: '/pricing' },
-    { label: 'Blog Articles', href: '/blog' },
+    { label: 'About story', href: '/about' },
+    { label: 'Core features', href: '/features' },
+    { label: 'Subscriptions', href: '/pricing' },
+    { label: 'Articles', href: '/blog' },
   ],
 };
 
@@ -39,14 +39,13 @@ export const Footer: React.FC = () => {
             viewport={{ once: true }}
             className="md:col-span-1"
           >
-            <div className="flex items-center gap-2.5 mb-4">
-              <img src="/logo.png" alt="ATHLIX Logo" className="h-8 w-auto object-contain" />
-              <span className="text-2xl font-extrabold tracking-wider font-display text-primary uppercase">
-                ATHLIX
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-lg font-bold tracking-tight text-text-primary">
+                Athlix
               </span>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(200, 210, 230, 0.7)' }}>
-              Handcrafted next-gen sports technology platform designed to elevate combat athletes, coaching calendars, and digital tournament bracket registries.
+            <p className="text-sm leading-relaxed max-w-xs text-text-secondary">
+              Management platform for combat sports academies, coaches, and athletes to organize schedules and tournaments.
             </p>
           </motion.div>
 
@@ -60,16 +59,15 @@ export const Footer: React.FC = () => {
               transition={{ delay: (i + 1) * 0.08, duration: 0.4, ease: 'easeOut' }}
               viewport={{ once: true }}
             >
-              <h4 className="text-xs font-bold text-text-primary uppercase tracking-widest font-display mb-5">
+              <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
                 {col}
               </h4>
-              <ul className="flex flex-col gap-3">
+              <ul className="flex flex-col gap-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:text-primary"
-                      style={{ color: 'rgba(200, 210, 230, 0.65)' }}
+                      className="text-sm transition-colors duration-150 text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:text-text-primary"
                     >
                       {link.label}
                     </Link>
@@ -87,24 +85,24 @@ export const Footer: React.FC = () => {
             transition={{ delay: 0.24, duration: 0.4, ease: 'easeOut' }}
             viewport={{ once: true }}
           >
-            <h4 className="text-xs font-bold text-text-primary uppercase tracking-widest font-display mb-5">
-              Stay Tuned
+            <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+              Stay updated
             </h4>
-            <p className="text-sm mb-4 leading-relaxed" style={{ color: 'rgba(200, 210, 230, 0.65)' }}>
-              Subscribe to get tournament alerts and scheduling system updates.
+            <p className="text-sm mb-4 leading-relaxed text-text-secondary">
+              Subscribe to receive updates on brackets and training schedules.
             </p>
             <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
               <input
                 type="email"
-                placeholder="Enter email"
-                className="flex-1 min-w-0 bg-surface border border-border rounded px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                placeholder="Email address"
+                className="flex-1 min-w-0 bg-secondary border border-border rounded px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 required
               />
               <button
                 type="submit"
-                className="bg-primary hover:brightness-110 text-white px-4 py-2 rounded text-xs font-bold font-bebas tracking-wider transition-all shadow-md shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="bg-primary hover:brightness-105 text-white px-4 py-2 rounded text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer"
               >
-                JOIN
+                Subscribe
               </button>
             </form>
           </motion.div>
@@ -112,13 +110,13 @@ export const Footer: React.FC = () => {
 
         {/* Bottom bar */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs" style={{ color: 'rgba(200, 210, 230, 0.5)' }}>
-            © {new Date().getFullYear()} ATHLIX. Built for combat sports athletes by martial artists. 🥋
+          <p className="text-xs text-text-tertiary">
+            © {new Date().getFullYear()} Athlix. All rights reserved.
           </p>
-          <div className="flex gap-6 text-xs" style={{ color: 'rgba(200, 210, 230, 0.5)' }}>
-            <Link href="#" className="hover:text-primary transition-colors focus-visible:outline-none focus-visible:text-primary">Privacy Policy</Link>
-            <Link href="#" className="hover:text-primary transition-colors focus-visible:outline-none focus-visible:text-primary">Terms of Service</Link>
-            <Link href="#" className="hover:text-primary transition-colors focus-visible:outline-none focus-visible:text-primary">Accessibility</Link>
+          <div className="flex gap-6 text-xs text-text-tertiary">
+            <Link href="#" className="hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:text-text-primary">Privacy policy</Link>
+            <Link href="#" className="hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:text-text-primary">Terms of service</Link>
+            <Link href="#" className="hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:text-text-primary">Accessibility</Link>
           </div>
         </div>
       </div>
