@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: 'You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user's prompt - no additional text, no markdown, no explanations.',
+        system: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user's prompt - no additional text, no markdown, no explanations.",
         messages: [
           {
             role: 'user',
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     let planText = '';
     if (data.content && Array.isArray(data.content) && data.content.length > 0) {
       // Find the text block
-      const textBlock = data.content.find(block => block.type === 'text');
+      const textBlock = data.content.find((block: any) => block.type === 'text');
       if (textBlock) {
         planText = textBlock.text;
       }
