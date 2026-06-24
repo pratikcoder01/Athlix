@@ -84,8 +84,8 @@ function TrainingPlanGenerator() {
   const handleFormSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
-    if (!formData.athleteId || !formData.discipline || !formData.trainingGoal) {
-      alert('Please fill in all required fields');
+    if (!formData.discipline || !formData.trainingGoal) {
+      alert('Please fill in all required fields (Discipline and Training Goal)');
       return;
     }
 
@@ -93,12 +93,19 @@ function TrainingPlanGenerator() {
     setError(null);
 
     try {
+      const payload = {
+        ...formData,
+        athleteId: formData.athleteId || 'demo-athlete-123',
+        beltLevel: formData.beltLevel || 'Not Specified',
+        weightCategory: formData.weightCategory || 'Not Specified',
+      };
+
       const response = await fetch('/api/ai/training-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

@@ -69,63 +69,43 @@ export async function POST(request: Request) {
       Adjust intensity and volume based on daysAvailablePerWeek.
       `;
 
-    // Call Anthropic API
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    // Call Google GenAI
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'ANTHROPIC_API_KEY not configured in environment variables' },
+        { error: 'GEMINI_API_KEY not configured in environment variables' },
         { status: 500 }
       );
     }
 
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        system: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user\'s prompt - no additional text, no markdown, no explanations.",
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      })
-    });
-
-    if (!anthropicResponse.ok) {
-      const errorData = await anthropicResponse.json();
+    let planText = '';
+    try {
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user's prompt - no additional text, no markdown, no explanations.",
+          temperature: 0.7,
+        }
+      });
+      planText = response.text || '';
+    } catch (apiError: any) {
       return NextResponse.json(
-        { error: `Claude API error: ${anthropicResponse.status} - ${errorData.error?.message || 'Unknown error'}` },
-        { status: anthropicResponse.status }
+        { error: `Gemini API error: ${apiError.message || 'Unknown error'}` },
+        { status: 500 }
       );
     }
 
-    const data = await anthropicResponse.json();
-
-    // Extract text from Anthropic response format
-    let planText = '';
-    if (data.content && Array.isArray(data.content) && data.content.length > 0) {
-      // Find the text block
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const textBlock = data.content.find((block: any) => block.type === 'text');
-      if (textBlock) {
-        planText = textBlock.text;
-      }
-    }
-
     if (!planText) {
-      throw new Error('Failed to extract text from Claude API response');
+      throw new Error('Failed to extract text from Gemini API response');
     }
 
     // Parse and validate the JSON plan
     let plan;
     try {
+      planText = planText.replace(/```json/g, '').replace(/```/g, ''); // cleanup any markdown if present
       plan = JSON.parse(planText.trim());
     } catch (parseError) {
       return NextResponse.json(
@@ -168,17 +148,22 @@ export async function POST(request: Request) {
       }
     }
 
-    // Save to MongoDB with upsert (update if exists, insert if new)
-    await TrainingPlanModel.findOneAndUpdate(
-      { athleteId: athleteId },
-      {
-        $set: {
-          plan: plan,
-          timestamp: new Date()
-        }
-      },
-      { upsert: true, new: true }
-    );
+    // Save to MongoDB with upsert (optional, don't crash if it fails)
+    try {
+      await connectDB();
+      await TrainingPlanModel.findOneAndUpdate(
+        { athleteId: athleteId },
+        {
+          $set: {
+            plan: plan,
+            timestamp: new Date()
+          }
+        },
+        { upsert: true, new: true }
+      );
+    } catch (dbError) {
+      console.error('[Training Plan API] DB Save failed, but continuing:', dbError);
+    }
 
     return NextResponse.json(plan);
   } catch (error) {
