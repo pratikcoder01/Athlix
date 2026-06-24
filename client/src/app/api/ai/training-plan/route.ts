@@ -66,40 +66,49 @@ export async function POST(request: Request) {
       }
 
       Ensure the plan is realistic, progressive, and appropriate for the athlete's level and goals.
-      Adjust intensity and volume based on daysAvailablePerWeek.
-      `;
-
-    // Call Google GenAI
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'GEMINI_API_KEY not configured in environment variables' },
-        { status: 500 }
-      );
-    }
-
+    // Call Featherless AI
+    const apiKey = process.env.FEATHERLESS_API_KEY || 'rc_37e72745fdd1e1e4c2dc83a211f28ab79e39b99ec7940dbe19237f3cb433594a';
     let planText = '';
+
     try {
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user's prompt - no additional text, no markdown, no explanations.",
+      const response = await fetch('https://api.featherless.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/Meta-Llama-3-8B-Instruct',
+          messages: [
+            {
+              role: 'system',
+              content: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user's prompt - no additional text, no markdown, no explanations."
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
           temperature: 0.7,
-        }
+        })
       });
-      planText = response.text || '';
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Featherless API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      planText = data.choices?.[0]?.message?.content || '';
     } catch (apiError: any) {
       return NextResponse.json(
-        { error: `Gemini API error: ${apiError.message || 'Unknown error'}` },
+        { error: `Featherless API error: ${apiError.message || 'Unknown error'}` },
         { status: 500 }
       );
     }
 
     if (!planText) {
-      throw new Error('Failed to extract text from Gemini API response');
+      throw new Error('Failed to extract text from Featherless API response');
     }
 
     // Parse and validate the JSON plan
