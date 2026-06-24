@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
             <p className="text-text-secondary text-xs leading-relaxed">
               A password reset link was sent to{' '}
               <span className="text-primary font-bold">{sentEmail}</span>.
-              Check your spam folder if it doesn&apos;t arrive within a minute.
+              Check your spam folder if it does not arrive within a minute.
             </p>
             <Link
               href="/login"

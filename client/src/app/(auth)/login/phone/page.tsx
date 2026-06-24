@@ -35,7 +35,7 @@ export default function PhoneLoginPage() {
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
-  // Initialise invisible reCAPTCHA on mount
+  // Initialize invisible reCAPTCHA on mount
   useEffect(() => {
     if (!recaptchaContainerRef.current) return;
     if (recaptchaVerifierRef.current) return; // already set
