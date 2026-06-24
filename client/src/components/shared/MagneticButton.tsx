@@ -9,6 +9,7 @@ interface MagneticButtonProps {
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'primary' | 'ghost';
+  disabled?: boolean;
 }
 
 export const MagneticButton: React.FC<MagneticButtonProps> = ({
@@ -17,6 +18,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   onClick,
   type = 'button',
   variant,
+  disabled = false,
 }) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -45,12 +47,13 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       animate={shouldReduce ? {} : { x: position.x, y: position.y }}
-      whileHover={shouldReduce ? {} : { scale: 1.01 }}
-      whileTap={shouldReduce ? {} : { scale: 0.98 }}
+      whileHover={shouldReduce || disabled ? {} : { scale: 1.01 }}
+      whileTap={shouldReduce || disabled ? {} : { scale: 0.98 }}
       transition={{ type: 'tween', ease: 'easeOut', duration: 0.15 }}
       onClick={onClick}
       type={type}
-      className={`cursor-pointer inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${variantClass} ${className}`}
+      disabled={disabled}
+      className={`cursor-pointer inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${variantClass} ${className}`}
     >
       <span className="relative z-10">{children}</span>
     </motion.button>

@@ -1,15 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Lock, Mail, ChevronRight, Award, Shield } from 'lucide-react';
+import { Lock, Mail, ChevronRight, Award, Shield, Smartphone, AlertCircle } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
 import MagneticButton from '../../../components/shared/MagneticButton';
 import SpotlightCard from '../../../components/shared/SpotlightCard';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -21,6 +25,7 @@ type LoginFields = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     register,
@@ -31,23 +36,41 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFields) => {
+    setAuthError(null);
     try {
-      const mockUser = {
-        id: 'usr_mock123',
-        name: 'Pratik',
-        email: data.email,
-        role: 'athlete' as const,
-        discipline: 'BJJ',
-        beltRank: 'Purple',
-        profileImage: '',
-        bio: 'Startup Founder & Combat Sports Practitioner.'
-      };
-      
-      setAuth(mockUser, 'mock_jwt_session_token_key');
-      alert('Logged in successfully!');
+      // 1. Sign in with Firebase — validates email + password
+      const firebaseUserCred = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+
+      // 2. Get a short-lived Firebase ID token
+      const idToken = await firebaseUserCred.user.getIdToken();
+
+      // 3. Exchange for an ATHLIX JWT (creates MongoDB record if first sign-in)
+      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Authentication failed');
+
+      // 4. Persist auth state (survives page refresh via Zustand persist)
+      setAuth(json.user, json.token);
       router.push('/dashboard');
-    } catch (error) {
-      alert('Login failed. Please check credentials.');
+    } catch (err: any) {
+      // Map Firebase error codes to readable messages
+      const code: string = err.code || '';
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setAuthError('Invalid email or password.');
+      } else if (code === 'auth/too-many-requests') {
+        setAuthError('Too many failed attempts. Try again later.');
+      } else {
+        setAuthError(err.message || 'Login failed. Please try again.');
+      }
     }
   };
 
@@ -79,8 +102,8 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex gap-6 text-[10px] font-mono font-bold text-text-secondary uppercase">
-          <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-primary" /> JWT SECURED</span>
-          <span className="flex items-center gap-1.5"><Award className="h-4 w-4 text-primary" /> VERIFIED RATING</span>
+          <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-primary" /> Firebase Auth</span>
+          <span className="flex items-center gap-1.5"><Award className="h-4 w-4 text-primary" /> Verified Identity</span>
         </div>
       </div>
 
@@ -147,12 +170,30 @@ export default function LoginPage() {
                 )}
               </div>
 
+              {/* Auth error display */}
+              {authError && (
+                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
+                  <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                </div>
+              )}
+
               <MagneticButton
                 type="submit"
                 className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
               >
                 {isSubmitting ? 'VERIFYING...' : 'LOGIN TO CONSOLE'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
               </MagneticButton>
+
+              {/* Phone OTP alternative */}
+              <div className="text-center">
+                <Link
+                  href="/login/phone"
+                  className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-text-secondary hover:text-primary transition-colors uppercase"
+                >
+                  <Smartphone className="h-3.5 w-3.5" /> Sign in with phone number
+                </Link>
+              </div>
             </form>
           </SpotlightCard>
 

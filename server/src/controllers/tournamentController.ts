@@ -150,6 +150,16 @@ export const updateTournamentBrackets = async (req: AuthenticatedRequest, res: R
 
     await tournament.save();
 
+    // Emit real-time bracket update to all users viewing this tournament's room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`tournament_${tournament._id}`).emit('bracket_update', {
+        tournamentId: tournament._id,
+        brackets: tournament.brackets,
+        status: tournament.status,
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Brackets updated successfully',

@@ -59,3 +59,9 @@ export const validateBody = (schema: z.ZodSchema) => (req: Request, res: Respons
     });
   }
 };
+
+// AI Seeding Payload Validator
+export const seedBracketSchema = z.object({
+  tournamentId: z.string().min(1, 'tournamentId is required'),
+});
+

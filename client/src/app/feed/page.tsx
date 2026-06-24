@@ -7,14 +7,17 @@ import Footer from '../../components/shared/Footer';
 import SpotlightCard from '../../components/shared/SpotlightCard';
 import MagneticButton from '../../components/shared/MagneticButton';
 import { useAuthStore } from '../../store/authStore';
+import { useSocket } from '../../context/SocketContext';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function FeedPage() {
   const { user } = useAuthStore();
   const [postContent, setPostContent] = useState('');
   
-  const [posts, setPosts] = useState([
+  const [posts, setPosts] = useState<any[]>([
     {
-      id: 1,
+      id: '1',
       author: 'Prof. Renato Silva',
       role: 'BJJ Black Belt',
       content: 'Just finished filming technical reviews for the upcoming guard passing module. Uploading details soon to the academy portal!',
@@ -24,7 +27,7 @@ export default function FeedPage() {
       discipline: 'BJJ'
     },
     {
-      id: 2,
+      id: '2',
       author: 'Coach Kru Somchai',
       role: 'Muay Thai Kru',
       content: 'Morning pad work finished with the amateur fight team. Speed checks and cardio metrics looking sharp on the charts.',
@@ -35,7 +38,31 @@ export default function FeedPage() {
     }
   ]);
 
-  const handleLike = (id: number) => {
+  const { socket, newPosts, clearNewPosts } = useSocket();
+
+  // Listen to new posts from socket in real time
+  React.useEffect(() => {
+    if (newPosts && newPosts.length > 0) {
+      const formatted = newPosts.map((p, idx) => ({
+        id: `socket_${p._id || idx}`,
+        author: p.authorId?.name || 'ATHLIX Fighter',
+        role: p.authorId?.role === 'coach' ? 'Verified Coach' : 'Athlete',
+        content: p.content,
+        likes: p.likes?.length || 0,
+        comments: p.commentsCount || 0,
+        liked: false,
+        discipline: 'BJJ',
+      }));
+      setPosts(prev => {
+        // filter out any duplicates by checking formatting
+        const filteredPrev = prev.filter(p => !newPosts.some(np => `socket_${np._id}` === p.id));
+        return [...formatted, ...filteredPrev];
+      });
+      clearNewPosts();
+    }
+  }, [newPosts, clearNewPosts]);
+
+  const handleLike = (id: number | string) => {
     setPosts(prev =>
       prev.map(p => {
         if (p.id === id) {
@@ -50,23 +77,26 @@ export default function FeedPage() {
     );
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!postContent.trim()) return;
 
-    const newPost = {
-      id: posts.length + 1,
-      author: user?.name || 'Athlete Fighter',
-      role: 'BJJ Purple Belt',
-      content: postContent,
-      likes: 0,
-      comments: 0,
-      liked: false,
-      discipline: 'BJJ'
-    };
-
-    setPosts([newPost, ...posts]);
-    setPostContent('');
+    try {
+      const token = useAuthStore.getState().token;
+      const res = await fetch(`${API_URL}/api/posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: postContent }),
+      });
+      if (res.ok) {
+        setPostContent('');
+      }
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    }
   };
 
   const trendingItems = [

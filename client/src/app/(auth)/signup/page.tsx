@@ -1,15 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Lock, Mail, ChevronRight, Award, Shield } from 'lucide-react';
+import { User, Lock, Mail, ChevronRight, Award, Shield, AlertCircle } from 'lucide-react';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
 import MagneticButton from '../../../components/shared/MagneticButton';
 import SpotlightCard from '../../../components/shared/SpotlightCard';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -23,6 +27,7 @@ type SignupFields = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     register,
@@ -38,23 +43,46 @@ export default function SignupPage() {
   const selectedRole = watch('role');
 
   const onSubmit = async (data: SignupFields) => {
+    setAuthError(null);
     try {
-      const mockUser = {
-        id: 'usr_mock' + Math.floor(Math.random() * 1000),
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        discipline: 'BJJ',
-        beltRank: 'White',
-        profileImage: '',
-        bio: `${data.role.replace('_', ' ')} on ATHLIX.`
-      };
-      
-      setAuth(mockUser, 'mock_jwt_session_token_key');
-      alert('Account registered successfully!');
+      // 1. Create Firebase account
+      const firebaseUserCred = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+
+      // 2. Update display name in Firebase
+      await updateProfile(firebaseUserCred.user, { displayName: data.name });
+
+      // 3. Get Firebase ID token
+      const idToken = await firebaseUserCred.user.getIdToken();
+
+      // 4. Exchange for ATHLIX JWT — passes role + name so MongoDB user is created correctly
+      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          name: data.name,
+          role: data.role,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Registration failed');
+
+      setAuth(json.user, json.token);
       router.push('/dashboard');
-    } catch (error) {
-      alert('Registration failed. Please try again.');
+    } catch (err: any) {
+      const code: string = err.code || '';
+      if (code === 'auth/email-already-in-use') {
+        setAuthError('An account with this email already exists.');
+      } else if (code === 'auth/weak-password') {
+        setAuthError('Password must be at least 6 characters.');
+      } else {
+        setAuthError(err.message || 'Registration failed. Please try again.');
+      }
     }
   };
 
@@ -191,6 +219,14 @@ export default function SignupPage() {
                   <span className="text-[10px] text-primary font-mono font-bold mt-1 uppercase">{errors.password.message}</span>
                 )}
               </div>
+
+              {/* Auth error display */}
+              {authError && (
+                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
+                  <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                </div>
+              )}
 
               <MagneticButton
                 type="submit"

@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sun, Moon, Menu, X, Shield, LogOut, User } from 'lucide-react';
+import { Sun, Moon, Menu, X, Shield, LogOut, User, Bell } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSocket } from '../../context/SocketContext';
 import MagneticButton from './MagneticButton';
 
 const NavLink = ({
@@ -44,8 +47,27 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
   const { user, logout, isAuthenticated } = useAuthStore();
+  const { notifications, unreadCount, markAllRead } = useSocket();
   const [isOpen, setIsOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const shouldReduce = useReducedMotion();
+
+  // Close notif dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [notifOpen]);
+
+  const handleLogout = async () => {
+    try { await signOut(auth); } catch { /* ignore */ }
+    logout();
+  };
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -106,6 +128,57 @@ export const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
+                {/* Notification Bell */}
+                <div className="relative" ref={notifRef}>
+                  <button
+                    onClick={() => { setNotifOpen((v) => !v); if (!notifOpen) markAllRead(); }}
+                    className="relative rounded-full p-2 hover:bg-surface transition-colors text-text-secondary hover:text-text-primary w-8 h-8 flex items-center justify-center cursor-pointer"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0.5 right-0.5 h-4 w-4 flex items-center justify-center bg-primary text-white text-[9px] font-black rounded-full font-mono">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notification Dropdown */}
+                  <AnimatePresence>
+                    {notifOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-10 w-72 bg-secondary border border-border rounded-sm shadow-2xl z-50 overflow-hidden"
+                      >
+                        <div className="flex justify-between items-center px-4 py-3 border-b border-border/60">
+                          <span className="text-[10px] font-black tracking-widest text-text-secondary uppercase font-mono">Notifications</span>
+                          <button
+                            onClick={() => markAllRead()}
+                            className="text-[9px] font-mono font-bold text-primary hover:underline uppercase"
+                          >Mark read</button>
+                        </div>
+                        <div className="max-h-72 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <p className="text-center text-[10px] text-text-tertiary font-mono py-6">No new notifications</p>
+                          ) : (
+                            notifications.map((n, i) => (
+                              <div key={n.id ?? i} className="px-4 py-3 border-b border-border/30 hover:bg-surface transition-colors">
+                                <p className="text-[10px] text-text-primary font-bold leading-relaxed">{n.message}</p>
+                                <span className="text-[9px] text-text-tertiary font-mono mt-0.5 block">
+                                  {new Date(n.createdAt).toLocaleString()}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <Link
                   href="/dashboard"
                   className="text-xs font-bold tracking-wider text-text-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded uppercase font-mono"
@@ -121,7 +194,7 @@ export const Navbar: React.FC = () => {
                   </Link>
                 )}
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="text-xs font-bold tracking-wider text-text-secondary hover:text-text-primary transition-colors uppercase font-mono cursor-pointer"
                 >
                   Logout
@@ -244,7 +317,7 @@ export const Navbar: React.FC = () => {
                       <User className="h-4 w-4 text-text-secondary" /> Dashboard Console
                     </Link>
                     <button
-                      onClick={() => { logout(); setIsOpen(false); }}
+                      onClick={() => { handleLogout(); setIsOpen(false); }}
                       className="flex items-center gap-2 text-left text-xs font-bold tracking-wider text-text-secondary py-2 uppercase font-mono cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" /> Logout

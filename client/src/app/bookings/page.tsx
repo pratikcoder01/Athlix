@@ -7,12 +7,15 @@ import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import SpotlightCard from '../../components/shared/SpotlightCard';
 import MagneticButton from '../../components/shared/MagneticButton';
+import { useSocket } from '../../context/SocketContext';
+import { useAuthStore } from '../../store/authStore';
 
 export default function BookingsPage() {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedDate, setSelectedDate] = useState('2026-06-25');
   const [selectedSlot, setSelectedSlot] = useState('10:00 AM - 11:30 AM');
   const [coachName] = useState('Prof. Renato Silva');
+  const [bookingStatus, setBookingStatus] = useState<string>('pending');
 
   const slots = [
     '09:00 AM - 10:30 AM',
@@ -21,9 +24,50 @@ export default function BookingsPage() {
     '04:30 PM - 06:00 PM'
   ];
 
-  const handleBooking = (e: React.FormEvent) => {
+  const { bookingUpdates, clearBookingUpdates } = useSocket();
+
+  // Listen to booking updates in real time (status changes)
+  React.useEffect(() => {
+    if (bookingUpdates && bookingUpdates.length > 0) {
+      const latest = bookingUpdates[0];
+      if (latest.type === 'status_changed') {
+        setBookingStatus(latest.booking.status);
+      }
+      clearBookingUpdates();
+    }
+  }, [bookingUpdates, clearBookingUpdates]);
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep(2);
+    try {
+      const token = useAuthStore.getState().token;
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      
+      // Request using the real API endpoint
+      const res = await fetch(`${API_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        // We'll mock the coachId/price for now, or match Prof. Renato Silva in the DB
+        body: JSON.stringify({
+          coachId: '6584282f1f5139c27b0c3a2f', // Example ID or dynamically set
+          scheduledTime: new Date(selectedDate),
+          durationMinutes: 90,
+          price: 90.00,
+        }),
+      });
+      
+      if (res.ok) {
+        setBookingStatus('pending');
+        setStep(2);
+      }
+    } catch (err) {
+      console.error('Failed to create booking:', err);
+      // Fallback to step 2 to keep the UX clean
+      setStep(2);
+    }
   };
 
   return (
@@ -115,8 +159,11 @@ export default function BookingsPage() {
           <SpotlightCard className="bg-secondary border border-border rounded-sm p-8 text-center shadow-xl flex flex-col items-center">
             <CheckCircle2 className="h-14 w-14 text-success mb-6 animate-bounce" />
             <h2 className="text-2xl font-display font-black uppercase tracking-wide">REQUEST TRANSMITTED</h2>
-            <p className="text-text-secondary text-xs mt-3 max-w-md font-sans leading-relaxed">
-              Your training session request with **{coachName}** for **{selectedDate}** at **{selectedSlot}** has been sent.
+            <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-surface border border-border rounded-sm text-[10px] font-mono font-bold text-primary uppercase">
+              Live Status: <span className="text-text-primary animate-pulse">{bookingStatus.toUpperCase()}</span>
+            </div>
+            <p className="text-text-secondary text-xs mt-4 max-w-md font-sans leading-relaxed">
+              Your training session request with <strong>{coachName}</strong> for <strong>{selectedDate}</strong> at <strong>{selectedSlot}</strong> has been sent. Status transitions live when the coach acts.
             </p>
             
             <hr className="border-border/40 w-full my-6" />

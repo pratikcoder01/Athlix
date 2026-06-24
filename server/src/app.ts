@@ -12,6 +12,7 @@ import academyRoutes from './routes/academyRoutes';
 import bookingRoutes from './routes/bookingRoutes';
 import tournamentRoutes from './routes/tournamentRoutes';
 import postRoutes from './routes/postRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/academies', academyRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/ai', aiRoutes);
 
 // API Health Check
 app.get('/api/health', (req, res) => {

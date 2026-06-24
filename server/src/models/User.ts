@@ -15,15 +15,39 @@ const UserSchema = new Schema<IUserDocument>(
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: false,        // optional — phone-OTP users may not have email
       unique: true,
+      sparse: true,           // sparse so multiple null values are allowed
       trim: true,
       lowercase: true,
       index: true,
     },
+    phone: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,           // phone-only users; email users leave this null
+      trim: true,
+      index: true,
+    },
+    /**
+     * firebaseUid — the UID issued by Firebase for this identity.
+     * Populated on first Firebase sign-in; absent for legacy bcrypt users.
+     */
+    firebaseUid: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+    /**
+     * password — only set for legacy email+bcrypt accounts.
+     * Firebase-authenticated users leave this undefined.
+     */
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: false,
       minlength: [6, 'Password must be at least 6 characters long'],
     },
     role: {
@@ -42,12 +66,9 @@ const UserSchema = new Schema<IUserDocument>(
   }
 );
 
-// Hash password before saving
+// Hash password before saving — only if a plaintext password is present
 UserSchema.pre<IUserDocument>('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  if (!this.password) {
+  if (!this.password || !this.isModified('password')) {
     return next();
   }
   try {
@@ -59,7 +80,7 @@ UserSchema.pre<IUserDocument>('save', async function (next) {
   }
 });
 
-// Compare password method
+// Compare password — safe to call even on Firebase-only users (returns false)
 UserSchema.methods.matchPassword = async function (enteredPassword: string): Promise<boolean> {
   if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);

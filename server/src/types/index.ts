@@ -10,8 +10,10 @@ export interface AuthenticatedRequest extends Request {
 
 export interface IUser {
   name: string;
-  email: string;
-  password?: string;
+  email?: string;           // optional — phone-OTP users may not have email
+  phone?: string;           // optional — set for phone-OTP sign-in users
+  firebaseUid?: string;     // Firebase UID — set for all Firebase-authenticated users
+  password?: string;        // optional — only set for legacy bcrypt users
   role: 'athlete' | 'coach' | 'academy_owner' | 'tournament_organizer' | 'admin';
   isActive?: boolean;
 }

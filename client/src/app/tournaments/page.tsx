@@ -7,25 +7,53 @@ import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import SpotlightCard from '../../components/shared/SpotlightCard';
 import MagneticButton from '../../components/shared/MagneticButton';
+import { useSocket } from '../../context/SocketContext';
+import { useAuthStore } from '../../store/authStore';
 
 export default function TournamentsPage() {
   const [activeTab, setActiveTab] = useState<'discover' | 'brackets'>('discover');
+  const { socket } = useSocket();
   
   const tournaments = [
     { id: 1, title: 'Grappling Championship 2026', date: 'July 15, 2026', location: 'Las Vegas, NV', fee: '$50', discipline: 'BJJ', entries: '184 fighters' },
     { id: 2, title: 'Muay Thai Stadium Cup', date: 'August 20, 2026', location: 'Bangkok, TH', fee: '$45', discipline: 'Muay Thai', entries: '96 fighters' }
   ];
 
-  // Brackets mock tree
-  const bracketMatches = [
+  // Live state of bracketMatches
+  const [bracketMatches, setBracketMatches] = useState<any[]>([
     { round: 'SEMIFINALS', matches: [
-      { p1: 'Pratik (ATHLIX)', p2: 'John Doe', score: '3 - 0 (Armbar)', winner: 'Pratik (ATHLIX)' },
-      { p1: 'Mike Smith', p2: 'Renato Silva', score: '0 - 2 (Points)', winner: 'Renato Silva' }
+      { p1: 'Pratik (ATHLIX)', p1_rationale: '', p2: 'John Doe', p2_rationale: '', score: '3 - 0 (Armbar)', winner: 'Pratik (ATHLIX)' },
+      { p1: 'Mike Smith', p1_rationale: '', p2: 'Renato Silva', p2_rationale: '', score: '0 - 2 (Points)', winner: 'Renato Silva' }
     ]},
     { round: 'FINALS', matches: [
-      { p1: 'Pratik (ATHLIX)', p2: 'Renato Silva', score: 'Pending...', winner: '' }
+      { p1: 'Pratik (ATHLIX)', p1_rationale: '', p2: 'Renato Silva', p2_rationale: '', score: 'Pending...', winner: '' }
     ]}
-  ];
+  ]);
+
+  // Subscribe to specific tournament room for live bracket updates
+  React.useEffect(() => {
+    if (!socket) return;
+    
+    // Join a demo tournament room (e.g. tournament_1)
+    socket.emit('join_user_room', 'tournament_1');
+    
+    const handleBracketUpdate = (update: any) => {
+      if (update.brackets) {
+        try {
+          const parsed = JSON.parse(update.brackets);
+          setBracketMatches(parsed);
+        } catch {
+          // If plain text / different schema, handle gracefully
+        }
+      }
+    };
+    
+    socket.on('bracket_update', handleBracketUpdate);
+    
+    return () => {
+      socket.off('bracket_update', handleBracketUpdate);
+    };
+  }, [socket]);
 
   return (
     <div className="min-h-screen bg-background text-text-primary overflow-hidden">
@@ -109,9 +137,51 @@ export default function TournamentsPage() {
             {/* Background Texture */}
             <div className="absolute inset-0 bracket-dots pointer-events-none opacity-40" />
 
-            <h3 className="relative z-10 text-md font-display font-black uppercase tracking-wider mb-8 text-center">
-              SUBMISSION DIVISION MATCH BRACKET
-            </h3>
+            <div className="relative z-10 flex flex-col items-center mb-8 border-b border-border/40 pb-6">
+              <h3 className="text-md font-display font-black uppercase tracking-wider mb-3 text-center">
+                SUBMISSION DIVISION MATCH BRACKET
+              </h3>
+              <p className="text-[10px] text-text-secondary font-mono mb-4 text-center uppercase tracking-wide">
+                AI-suggested seeding based on rank and weight class
+              </p>
+              
+              <MagneticButton
+                onClick={async () => {
+                  try {
+                    const token = useAuthStore.getState().token;
+                    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                    const res = await fetch(`${API_URL}/api/ai/seed-bracket`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ tournamentId: 'demo_tournament_1' }),
+                    });
+                    if (res.ok) {
+                      const json = await res.json();
+                      // Update match seeding names using generated seeds
+                      if (json.seeds && json.seeds.length >= 2) {
+                        setBracketMatches(prev => {
+                          const updated = [...prev];
+                          // Match seeds to players dynamically
+                          updated[0].matches[0].p1 = `${json.seeds[0].seed}. ${json.seeds[0].name || 'Pratik (ATHLIX)'}`;
+                          updated[0].matches[0].p1_rationale = json.seeds[0].rationale;
+                          updated[0].matches[0].p2 = `${json.seeds[1].seed}. ${json.seeds[1].name || 'John Doe'}`;
+                          updated[0].matches[0].p2_rationale = json.seeds[1].rationale;
+                          return updated;
+                        });
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Failed to trigger AI seeding:', err);
+                  }
+                }}
+                className="bg-primary hover:bg-opacity-95 text-white py-2 px-6 rounded-sm text-xs font-mono font-bold tracking-wider uppercase"
+              >
+                Generate AI Seeding
+              </MagneticButton>
+            </div>
             
             {/* Responsive Tree columns with SVG connection lines */}
             <div className="relative z-10 flex flex-col md:flex-row justify-center gap-12 items-stretch">
@@ -122,14 +192,34 @@ export default function TournamentsPage() {
                   SEMIFINALS
                 </span>
                 
-                {bracketMatches[0].matches.map((match, mIdx) => (
-                  <div key={mIdx} className="bg-surface border border-border p-4 rounded-sm flex flex-col gap-2 relative shadow-inner">
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className={`font-bold ${match.winner === match.p1 ? 'text-primary' : 'text-text-primary'}`}>{match.p1}</span>
+                {bracketMatches[0].matches.map((match: any, mIdx: number) => (
+                  <div key={mIdx} className="bg-surface border border-border p-4 rounded-sm flex flex-col gap-2 relative shadow-inner group">
+                    <div className="flex justify-between items-center text-xs font-mono relative">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-bold ${match.winner === match.p1 ? 'text-primary' : 'text-text-primary'}`}>{match.p1}</span>
+                        {match.p1_rationale && (
+                          <div className="relative group/tooltip">
+                            <span className="cursor-help text-text-secondary hover:text-primary">ⓘ</span>
+                            <div className="absolute left-6 top-0 hidden group-hover/tooltip:block w-48 bg-secondary border border-border p-2 rounded text-[9px] text-text-primary font-sans shadow-lg z-50">
+                              {match.p1_rationale}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       {match.winner === match.p1 && <Check className="h-3.5 w-3.5 text-success" />}
                     </div>
-                    <div className="flex justify-between items-center text-xs font-mono border-t border-border/40 pt-2 mt-1">
-                      <span className={`font-bold ${match.winner === match.p2 ? 'text-primary' : 'text-text-primary'}`}>{match.p2}</span>
+                    <div className="flex justify-between items-center text-xs font-mono border-t border-border/40 pt-2 mt-1 relative">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-bold ${match.winner === match.p2 ? 'text-primary' : 'text-text-primary'}`}>{match.p2}</span>
+                        {match.p2_rationale && (
+                          <div className="relative group/tooltip">
+                            <span className="cursor-help text-text-secondary hover:text-primary">ⓘ</span>
+                            <div className="absolute left-6 top-0 hidden group-hover/tooltip:block w-48 bg-secondary border border-border p-2 rounded text-[9px] text-text-primary font-sans shadow-lg z-50">
+                              {match.p2_rationale}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       {match.winner === match.p2 && <Check className="h-3.5 w-3.5 text-success" />}
                     </div>
                     <div className="text-[9px] text-text-secondary font-mono text-center border-t border-border/20 pt-1.5 mt-1 uppercase font-bold">
@@ -155,7 +245,7 @@ export default function TournamentsPage() {
                   FINALS
                 </span>
                 
-                {bracketMatches[1].matches.map((match, mIdx) => (
+                {bracketMatches[1].matches.map((match: any, mIdx: number) => (
                   <div key={mIdx} className="bg-surface border border-border p-4 rounded-sm flex flex-col gap-2 relative shadow-inner">
                     <div className="flex justify-between items-center text-xs font-mono">
                       <span className="text-text-primary font-bold">{match.p1 || 'Awaiting winner'}</span>

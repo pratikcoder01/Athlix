@@ -1,10 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Initialise Firebase Admin SDK before any routes are loaded
+import './config/firebase';
+
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import app from './app';
 import connectDB from './config/db';
+
 
 const PORT = process.env.PORT || 5000;
 
