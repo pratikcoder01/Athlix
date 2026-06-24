@@ -112,6 +112,7 @@ export async function POST(request: Request) {
     let planText = '';
     if (data.content && Array.isArray(data.content) && data.content.length > 0) {
       // Find the text block
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const textBlock = data.content.find((block: any) => block.type === 'text');
       if (textBlock) {
         planText = textBlock.text;

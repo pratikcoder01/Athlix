@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '../components/shared/Navbar';
 import Footer from '../components/shared/Footer';
 import MagneticButton from '../components/shared/MagneticButton';
@@ -41,9 +42,9 @@ export default function ErrorPage({
             >
               RETRY OPERATION
             </MagneticButton>
-            <a href="/" className="text-xs font-bold text-text-secondary hover:text-text-primary tracking-wide font-mono mt-2 transition-colors">
+            <Link href="/" className="text-xs font-bold text-text-secondary hover:text-text-primary tracking-wide font-mono mt-2 transition-colors">
               OR GO BACK HOME
-            </a>
+            </Link>
           </div>
         </div>
       </div>

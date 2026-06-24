@@ -504,7 +504,7 @@ export default function LandingPage() {
                     Verified credentials
                   </h3>
                   <p className="text-sm text-text-secondary leading-relaxed">
-                    Train with confidence knowing every coach's rank and credentials are fully verified.
+                    Train with confidence knowing every coach&apos;s rank and credentials are fully verified.
                   </p>
                 </div>
                 <div className="mt-6 flex items-center text-xs font-semibold text-text-primary gap-1">
