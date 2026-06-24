@@ -73,4 +73,10 @@ export const trainingPlanSchema = z.object({
   notes: z.string().optional().default(''),
 });
 
+// AI Coach Matchmaker Payload Validator
+export const matchCoachSchema = z.object({
+  query: z.string().min(1, 'Query is required'),
+});
+
+
 

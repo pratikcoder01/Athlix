@@ -194,3 +194,165 @@ export const saveTrainingPlan = async (
   }
 };
 
+import { CoachProfile } from '../models/CoachProfile';
+
+interface MatchOutput {
+  matches: Array<{
+    coachId: string;
+    matchScore: number;
+    reason: string;
+  }>;
+}
+
+export const matchCoach = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { query, location } = req.body;
+
+    // Retrieve athlete's location from profile if not explicitly passed in body
+    let athleteLocation = location;
+    if (!athleteLocation && req.user) {
+      const athleteProfile = await Profile.findOne({ userId: req.user._id });
+      if (athleteProfile && athleteProfile.location) {
+        athleteLocation = athleteProfile.location;
+      }
+    }
+
+    // 1. Fetch active coaches
+    const activeCoaches = await User.find({ role: 'coach', isActive: true });
+    const coachIds = activeCoaches.map((c) => c._id);
+
+    const coachProfiles = await CoachProfile.find({ userId: { $in: coachIds } });
+    const generalProfiles = await Profile.find({ userId: { $in: coachIds } });
+
+    const coachProfilesMap = new Map(coachProfiles.map((p) => [p.userId.toString(), p]));
+    const generalProfilesMap = new Map(generalProfiles.map((p) => [p.userId.toString(), p]));
+
+    // Match profiles to users
+    const coachesData = activeCoaches.map((u) => {
+      const cp = coachProfilesMap.get(u._id.toString());
+      const p = generalProfilesMap.get(u._id.toString());
+      return {
+        id: u._id.toString(),
+        name: u.name,
+        email: u.email || '',
+        discipline: p?.discipline || 'BJJ',
+        beltRank: p?.beltRank || 'White',
+        location: p?.location || '',
+        experienceYears: cp?.experienceYears || 0,
+        pricingPerHour: cp?.pricingPerHour || 0,
+        certifications: cp?.certifications || [],
+        rating: cp?.ratings || 5.0,
+        availability: cp?.availability || [],
+      };
+    });
+
+    // 2. Perform basic keyword-based pre-filtering to limit dataset sent to AI
+    const lowerQuery = query.toLowerCase();
+    const filteredCoaches = coachesData.filter((c) => {
+      // Discipline check: if query mentions a discipline, does the coach teach it?
+      const disciplines = ['bjj', 'jiu-jitsu', 'mma', 'muay thai', 'boxing', 'wrestling', 'judo', 'karate', 'taekwondo'];
+      const queryDisciplines = disciplines.filter(d => lowerQuery.includes(d));
+      
+      let disciplineMatches = true;
+      if (queryDisciplines.length > 0) {
+        disciplineMatches = queryDisciplines.some(qd => {
+          const coachDiscipline = c.discipline.toLowerCase();
+          const certsString = c.certifications.join(' ').toLowerCase();
+          return coachDiscipline.includes(qd) || certsString.includes(qd) || 
+                 (qd === 'jiu-jitsu' && coachDiscipline.includes('bjj')) ||
+                 (qd === 'bjj' && coachDiscipline.includes('jiu-jitsu'));
+        });
+      }
+
+      // Location check: if query or athleteLocation specifies a location, does the coach match or does query match?
+      let locationMatches = true;
+      if (athleteLocation || lowerQuery.includes('near') || lowerQuery.includes('in ')) {
+        const coachLoc = c.location.toLowerCase();
+        const searchLoc = athleteLocation ? athleteLocation.toLowerCase() : '';
+        if (searchLoc && coachLoc.includes(searchLoc)) {
+          locationMatches = true;
+        } else if (coachLoc && lowerQuery.includes(coachLoc)) {
+          locationMatches = true;
+        } else {
+          locationMatches = coachLoc ? false : true;
+        }
+      }
+
+      // Pricing check
+      let pricingMatches = true;
+      if (lowerQuery.includes('under') || lowerQuery.includes('$') || lowerQuery.includes('cheap') || lowerQuery.includes('budget')) {
+        const prices = lowerQuery.match(/\d+/);
+        if (prices) {
+          const maxPrice = parseInt(prices[0], 10);
+          pricingMatches = c.pricingPerHour <= maxPrice;
+        }
+      }
+
+      const keywordMatches = c.name.toLowerCase().includes(lowerQuery) || 
+                            c.certifications.some(cert => cert.toLowerCase().includes(lowerQuery));
+
+      return (disciplineMatches && locationMatches && pricingMatches) || keywordMatches;
+    });
+
+    // If fewer than 3 match the pre-filtering database constraints, skip AI call
+    if (filteredCoaches.length < 3) {
+      return res.status(200).json({
+        success: true,
+        skipAI: true,
+        message: 'Broaden your search criteria to discover more matches.',
+        coaches: [],
+      });
+    }
+
+    // 3. Ask Claude to rank the top 5 matches
+    const systemPrompt = `You are an elite combat sports matchmaker. Your job is to rank the suitability of combat sports coaches based on a user's specific training requirements and constraints (such as discipline, budget, location, and experience).`;
+
+    const userPrompt = `A student is searching for a coach with this requirement:
+"${query}"
+Fighter's Location: "${athleteLocation || 'Not provided'}"
+
+Here is the roster of available coaches:
+${JSON.stringify(filteredCoaches, null, 2)}
+
+Select and rank the top 5 best-fit coaches. Give each a suitability matchScore (integer from 0 to 100) and a brief one-sentence reason why.
+Respond strictly in JSON format matching this schema:
+{
+  "matches": [
+    {
+      "coachId": "string (matching coach id)",
+      "matchScore": number (0-100),
+      "reason": "string (one sentence explanation of the match fit)"
+    }
+  ]
+}`;
+
+    const aiResult = await askClaudeJSON<MatchOutput>(systemPrompt, userPrompt);
+
+    // Merge AI recommendations with full profile details
+    const finalMatches = aiResult.matches
+      .map((m) => {
+        const fullCoach = coachesData.find((c) => c.id === m.coachId);
+        if (!fullCoach) return null;
+        return {
+          ...fullCoach,
+          matchScore: m.matchScore,
+          reason: m.reason,
+        };
+      })
+      .filter(Boolean);
+
+    return res.status(200).json({
+      success: true,
+      skipAI: false,
+      coaches: finalMatches,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
