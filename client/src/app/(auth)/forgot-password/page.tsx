@@ -29,50 +29,56 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex justify-between items-center">
-          <Link href="/login" className="text-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1">
+    <div className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary overflow-hidden">
+      {/* Fine background grid */}
+      <div className="absolute inset-0 mat-grid opacity-20 pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="mb-6 flex justify-between items-center font-mono text-[10px] font-bold">
+          <Link href="/login" className="text-text-secondary hover:text-primary transition-colors flex items-center gap-1.5 uppercase">
             <ArrowLeft className="h-4 w-4" /> BACK TO LOGIN
           </Link>
-          <div className="flex items-center gap-1.5">
-            <img src="/logo.png" alt="ATHLIX Logo" className="h-6 w-auto object-contain" />
-            <span className="text-xs font-bold font-mono text-primary uppercase">SECURITY</span>
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" className="fill-none stroke-current stroke-2" />
+              <polygon points="12 6 18 10 18 14 12 18 6 14 6 10" />
+            </svg>
+            <span className="text-text-primary uppercase">SECURITY</span>
           </div>
         </div>
 
         <div className="mb-8">
-          <h2 className="text-4xl font-extrabold font-display uppercase tracking-wide">
+          <h2 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
             RESET PASSWORD
           </h2>
-          <p className="text-text-secondary text-sm mt-2">
+          <p className="text-text-secondary text-xs mt-2">
             Enter your registered email address to receive a secure recovery link.
           </p>
         </div>
 
-        <SpotlightCard className="bg-secondary p-8 border border-border shadow-xl">
+        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm shadow-xl">
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-widest font-mono">Email Address</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5.5 w-5.5 text-text-secondary" />
                 <input
                   type="email"
                   {...register('email')}
-                  className="w-full bg-surface border border-border rounded pl-11 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all"
+                  className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                   placeholder="name@example.com"
                 />
               </div>
               {errors.email && (
-                <span className="text-xs text-primary font-bold mt-1">{errors.email.message}</span>
+                <span className="text-[10px] text-primary font-mono font-bold mt-1 uppercase">{errors.email.message}</span>
               )}
             </div>
 
             <MagneticButton
               type="submit"
-              className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-md font-bebas tracking-widest text-sm shadow-md"
+              className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
             >
-              {isSubmitting ? 'TRANSMITTING...' : 'SEND RECOVERY LINK'} <ChevronRight className="h-4 w-4 ml-1 inline" />
+              {isSubmitting ? 'TRANSMITTING...' : 'SEND RECOVERY LINK'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
             </MagneticButton>
           </form>
         </SpotlightCard>

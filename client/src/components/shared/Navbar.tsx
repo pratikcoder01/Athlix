@@ -20,16 +20,22 @@ const NavLink = ({
   children: React.ReactNode;
   onClick?: () => void;
 }) => {
-  const shouldReduce = useReducedMotion();
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={`relative text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-2 py-1 ${
-        active ? 'text-primary font-medium' : 'text-text-secondary hover:text-text-primary'
+      className={`relative text-xs font-semibold tracking-wide transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-2.5 py-1.5 ${
+        active ? 'text-primary' : 'text-text-secondary hover:text-text-primary'
       }`}
     >
       {children}
+      {active && (
+        <motion.span
+          layoutId="activeNav"
+          className="absolute bottom-0 left-2.5 right-2.5 h-0.5 bg-primary"
+          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        />
+      )}
     </Link>
   );
 };
@@ -51,30 +57,28 @@ export const Navbar: React.FC = () => {
 
   const isActive = (path: string) => pathname === path;
 
-  const mobileMenuVariants = {
-    hidden: { opacity: 0, y: -8, height: 0 },
-    visible: { opacity: 1, y: 0, height: 'auto' },
-    exit: { opacity: 0, y: -8, height: 0 },
-  };
-
   return (
-    <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border transition-colors duration-300">
+    <nav className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-md border-b border-border transition-colors duration-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between">
-          {/* Logo */}
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo with Combat tech styling */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
-              <span className="text-lg font-bold tracking-tight text-text-primary">
-                Athlix
+            <Link href="/" className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded group">
+              <svg className="h-6 w-6 text-primary transition-transform duration-200 group-hover:scale-105" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" className="fill-none stroke-current stroke-2" />
+                <polygon points="12 6 18 10 18 14 12 18 6 14 6 10" />
+              </svg>
+              <span className="text-md font-display font-black tracking-widest text-text-primary uppercase">
+                ATHLIX<span className="text-primary">.</span>
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden md:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) => (
               <NavLink key={link.name} href={link.href} active={isActive(link.href)}>
-                {link.name}
+                {link.name.toUpperCase()}
               </NavLink>
             ))}
           </div>
@@ -83,47 +87,47 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="rounded-full p-1.5 hover:bg-surface transition-colors cursor-pointer text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="rounded-full p-2 hover:bg-surface transition-colors cursor-pointer text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Toggle Theme"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
-                  className="text-[13px] font-medium text-text-primary hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  className="text-xs font-bold tracking-wider text-text-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded uppercase font-mono"
                 >
-                  <User className="h-3.5 w-3.5 text-text-secondary" /> Dashboard
+                  <User className="h-4 w-4 text-text-secondary" /> Console
                 </Link>
                 {user?.role === 'admin' && (
                   <Link
                     href="/admin/users"
-                    className="text-[13px] font-medium text-text-secondary hover:text-primary transition-colors flex items-center gap-1 border border-border px-2 py-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="text-xs font-bold tracking-wider text-text-secondary hover:text-primary transition-colors flex items-center gap-1 border border-border px-2.5 py-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary uppercase font-mono"
                   >
-                    <Shield className="h-3 w-3" /> Admin
+                    <Shield className="h-3.5 w-3.5" /> Admin
                   </Link>
                 )}
                 <button
                   onClick={logout}
-                  className="text-[13px] text-text-secondary hover:text-text-primary transition-colors"
+                  className="text-xs font-bold tracking-wider text-text-secondary hover:text-text-primary transition-colors uppercase font-mono cursor-pointer"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <Link
                   href="/login"
-                  className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-1"
+                  className="text-xs font-bold tracking-wider text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-1 uppercase font-mono"
                 >
                   Log in
                 </Link>
                 <Link href="/signup">
                   <MagneticButton
                     variant="primary"
-                    className="text-[13px] font-medium py-1.5 px-4 rounded-md"
+                    className="text-xs font-bold py-2 px-5 rounded-sm tracking-wider uppercase font-mono"
                   >
                     Get started
                   </MagneticButton>
@@ -133,95 +137,116 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <div className="flex items-center gap-3 md:hidden">
+          <div className="flex items-center gap-2 md:hidden">
             <button
               onClick={toggleTheme}
-              className="rounded-full p-1.5 hover:bg-surface text-text-secondary"
+              className="rounded-full p-2 hover:bg-surface text-text-secondary"
               aria-label="Toggle Theme"
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
             </button>
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="rounded-md p-1.5 hover:bg-surface text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-label={isOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isOpen}
+              onClick={() => setIsOpen(true)}
+              className="rounded-md p-2 hover:bg-surface text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+              aria-label="Open menu"
             >
-              <AnimatePresence initial={false} mode="wait">
-                <motion.span
-                  key={isOpen ? 'close' : 'open'}
-                  initial={shouldReduce ? {} : { opacity: 0, rotate: -90 }}
-                  animate={shouldReduce ? {} : { opacity: 1, rotate: 0 }}
-                  exit={shouldReduce ? {} : { opacity: 0, rotate: 90 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </motion.span>
-              </AnimatePresence>
+              <Menu className="h-5.5 w-5.5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Panel */}
+      {/* Slide-in Mobile Drawer with Backdrop Fade */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            variants={shouldReduce ? {} : mobileMenuVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="overflow-hidden border-t border-border bg-background px-4 py-4 md:hidden"
-          >
-            <div className="flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`text-[14px] transition-colors ${
-                    isActive(link.href) ? 'text-primary font-medium' : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <hr className="border-border my-2" />
-              {isAuthenticated ? (
-                <div className="flex flex-col gap-3">
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setIsOpen(false)}
-                    className="text-[14px] text-text-primary flex items-center gap-2"
-                  >
-                    <User className="h-4 w-4 text-text-secondary" /> Dashboard
-                  </Link>
+          <>
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            />
+
+            {/* Sidebar drawer content */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.25 }}
+              className="fixed inset-y-0 right-0 z-50 w-72 bg-secondary border-l border-border px-6 py-6 flex flex-col justify-between shadow-2xl md:hidden"
+            >
+              <div className="flex flex-col gap-8">
+                {/* Header inside drawer */}
+                <div className="flex justify-between items-center">
+                  <span className="text-md font-display font-black tracking-widest text-text-primary uppercase">
+                    ATHLIX<span className="text-primary">.</span>
+                  </span>
                   <button
-                    onClick={() => { logout(); setIsOpen(false); }}
-                    className="flex items-center gap-2 text-left text-[14px] text-text-secondary"
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-md p-2 hover:bg-surface text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                    aria-label="Close menu"
                   >
-                    <LogOut className="h-4 w-4" /> Logout
+                    <X className="h-5.5 w-5.5" />
                   </button>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <Link
-                    href="/login"
-                    onClick={() => setIsOpen(false)}
-                    className="text-[14px] text-text-secondary"
-                  >
-                    Log in
-                  </Link>
-                  <Link href="/signup" onClick={() => setIsOpen(false)}>
-                    <button className="w-full bg-primary hover:brightness-110 text-white font-medium py-2 rounded-md text-[14px] transition-all">
-                      Get started
+
+                {/* Navigation lists */}
+                <nav className="flex flex-col gap-4">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`text-sm font-bold tracking-wider uppercase font-mono py-2 border-b border-border/20 ${
+                        isActive(link.href) ? 'text-primary' : 'text-text-secondary hover:text-text-primary'
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Drawer footer actions */}
+              <div className="flex flex-col gap-3 pt-6 border-t border-border/40">
+                {isAuthenticated ? (
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className="text-xs font-bold tracking-wider text-text-primary flex items-center gap-2 py-2 uppercase font-mono"
+                    >
+                      <User className="h-4 w-4 text-text-secondary" /> Dashboard Console
+                    </Link>
+                    <button
+                      onClick={() => { logout(); setIsOpen(false); }}
+                      className="flex items-center gap-2 text-left text-xs font-bold tracking-wider text-text-secondary py-2 uppercase font-mono cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4" /> Logout
                     </button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </motion.div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      href="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="text-xs font-bold tracking-wider text-text-secondary text-center py-2 uppercase font-mono"
+                    >
+                      Log in
+                    </Link>
+                    <Link href="/signup" onClick={() => setIsOpen(false)}>
+                      <button className="w-full bg-primary hover:bg-opacity-95 text-white font-bold py-3 rounded-sm text-xs tracking-wider uppercase font-mono cursor-pointer transition-colors">
+                        Get started
+                      </button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </nav>

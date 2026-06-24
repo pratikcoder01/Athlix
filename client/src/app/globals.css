@@ -1,28 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --secondary: #f5f5f5;
-  --surface: #ebebeb;
+  --background: #09090b;
+  --secondary: #121215;
+  --surface: #18181b;
   --primary: #FF5A3D;
-  --text-primary: #0a0a0a;
-  --text-secondary: #6b6b6b;
-  --text-tertiary: #a0a0a0;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #52525b;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
   --success: #22C55E;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --secondary: #111111;
-  --surface: #1a1a1a;
+  --background: #09090b;
+  --secondary: #121215;
+  --surface: #18181b;
   --primary: #FF5A3D;
-  --text-primary: #fafafa;
-  --text-secondary: #8b8b8b;
-  --text-tertiary: #555555;
-  --border: rgba(255, 255, 255, 0.07);
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #52525b;
+  --border: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.12);
   --success: #22C55E;
 }
@@ -40,17 +40,51 @@
   --color-border-strong: var(--border-strong);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Force consistent sharp 4px border radius throughout standard Tailwind classes */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
 }
 
 body {
   background-color: var(--background);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'ss01', 'ss02', 'cv01';
+}
+
+/* Combat sports visual texture utility classes */
+.mat-grid {
+  background-size: 44px 44px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 90, 61, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 90, 61, 0.02) 1px, transparent 1px);
+}
+
+.bracket-dots {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
+  background-size: 16px 16px;
+}
+
+.bracket-line-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 2s ease-out forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Keyboard-only focus */

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Shield, Bell, Eye, User, Save, Sun, Moon } from 'lucide-react';
+import { Settings as SettingsIcon, Eye, User, Save, Sun, Moon } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import SpotlightCard from '../../components/shared/SpotlightCard';
@@ -21,95 +21,98 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-text-primary transition-colors duration-300">
+    <div className="min-h-screen bg-background text-text-primary overflow-hidden">
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8 border-b border-border pb-4 flex items-center gap-3">
-          <SettingsIcon className="h-8 w-8 text-primary" />
+        
+        {/* Header Title */}
+        <div className="mb-8 border-b border-border/60 pb-4 flex items-center gap-3">
+          <SettingsIcon className="h-6.5 w-6.5 text-primary" />
           <div>
-            <h1 className="text-3xl font-extrabold font-display tracking-wide uppercase">PLATFORM SETTINGS</h1>
-            <p className="text-text-secondary text-sm">Manage profile credentials, privacy, and theme preferences</p>
+            <h1 className="text-2xl sm:text-3xl font-display font-black tracking-wide uppercase">PLATFORM SETTINGS</h1>
+            <p className="text-text-secondary text-xs mt-1">Configure profile visibility, credentials, and UI theme preferences</p>
           </div>
         </div>
 
-        <SpotlightCard className="bg-secondary border border-border p-8 shadow-xl">
+        <SpotlightCard className="bg-secondary border border-border rounded-sm p-8 shadow-xl">
           <form onSubmit={handleSave} className="flex flex-col gap-8">
             
             {/* User credentials */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 mb-2">
-                <User className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-bold font-display uppercase tracking-wide">profile credentials</h3>
+                <User className="h-4.5 w-4.5 text-primary" />
+                <h3 className="text-sm font-bold font-mono uppercase tracking-widest text-text-primary">PROFILE CREDENTIALS</h3>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-[10px] font-bold text-text-secondary">
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-secondary uppercase tracking-widest font-mono">Full Name</label>
+                  <label className="uppercase tracking-widest">Full Name</label>
                   <input
                     type="text"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="bg-surface border border-border rounded px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all"
+                    className="bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-secondary uppercase tracking-widest font-mono">Email Address</label>
+                  <label className="uppercase tracking-widest">Email Address</label>
                   <input
                     type="email"
                     value={user?.email || 'name@example.com'}
                     disabled
-                    className="bg-surface/50 border border-border rounded px-4 py-3 text-sm text-text-secondary focus:outline-none cursor-not-allowed"
+                    className="bg-surface/50 border border-border rounded-sm px-4 py-3 text-xs text-text-tertiary focus:outline-none cursor-not-allowed font-sans"
                   />
                 </div>
               </div>
             </div>
 
-            <hr className="border-border" />
+            <hr className="border-border/40" />
 
             {/* Platform theme */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 mb-2">
-                {theme === 'dark' ? <Moon className="h-5 w-5 text-secondary-accent" /> : <Sun className="h-5 w-5 text-primary" />}
-                <h3 className="text-lg font-bold font-display uppercase tracking-wide">theme preferences</h3>
+                {theme === 'dark' ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
+                <h3 className="text-sm font-bold font-mono uppercase tracking-widest text-text-primary">THEME CONFIGURATION</h3>
               </div>
-              <div className="flex justify-between items-center bg-surface p-4 border border-border rounded">
+              <div className="flex justify-between items-center bg-surface p-4 border border-border rounded-sm">
                 <div>
-                  <h4 className="font-bold text-sm text-text-primary uppercase tracking-wide">Toggle Platform Theme</h4>
-                  <p className="text-xs text-text-secondary mt-0.5">Switch between dark premium mode and clean light mode.</p>
+                  <h4 className="font-bold text-xs text-text-primary uppercase font-mono">Toggle platform theme</h4>
+                  <p className="text-[10px] text-text-secondary mt-1">Switch between dark premium mode and clean light mode.</p>
                 </div>
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  className="bg-primary hover:bg-opacity-95 text-white font-bold py-2 px-5 rounded text-xs font-mono tracking-wider cursor-pointer uppercase"
+                  className="bg-primary hover:bg-opacity-95 text-white font-bold py-2 px-4 rounded-sm text-[10px] font-mono tracking-wider cursor-pointer uppercase"
                 >
                   {theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}
                 </button>
               </div>
             </div>
 
-            <hr className="border-border" />
+            <hr className="border-border/40" />
 
             {/* Privacy */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 mb-2">
-                <Eye className="h-5 w-5 text-success" />
-                <h3 className="text-lg font-bold font-display uppercase tracking-wide">privacy & visibility</h3>
+                <Eye className="h-4.5 w-4.5 text-primary" />
+                <h3 className="text-sm font-bold font-mono uppercase tracking-widest text-text-primary">PRIVACY & VISIBILITY</h3>
               </div>
-              <div className="flex justify-between items-center bg-surface p-4 border border-border rounded">
+              <div className="flex justify-between items-center bg-surface p-4 border border-border rounded-sm">
                 <div>
-                  <h4 className="font-bold text-sm text-text-primary uppercase tracking-wide">Public Profile Visibility</h4>
-                  <p className="text-xs text-text-secondary mt-0.5">Allow other platform users to discover and view your belt rank timeline.</p>
+                  <h4 className="font-bold text-xs text-text-primary uppercase font-mono">Public profile search visibility</h4>
+                  <p className="text-[10px] text-text-secondary mt-1">Allow other athletes and coaches to search your rank logs and spars.</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={allowPublic}
                   onChange={(e) => setAllowPublic(e.target.checked)}
-                  className="h-5 w-5 accent-primary cursor-pointer border-border rounded"
+                  className="h-4.5 w-4.5 accent-primary cursor-pointer border-border rounded-sm"
                 />
               </div>
             </div>
 
-            <MagneticButton type="submit" className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-md font-bebas tracking-widest text-sm shadow-md">
+            <MagneticButton type="submit" className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md">
               <Save className="h-4 w-4 mr-2 inline" /> SAVE ALL SETTINGS
             </MagneticButton>
 

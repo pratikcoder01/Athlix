@@ -66,6 +66,7 @@ export async function POST(request: Request) {
       }
 
       Ensure the plan is realistic, progressive, and appropriate for the athlete's level and goals.
+    `;
     // Call Featherless AI
     const apiKey = process.env.FEATHERLESS_API_KEY || 'rc_37e72745fdd1e1e4c2dc83a211f28ab79e39b99ec7940dbe19237f3cb433594a';
     let planText = '';
