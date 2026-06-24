@@ -38,7 +38,7 @@ function TrainingPlanGenerator() {
     daysAvailablePerWeek: 7,
   });
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [skeletonStage, setSkeletonStage] = useState(0);
   const skeletonTimer = useRef<number>(0);
@@ -93,26 +93,20 @@ function TrainingPlanGenerator() {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('/api/ai/training-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      // Generate mock plan
-      const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      const sevenDays = daysOfWeek.slice(0, formData.daysAvailablePerWeek);
+      if (!response.ok) {
+        throw new Error('Failed to generate training plan');
+      }
 
-      const mockPlan: TrainingPlan = {
-        weekOverview: `Your ${formData.trainingGoal} plan for the week`,
-        days: sevenDays.map((day, index) => ({
-          day,
-          focus: ['Technique', 'Strength', 'Conditioning', 'Recovery', 'Strategy', 'Sparring', 'Analysis'][index % 5],
-          drills: generateDrills(3 + index % 4),
-          duration: ['45 mins', '60 mins', '75 mins', '90 mins'][index % 3],
-          intensity: ['low', 'medium', 'high'][index % 3 as number] as 'low' | 'medium' | 'high',
-        })),
-        notes: `Remember to stay hydrated, track your progress, and get adequate rest between sessions. Adjust intensity based on how you feel.`,
-      };
-
-      setPlan(mockPlan);
+      const data = await response.json();
+      setPlan(data.plan);
     } catch (err) {
       console.error('Error generating plan:', err);
       setError('Failed to generate training plan. Please try again.');
@@ -144,15 +138,79 @@ function TrainingPlanGenerator() {
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-6">
-      {/* Form Header */}
-      <div className="flex-1">
+      {/* Form Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Discipline *</label>
+          <select 
+            value={formData.discipline}
+            onChange={(e) => setFormData({...formData, discipline: e.target.value})}
+            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
+            required
+            disabled={loading}
+          >
+            <option value="">Select discipline...</option>
+            <option value="BJJ">Brazilian Jiu-Jitsu</option>
+            <option value="MMA">MMA</option>
+            <option value="Muay Thai">Muay Thai</option>
+            <option value="Boxing">Boxing</option>
+            <option value="Wrestling">Wrestling</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Training Goal *</label>
+          <select 
+            value={formData.trainingGoal}
+            onChange={(e) => setFormData({...formData, trainingGoal: e.target.value})}
+            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
+            required
+            disabled={loading}
+          >
+            <option value="">Select goal...</option>
+            <option value="Competition Prep">Competition Prep</option>
+            <option value="Skill Acquisition">Skill Acquisition</option>
+            <option value="Conditioning">Cardio & Conditioning</option>
+            <option value="Strength">Strength & Power</option>
+            <option value="Recovery">Active Recovery</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Belt / Experience Level</label>
+          <input 
+            type="text"
+            value={formData.beltLevel}
+            onChange={(e) => setFormData({...formData, beltLevel: e.target.value})}
+            placeholder="e.g. Blue Belt, Amateur"
+            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
+            disabled={loading}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Days per week</label>
+          <input 
+            type="number"
+            min="1"
+            max="7"
+            value={formData.daysAvailablePerWeek}
+            onChange={(e) => setFormData({...formData, daysAvailablePerWeek: parseInt(e.target.value) || 7})}
+            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Additional Notes</label>
         <textarea
-          placeholder="Enter any additional goals or preferences..."
+          placeholder="Enter any additional goals or preferences... (e.g. 'I want to focus on guard retention' or 'I have a knee injury')"
           value={formData.notes || ''}
           onChange={(e) => setFormData({...formData, notes: e.target.value})}
           disabled={loading}
           rows={3}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none w-full"
         />
       </div>
 
@@ -275,20 +333,32 @@ function TrainingPlanGenerator() {
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-between mt-4 gap-3">
-        <button
-          type="button"
-          onClick={handleRegenerate}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-        >
-          Regenerate Plan
-        </button>
-        <button
-          type="button"
-          onClick={saveToProfile}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-        >
-          Save to My Profile
-        </button>
+        {!plan ? (
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors font-bold font-bebas tracking-widest text-lg disabled:opacity-50"
+          >
+            {loading ? 'GENERATING...' : 'GENERATE AI TRAINING PLAN'}
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              className="px-4 py-2 bg-secondary border border-border text-text-primary rounded-md hover:bg-surface transition-colors"
+            >
+              Reset Form
+            </button>
+            <button
+              type="button"
+              onClick={saveToProfile}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Save to My Profile
+            </button>
+          </>
+        )}
       </div>
     </form>
   );
