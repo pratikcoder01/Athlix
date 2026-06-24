@@ -2,29 +2,35 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --secondary: #121215;
-  --surface: #18181b;
-  --primary: #FF5A3D;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #52525b;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --success: #22C55E;
+  /* LIGHT MODE */
+  --background: #faf9f7;
+  --secondary: #f4f3f0;
+  --surface: #ffffff;
+  --primary: #991b1b; /* Crimson red */
+  --accent-gold: #c28e1d; /* Accent Gold */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #a3a3a3;
+  --border: rgba(26, 26, 26, 0.08);
+  --border-strong: rgba(26, 26, 26, 0.15);
+  --success: #15803d;
+  --mat-grid-color: rgba(153, 27, 27, 0.015);
 }
 
 .dark {
-  --background: #09090b;
-  --secondary: #121215;
-  --surface: #18181b;
-  --primary: #FF5A3D;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #52525b;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --success: #22C55E;
+  /* DARK MODE */
+  --background: #0a0a0b;
+  --secondary: #111012;
+  --surface: #161417;
+  --primary: #dc2626; /* Crimson red */
+  --accent-gold: #d4a437; /* Accent Gold */
+  --text-primary: #f5f3f0;
+  --text-secondary: #9a9a9a;
+  --text-tertiary: #4c4c4c;
+  --border: rgba(245, 243, 240, 0.08);
+  --border-strong: rgba(245, 243, 240, 0.15);
+  --success: #16a34a;
+  --mat-grid-color: rgba(220, 38, 38, 0.015);
 }
 
 @theme {
@@ -32,6 +38,7 @@
   --color-secondary: var(--secondary);
   --color-surface: var(--surface);
   --color-primary: var(--primary);
+  --color-accent-gold: var(--accent-gold);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
@@ -52,6 +59,10 @@
   --radius-3xl: 4px;
 }
 
+body, nav, footer, div, section, header, button, input, select, textarea, a {
+  transition: background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out;
+}
+
 body {
   background-color: var(--background);
   color: var(--text-primary);
@@ -66,8 +77,8 @@ body {
 .mat-grid {
   background-size: 44px 44px;
   background-image: 
-    linear-gradient(to right, rgba(255, 90, 61, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 90, 61, 0.02) 1px, transparent 1px);
+    linear-gradient(to right, var(--mat-grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mat-grid-color) 1px, transparent 1px);
 }
 
 .bracket-dots {

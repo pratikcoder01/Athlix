@@ -55,7 +55,8 @@ export default function PricingPage() {
         'Manage member registrations',
         'Create in-house local tournaments',
         'Unlimited image/video gallery upload'
-      ]
+      ],
+      premium: true
     }
   ];
 
@@ -119,20 +120,37 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {tiers.map((tier, idx) => {
             const currentPrice = isAnnual ? tier.priceAnnual : tier.priceMonthly;
+            const isPopular = 'popular' in tier && tier.popular;
+            const isPremium = 'premium' in tier && tier.premium;
+
+            let cardBorderClass = 'border-border';
+            let glowColor = undefined;
+
+            if (isPopular) {
+              cardBorderClass = 'border-primary shadow-lg shadow-primary/5';
+              glowColor = 'rgba(220, 38, 38, 0.15)'; // Crimson glow
+            } else if (isPremium) {
+              cardBorderClass = 'border-accent-gold shadow-lg shadow-accent-gold/5';
+              glowColor = 'rgba(212, 164, 55, 0.15)'; // Gold glow
+            }
+
             return (
               <SpotlightCard
                 key={idx}
-                className={`bg-secondary p-8 border rounded-sm flex flex-col justify-between h-[520px] ${
-                  tier.popular ? 'border-primary shadow-lg shadow-primary/5' : 'border-border'
-                }`}
-                glowColor={tier.popular ? 'rgba(255, 90, 61, 0.2)' : undefined}
+                className={`bg-secondary p-8 border rounded-sm flex flex-col justify-between h-[520px] ${cardBorderClass}`}
+                glowColor={glowColor}
               >
                 <div>
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">{tier.name}</span>
-                    {tier.popular && (
+                    {isPopular && (
                       <span className="bg-primary/10 border border-primary/25 text-primary text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider">
                         MOST POPULAR
+                      </span>
+                    )}
+                    {isPremium && (
+                      <span className="bg-accent-gold/10 border border-accent-gold/25 text-accent-gold text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                        CHAMPION TIER
                       </span>
                     )}
                   </div>
@@ -161,7 +179,11 @@ export default function PricingPage() {
 
                 <MagneticButton
                   className={`w-full py-3 rounded-sm font-bold font-mono tracking-wider text-xs uppercase ${
-                    tier.popular ? 'bg-primary hover:bg-opacity-95 text-white' : 'bg-surface hover:bg-opacity-80 text-text-primary border border-border'
+                    isPopular
+                      ? 'bg-primary hover:bg-opacity-95 text-white'
+                      : isPremium
+                      ? 'bg-accent-gold hover:bg-opacity-95 text-black'
+                      : 'bg-surface hover:bg-opacity-80 text-text-primary border border-border'
                   }`}
                 >
                   SELECT {tier.name}

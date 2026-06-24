@@ -141,7 +141,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 flex flex-col gap-6">
             
             {/* Technical Belt Progression Widget */}
-            <SpotlightCard className="bg-secondary border border-border rounded-sm p-6" glowColor="rgba(255, 90, 61, 0.15)">
+            <SpotlightCard className="bg-secondary border border-border rounded-sm p-6" glowColor="rgba(220, 38, 38, 0.15)">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-md font-display font-black uppercase tracking-wide">BELT RANK PROGRESS</h3>
