@@ -20,6 +20,7 @@ import {
 import SpotlightCard from '../../components/shared/SpotlightCard';
 import MagneticButton from '../../components/shared/MagneticButton';
 import { useAuthStore } from '../../store/authStore';
+import TrainingPlanGenerator from '../../components/TrainingPlanGenerator';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -205,6 +206,10 @@ export default function DashboardPage() {
               </div>
             </SpotlightCard>
           </div>
+        </div>
+        {/* Training Plan Generator Feature */}
+        <div className="mt-8">
+          <TrainingPlanGenerator />
         </div>
       </main>
     </div>
