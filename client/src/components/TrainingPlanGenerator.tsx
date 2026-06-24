@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { useRouter } from 'next/navigation';
 
 /*
   Component: TrainingPlanGenerator
@@ -29,8 +28,7 @@ type TrainingPlan = {
 };
 
 function TrainingPlanGenerator() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     athleteId: '',
     discipline: '',
     beltLevel: '',
@@ -83,7 +81,7 @@ function TrainingPlanGenerator() {
     return () => clearTimeout(skeletonTimer.current);
   }, [skeletonStage]);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!formData.athleteId || !formData.discipline || !formData.trainingGoal) {
