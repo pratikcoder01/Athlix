@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server'
 
 // MongoDB connection and model - inline for API route
 import mongoose from 'mongoose'
-import { connectDB } from '../../../../../../server/src/config/db'
+
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) return
+  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/athlix'
+  await mongoose.connect(mongoUri)
+}
 
 const TrainingPlanSchema = new mongoose.Schema({
   athleteId: { type: String, required: true, unique: true },
