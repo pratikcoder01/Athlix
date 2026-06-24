@@ -95,3 +95,102 @@ Respond strictly in JSON format matching this schema:
     next(error);
   }
 };
+
+import { TrainingPlanModel } from '../models/TrainingPlan';
+
+interface PlanOutput {
+  weekOverview: string;
+  days: Array<{
+    day: string;
+    focus: string;
+    drills: string[];
+    duration: string;
+    intensity: 'low' | 'medium' | 'high';
+  }>;
+  notes: string;
+}
+
+export const generateTrainingPlan = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    const athleteId = req.user._id;
+    const { discipline, trainingGoal, daysAvailablePerWeek, notes: userNotes } = req.body;
+
+    const profile = await Profile.findOne({ userId: athleteId });
+
+    const systemPrompt = `You are a world-class martial arts head coach. Your goal is to design a structured, highly optimized weekly training plan.`;
+
+    const userPrompt = `Create a weekly training plan for:
+- Discipline: ${discipline}
+- Belt/Skill Level: ${profile?.beltRank || 'Beginner'}
+- Training Goal: ${trainingGoal}
+- Days Available Per Week: ${daysAvailablePerWeek}
+- Additional Athlete Notes: ${userNotes}
+
+Respond strictly in JSON format matching this schema:
+{
+  "weekOverview": "string (brief overview of focus)",
+  "days": [
+    {
+      "day": "string (e.g. Monday)",
+      "focus": "string (technique or focus area)",
+      "drills": ["string (specific drill names)"],
+      "duration": "string (e.g. 60 mins)",
+      "intensity": "low" | "medium" | "high"
+    }
+  ],
+  "notes": "string (any recovery or diet tips)"
+}`;
+
+    const plan = await askClaudeJSON<PlanOutput>(systemPrompt, userPrompt);
+
+    return res.status(200).json({
+      success: true,
+      plan,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const saveTrainingPlan = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    const athleteId = req.user._id;
+    const { plan } = req.body;
+
+    if (!plan) {
+      return res.status(400).json({ success: false, message: 'Plan body is required' });
+    }
+
+    const savedPlan = await TrainingPlanModel.create({
+      athleteId,
+      weekOverview: plan.weekOverview,
+      days: plan.days,
+      notes: plan.notes,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Training plan successfully saved to profile',
+      plan: savedPlan,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

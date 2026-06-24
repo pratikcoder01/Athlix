@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, memo } from 'react';
+import MagneticButton from './shared/MagneticButton';
 
 /*
   Component: TrainingPlanGenerator
@@ -91,19 +92,26 @@ function TrainingPlanGenerator() {
 
     setLoading(true);
     setError(null);
+    setSkeletonStage(0);
 
     try {
+      const token = localStorage.getItem('athlix-auth')
+        ? JSON.parse(localStorage.getItem('athlix-auth')!).state.token
+        : '';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
       const payload = {
-        ...formData,
-        athleteId: formData.athleteId || 'demo-athlete-123',
-        beltLevel: formData.beltLevel || 'Not Specified',
-        weightCategory: formData.weightCategory || 'Not Specified',
+        discipline: formData.discipline,
+        trainingGoal: formData.trainingGoal,
+        daysAvailablePerWeek: formData.daysAvailablePerWeek,
+        notes: formData.notes,
       };
 
-      const response = await fetch('/api/ai/training-plan', {
+      const response = await fetch(`${API_URL}/api/ai/training-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -117,7 +125,6 @@ function TrainingPlanGenerator() {
     } catch (err) {
       console.error('Error generating plan:', err);
       setError('Failed to generate training plan. Please try again.');
-      alert('Failed to generate training plan. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -127,249 +134,226 @@ function TrainingPlanGenerator() {
     setPlan(null);
     setFormData({
       athleteId: formData.athleteId,
-      discipline: formData.discipline,
-      beltLevel: formData.beltLevel,
-      weightCategory: formData.weightCategory,
-      trainingGoal: formData.trainingGoal,
-      notes: formData.notes,
+      discipline: '',
+      beltLevel: '',
+      weightCategory: '',
+      trainingGoal: '',
+      notes: '',
       daysAvailablePerWeek: 7,
     });
   };
 
-  const saveToProfile = () => {
-    if (plan) {
-      alert('Training plan saved to your profile!');
-      console.log('Saving plan to profile:', plan);
+  const saveToProfile = async () => {
+    if (!plan) return;
+    try {
+      const token = localStorage.getItem('athlix-auth')
+        ? JSON.parse(localStorage.getItem('athlix-auth')!).state.token
+        : '';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const response = await fetch(`${API_URL}/api/ai/save-plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      if (response.ok) {
+        alert('Training plan saved to your profile!');
+      } else {
+        alert('Failed to save training plan.');
+      }
+    } catch (err) {
+      console.error('Error saving plan:', err);
+      alert('Failed to save training plan.');
+    }
+  };
+
+  const [checkedDrills, setCheckedDrills] = useState<Record<string, boolean>>({});
+
+  const toggleDrill = (dayIndex: number, drillIndex: number) => {
+    const key = `${dayIndex}-${drillIndex}`;
+    setCheckedDrills((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const getIntensityDot = (intensity: 'low' | 'medium' | 'high') => {
+    switch (intensity) {
+      case 'low':
+        return 'bg-green-500';
+      case 'medium':
+        return 'bg-amber-500';
+      case 'high':
+        return 'bg-red-500';
+      default:
+        return 'bg-primary';
     }
   };
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-6">
-      {/* Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Discipline *</label>
-          <select 
-            value={formData.discipline}
-            onChange={(e) => setFormData({...formData, discipline: e.target.value})}
-            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
-            required
-            disabled={loading}
-          >
-            <option value="">Select discipline...</option>
-            <option value="BJJ">Brazilian Jiu-Jitsu</option>
-            <option value="MMA">MMA</option>
-            <option value="Muay Thai">Muay Thai</option>
-            <option value="Boxing">Boxing</option>
-            <option value="Wrestling">Wrestling</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Training Goal *</label>
-          <select 
-            value={formData.trainingGoal}
-            onChange={(e) => setFormData({...formData, trainingGoal: e.target.value})}
-            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
-            required
-            disabled={loading}
-          >
-            <option value="">Select goal...</option>
-            <option value="Competition Prep">Competition Prep</option>
-            <option value="Skill Acquisition">Skill Acquisition</option>
-            <option value="Conditioning">Cardio & Conditioning</option>
-            <option value="Strength">Strength & Power</option>
-            <option value="Recovery">Active Recovery</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Belt / Experience Level</label>
-          <input 
-            type="text"
-            value={formData.beltLevel}
-            onChange={(e) => setFormData({...formData, beltLevel: e.target.value})}
-            placeholder="e.g. Blue Belt, Amateur"
-            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
-            disabled={loading}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Days per week</label>
-          <input 
-            type="number"
-            min="1"
-            max="7"
-            value={formData.daysAvailablePerWeek}
-            onChange={(e) => setFormData({...formData, daysAvailablePerWeek: parseInt(e.target.value) || 7})}
-            className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none"
-            disabled={loading}
-          />
-        </div>
+    <div className="bg-secondary border border-border rounded-sm p-6 sm:p-8 relative overflow-hidden shadow-xl">
+      <div className="absolute inset-0 bracket-dots pointer-events-none opacity-40" />
+      
+      <div className="relative z-10 mb-6 border-b border-border/40 pb-4">
+        <h3 className="text-lg font-display font-black uppercase tracking-wide">AI TRAINING PLAN GENERATOR</h3>
+        <p className="text-text-secondary text-xs mt-1">Get custom drill recommendations based on your discipline, rank, and weekly capacity.</p>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold font-mono tracking-widest text-text-secondary uppercase">Additional Notes</label>
-        <textarea
-          placeholder="Enter any additional goals or preferences... (e.g. 'I want to focus on guard retention' or 'I have a knee injury')"
-          value={formData.notes || ''}
-          onChange={(e) => setFormData({...formData, notes: e.target.value})}
-          disabled={loading}
-          rows={3}
-          className="bg-surface border border-border rounded p-3 text-sm text-text-primary focus:border-primary focus:outline-none w-full"
-        />
-      </div>
-
-      {/* Loading States */}
-      {loading && (
-        <div className="flex flex-col items-center p-6 space-y-4">
-          {/* Stage 1: Analyze */}
-          {skeletonStage >= 0 && (
-            <div className="w-8 h-8 bg-primary rounded-full animate-bounce" />
-          )}
-          {skeletonStage >= 1 && (
-            <div className="w-64 rounded-lg bg-secondary animate-pulse" style={{ height: '1.5rem', marginBottom: '0.5rem' }} />
-          )}
-          {skeletonStage >= 2 && (
-            <div className="w-32 rounded-lg bg-secondary animate-pulse" style={{ height: '1rem', marginBottom: '1rem' }} />
-          )}
-          {skeletonStage >= 3 && (
-            <div className="w-48 rounded-lg bg-secondary animate-pulse" style={{ height: '1rem' }} />
-          )}
-
-          {/* Staggered text messages */}
-          {[...Array(3)].map((_, i) => (
-            <textarea
-              key={i}
-              placeholder={i === 0 ? 'Analyzing your training history...' :
-                         i === 1 ? 'Assessing your goals and current level...' :
-                         'Generating personalized plan...'}
-              disabled
-              className="w-80 h-8 bg-secondary rounded-none border-0 text-transparent p-2 animate-pulse"
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="flex items-start space-x-2 p-3 bg-error/10 border border-error rounded-lg">
-          <svg className="flex-shrink-0 w-5 h-5 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-.19 0-.38.04-.58.12a.79.79 0 0 1-.12.64l4.4.9a1.2 1.2 0 0 0 1.21-.4l4.4-.9a.79.79 0 0 1 .12-.64c-.02-.08-.04-.16-.06-.24A.79.79 0 0 1 12 8z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14a1 1 0 0 1-1 .99v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1zm-3-2.5a1 1 0 0 0-.5.425A.75.75 0 0 0 9 12a.75.75 0 0 0 .75.75h6a.75.75 0 0 0 .75-.75A1 1 0 0 0 11 12a1 1 0 0 1-.5-.425z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2h2z" />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm text-error">{error}</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleRegenerate}
-            className="w-fit px-3 py-1 bg-transparent border border-error text-error rounded-md hover:bg-error hover:text-white transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Main UI */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${loading ? 'opacity-70' : ''}`} >
-        {/* Training Plan Card */}
-        {plan ? (
-          <>
-            {/* Week Overview Card */}
-            <div className="bg-surface p-4 rounded-lg border border-border">
-              <h3 className="text-lg font-medium text-primary">Week Overview</h3>
-              <p className="text-sm text-primary mt-1">{plan.weekOverview}</p>
+      {!plan && !loading ? (
+        <form onSubmit={handleFormSubmit} className="relative z-10 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold font-mono tracking-widest text-text-secondary uppercase">Discipline *</label>
+              <select
+                value={formData.discipline}
+                onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
+                className="w-full bg-surface border border-border rounded-sm p-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
+                required
+              >
+                <option value="">Select discipline...</option>
+                <option value="BJJ">Brazilian Jiu-Jitsu</option>
+                <option value="MMA">MMA</option>
+                <option value="Muay Thai">Muay Thai</option>
+                <option value="Boxing">Boxing</option>
+                <option value="Wrestling">Wrestling</option>
+              </select>
             </div>
 
-            {/* Daily Cards */}
-            <div className="space-y-4">
-              {plan.days.map((day, index) => (
-                <div key={index} className="relative group bg-surface rounded-xl p-4 shadow-sm border border-border/50 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium">Day Focus</h4>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: `${getIntensityColor(day.intensity)}20`, color: getIntensityColor(day.intensity) }}>
-                      {day.intensity}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold font-mono tracking-widest text-text-secondary uppercase">Training Goal *</label>
+              <select
+                value={formData.trainingGoal}
+                onChange={(e) => setFormData({ ...formData, trainingGoal: e.target.value })}
+                className="w-full bg-surface border border-border rounded-sm p-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
+                required
+              >
+                <option value="">Select goal...</option>
+                <option value="Competition Prep">Competition Prep</option>
+                <option value="General Fitness">General Fitness</option>
+                <option value="Belt Promotion">Belt Promotion</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold font-mono tracking-widest text-text-secondary uppercase">Days Available Per Week</label>
+              <input
+                type="number"
+                min="1"
+                max="7"
+                value={formData.daysAvailablePerWeek}
+                onChange={(e) => setFormData({ ...formData, daysAvailablePerWeek: parseInt(e.target.value) || 7 })}
+                className="w-full bg-surface border border-border rounded-sm p-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold font-mono tracking-widest text-text-secondary uppercase">Additional Notes</label>
+            <textarea
+              placeholder="e.g. Focus on guard retention, recovering from left shoulder strain..."
+              value={formData.notes || ''}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              rows={3}
+              className="w-full bg-surface border border-border rounded-sm p-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans resize-none"
+            />
+          </div>
+
+          <MagneticButton type="submit" className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md">
+            Generate AI Training Plan
+          </MagneticButton>
+        </form>
+      ) : null}
+
+      {/* Loading Skeleton View */}
+      {loading && (
+        <div className="relative z-10 flex flex-col items-center py-12 text-center">
+          <div className="w-10 h-10 border-4 border-t-primary border-border rounded-full animate-spin mb-6" />
+          <h4 className="text-sm font-display font-black tracking-wider uppercase mb-2">
+            {skeletonStage === 0 ? 'Analyzing your training history...' :
+             skeletonStage === 1 ? 'Assessing your goals and current level...' :
+             'Building your week...'}
+          </h4>
+          <p className="text-text-secondary text-xs max-w-xs leading-relaxed">
+            Claude is compiling drills tailored to your belt rank and schedule.
+          </p>
+        </div>
+      )}
+
+      {/* Generated Plan View */}
+      {plan && !loading ? (
+        <div className="relative z-10 space-y-6">
+          {/* Week Overview */}
+          <div className="bg-surface border border-border/60 p-4 rounded-sm">
+            <h4 className="text-xs font-mono font-bold tracking-widest text-primary uppercase mb-2">WEEK OVERVIEW</h4>
+            <p className="text-text-secondary text-xs leading-relaxed font-sans">{plan.weekOverview}</p>
+          </div>
+
+          {/* Days Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {plan.days.map((day, dIdx) => (
+              <div key={dIdx} className="bg-surface border border-border p-4 rounded-sm flex flex-col justify-between h-72">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-mono font-bold text-text-secondary uppercase">{day.day}</span>
+                    <span className="flex items-center gap-1.5 text-[9px] font-mono font-bold text-text-primary uppercase">
+                      <span className={`h-2.5 w-2.5 rounded-full ${getIntensityDot(day.intensity)}`} />
+                      {day.intensity} INTENSITY
                     </span>
                   </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <h5 className="text-medium">{day.day}</h5>
-                    <p className="text-sm text-secondary">{day.focus}</p>
-                    <div className="w-full bg-secondary rounded-md p-2.5">
-                      <ul className="space-y-2">
-                        {day.drills.map((drill) => (
-                          <li key={drill} className="flex items-center">
-                            <span className="w-4 h-4 rounded border border-primary flex-shrink-0 mr-2">
-                              <span className="w-3 h-3 rounded bg-primary mx-auto block" />
-                            </span>
-                            <span className="text-xs">{drill}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="h-2.5 rounded-full bg-opacity-20 mt-2 flex items-center">
-                      <div
-                        className={`h-2 rounded-full transition-transform duration-300 ${
-                          day.intensity === 'low' ? 'bg-success' :
-                          day.intensity === 'medium' ? 'bg-warning' : 'bg-red-500'
-                        }`}
-                        style={{ width: day.intensity === 'low' ? '40%' :
-                                        day.intensity === 'medium' ? '60%' : '80%' }}
-                      />
-                    </div>
-
-                    <p className="text-xs text-secondary mt-1">{day.duration}</p>
-                  </div>
+                  
+                  <h5 className="text-xs font-display font-black uppercase tracking-wider text-text-primary mb-2">{day.focus}</h5>
+                  
+                  {/* Checklist Drills */}
+                  <ul className="space-y-1.5 overflow-y-auto max-h-36 pr-1 font-sans text-[11px] text-text-secondary">
+                    {day.drills.map((drill, drillIdx) => {
+                      const isChecked = !!checkedDrills[`${dIdx}-${drillIdx}`];
+                      return (
+                        <li key={drillIdx} className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleDrill(dIdx, drillIdx)}
+                            className="mt-0.5 accent-primary h-3.5 w-3.5 border-border rounded-sm bg-surface cursor-pointer"
+                          />
+                          <span className={isChecked ? 'line-through text-text-tertiary' : ''}>{drill}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          /* Empty State */
-          <div className="space-y-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-secondary animate-pulse mx-auto" />
-            <p className="text-lg font-medium text-secondary">No plan generated yet</p>
-            <p className="text-sm text-secondary">Fill out your training preferences to generate a personalized plan</p>
+                
+                <div className="border-t border-border/40 pt-2.5 mt-3 text-[9px] font-mono font-bold text-text-secondary">
+                  DURATION: {day.duration.toUpperCase()}
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between mt-4 gap-3">
-        {!plan ? (
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors font-bold font-bebas tracking-widest text-lg disabled:opacity-50"
-          >
-            {loading ? 'GENERATING...' : 'GENERATE AI TRAINING PLAN'}
-          </button>
-        ) : (
-          <>
+          {/* Notes */}
+          {plan.notes && (
+            <div className="bg-surface border border-border/60 p-4 rounded-sm">
+              <h4 className="text-xs font-mono font-bold tracking-widest text-text-secondary uppercase mb-2">COACH'S CORNER NOTES</h4>
+              <p className="text-text-secondary text-xs leading-relaxed font-sans">{plan.notes}</p>
+            </div>
+          )}
+
+          {/* Plan Actions */}
+          <div className="flex justify-end gap-4 pt-4 border-t border-border/40">
             <button
-              type="button"
               onClick={handleRegenerate}
-              className="px-4 py-2 bg-secondary border border-border text-text-primary rounded-md hover:bg-surface transition-colors"
+              className="text-xs font-bold font-mono tracking-wider text-text-secondary hover:text-text-primary transition-colors uppercase cursor-pointer"
             >
               Reset Form
             </button>
-            <button
-              type="button"
-              onClick={saveToProfile}
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Save to My Profile
-            </button>
-          </>
-        )}
-      </div>
-    </form>
+            <MagneticButton onClick={saveToProfile} className="bg-primary hover:bg-opacity-95 text-white py-2.5 px-6 rounded-sm text-xs font-mono font-bold tracking-wider uppercase">
+              Save to Profile
+            </MagneticButton>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
-// Make it memoized for performance
 export default memo(TrainingPlanGenerator);

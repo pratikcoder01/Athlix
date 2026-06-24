@@ -65,3 +65,12 @@ export const seedBracketSchema = z.object({
   tournamentId: z.string().min(1, 'tournamentId is required'),
 });
 
+// AI Training Plan Payload Validator
+export const trainingPlanSchema = z.object({
+  discipline: z.string().min(1, 'Discipline is required'),
+  trainingGoal: z.string().min(1, 'Training goal is required'),
+  daysAvailablePerWeek: z.number().min(1).max(7).default(7),
+  notes: z.string().optional().default(''),
+});
+
+
