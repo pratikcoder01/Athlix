@@ -1,10 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Button, CardGrid, Checkbox, CheckboxList, Form, Group, Label, Textarea, useToast } from '@/components/ui';
-import { AiLoader } from 'react-icons/ai';
-import { memo } from 'react';
-import { useTheme } from '@/store/themeStore';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
 /*
@@ -32,16 +28,15 @@ type TrainingPlan = {
   notes: string
 };
 
-export default function TrainingPlanGenerator() {
-  const { theme, isDark } = useTheme();
+function TrainingPlanGenerator() {
   const router = useRouter();
-  const toast = useToast();
   const [formData, setFormData] = useState({
     athleteId: '',
     discipline: '',
     beltLevel: '',
     weightCategory: '',
     trainingGoal: '',
+    notes: '',
     daysAvailablePerWeek: 7,
   });
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
@@ -92,7 +87,7 @@ export default function TrainingPlanGenerator() {
     e.preventDefault();
 
     if (!formData.athleteId || !formData.discipline || !formData.trainingGoal) {
-      toast.error('Please fill in all required fields');
+      alert('Please fill in all required fields');
       return;
     }
 
@@ -123,7 +118,7 @@ export default function TrainingPlanGenerator() {
     } catch (err) {
       console.error('Error generating plan:', err);
       setError('Failed to generate training plan. Please try again.');
-      toast.error('Failed to generate training plan. Please try again.');
+      alert('Failed to generate training plan. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -137,13 +132,14 @@ export default function TrainingPlanGenerator() {
       beltLevel: formData.beltLevel,
       weightCategory: formData.weightCategory,
       trainingGoal: formData.trainingGoal,
+      notes: formData.notes,
       daysAvailablePerWeek: 7,
     });
   };
 
   const saveToProfile = () => {
     if (plan) {
-      toast.success('Training plan saved to your profile!');
+      alert('Training plan saved to your profile!');
       console.log('Saving plan to profile:', plan);
     }
   };

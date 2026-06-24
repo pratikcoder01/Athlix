@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user's prompt - no additional text, no markdown, no explanations.",
+        system: "You are an expert martial arts training coach. Generate scientifically sound, progressive training plans. Return ONLY valid JSON as specified in the user\'s prompt - no additional text, no markdown, no explanations.",
         messages: [
           {
             role: 'user',
