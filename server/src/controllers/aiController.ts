@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { Tournament } from '../models/Tournament';
 import { User } from '../models/User';
 import { Profile } from '../models/Profile';
-import { askClaudeJSON } from '../utils/anthropic';
+import { askFeatherlessJSON } from '../utils/anthropic';
 
 interface SeedOutput {
   seeds: Array<{
@@ -69,7 +69,7 @@ Respond strictly in JSON format matching this schema:
   ]
 }`;
 
-    const aiResult = await askClaudeJSON<SeedOutput>(systemPrompt, userPrompt);
+    const aiResult = await askFeatherlessJSON<SeedOutput>(systemPrompt, userPrompt);
 
     // Save seeding rationale/result back to the tournament document
     // We will serialize and save it inside tournament.brackets or update brackets JSON
@@ -149,7 +149,7 @@ Respond strictly in JSON format matching this schema:
   "notes": "string (any recovery or diet tips)"
 }`;
 
-    const plan = await askClaudeJSON<PlanOutput>(systemPrompt, userPrompt);
+    const plan = await askFeatherlessJSON<PlanOutput>(systemPrompt, userPrompt);
 
     return res.status(200).json({
       success: true,
@@ -330,7 +330,7 @@ Respond strictly in JSON format matching this schema:
   ]
 }`;
 
-    const aiResult = await askClaudeJSON<MatchOutput>(systemPrompt, userPrompt);
+    const aiResult = await askFeatherlessJSON<MatchOutput>(systemPrompt, userPrompt);
 
     // Merge AI recommendations with full profile details
     const finalMatches = aiResult.matches

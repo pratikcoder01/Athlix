@@ -275,7 +275,7 @@ function TrainingPlanGenerator() {
              'Building your week...'}
           </h4>
           <p className="text-text-secondary text-xs max-w-xs leading-relaxed">
-            Claude is compiling drills tailored to your belt rank and schedule.
+            Our AI coach is compiling drills tailored to your belt rank and schedule.
           </p>
         </div>
       )}

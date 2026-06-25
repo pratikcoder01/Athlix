@@ -2,10 +2,10 @@ import fetch from 'node-fetch';
 
 /**
  * Shared utility helper for interacting with the OpenAI-compatible Featherless.ai Messages API.
- * Leverages deepseek-ai/DeepSeek-V3.2 as default model.
+ * Leverages the model configured via FEATHERLESS_MODEL environment variable (defaults to deepseek-ai/DeepSeek-V3.2).
  * Enforces JSON output and strips markdown fences cleanly.
  */
-export async function askClaudeJSON<T>(
+export async function askFeatherlessJSON<T>(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number = 4000
