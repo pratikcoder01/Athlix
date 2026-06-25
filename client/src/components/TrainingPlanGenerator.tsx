@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, memo } from 'react';
 import MagneticButton from './shared/MagneticButton';
+import { useAuthStore } from '../store/authStore';
 
 /*
   Component: TrainingPlanGenerator
@@ -29,14 +30,15 @@ type TrainingPlan = {
 };
 
 function TrainingPlanGenerator() {
-    const [formData, setFormData] = useState({
+  const { token } = useAuthStore();
+  const [formData, setFormData] = useState({
     athleteId: '',
     discipline: '',
     beltLevel: '',
     weightCategory: '',
     trainingGoal: '',
     notes: '',
-    daysAvailablePerWeek: 7,
+    daysAvailablePerWeek: 4,
   });
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -95,9 +97,6 @@ function TrainingPlanGenerator() {
     setSkeletonStage(0);
 
     try {
-      const token = localStorage.getItem('athlix-auth')
-        ? JSON.parse(localStorage.getItem('athlix-auth')!).state.token
-        : '';
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       const payload = {
@@ -139,16 +138,13 @@ function TrainingPlanGenerator() {
       weightCategory: '',
       trainingGoal: '',
       notes: '',
-      daysAvailablePerWeek: 7,
+      daysAvailablePerWeek: 4,
     });
   };
 
   const saveToProfile = async () => {
     if (!plan) return;
     try {
-      const token = localStorage.getItem('athlix-auth')
-        ? JSON.parse(localStorage.getItem('athlix-auth')!).state.token
-        : '';
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       const response = await fetch(`${API_URL}/api/ai/save-plan`, {

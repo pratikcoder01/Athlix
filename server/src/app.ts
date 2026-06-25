@@ -18,9 +18,18 @@ const app = express();
 
 // Security and Logging Configuration
 app.use(helmet());
+
+const allowedOrigins = process.env.ALLOWED_ORIGIN
+  ? process.env.ALLOWED_ORIGIN.split(',').map(origin => origin.trim())
+  : '*';
+
+if (allowedOrigins === '*') {
+  console.warn('WARNING: ALLOWED_ORIGIN environment variable is not set. CORS fallback to "*" is active.');
+}
+
 app.use(
   cors({
-    origin: '*', // Set to target client domains in production
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
