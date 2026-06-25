@@ -38,9 +38,17 @@ if (appsList.length === 0) {
       if ((cleanedJson.startsWith('"') && cleanedJson.endsWith('"')) || (cleanedJson.startsWith("'") && cleanedJson.endsWith("'"))) {
         cleanedJson = cleanedJson.substring(1, cleanedJson.length - 1);
       }
-      // Replace literal double backslashes for newlines if any
-      cleanedJson = cleanedJson.replace(/\\n/g, '\n');
+      
+      // Sanitize raw newlines inside the private_key string value if they pasted it raw
+      cleanedJson = cleanedJson.replace(/"private_key"\s*:\s*"([\s\S]*?)"/, (match, keyContent) => {
+        const escapedKey = keyContent.replace(/\r?\n/g, '\\n');
+        return `"private_key": "${escapedKey}"`;
+      });
+
       serviceAccount = JSON.parse(cleanedJson);
+      if (serviceAccount && typeof serviceAccount.private_key === 'string') {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
     } catch (err: any) {
       console.error('❌ Failed parsing FIREBASE_SERVICE_ACCOUNT_JSON:', err.message);
       throw new Error(
