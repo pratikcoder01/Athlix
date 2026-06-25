@@ -5,9 +5,11 @@ import { Profile } from '../models/Profile';
 import { CoachProfile } from '../models/CoachProfile';
 import { AuthenticatedRequest } from '../types';
 
+import { getJwtSecret } from '../config/jwt';
+
 // Generate JWT token helper
 const generateToken = (id: any): string => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'super_secret_jwt_key_for_athlix_authentication', {
+  return jwt.sign({ id }, getJwtSecret(), {
     expiresIn: '30d',
   });
 };

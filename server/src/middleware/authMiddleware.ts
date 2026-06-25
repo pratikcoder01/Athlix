@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { getJwtSecret } from '../config/jwt';
 import { AuthenticatedRequest } from '../types';
 
 export const protect = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -11,7 +12,7 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(
         token,
-        process.env.JWT_SECRET || 'super_secret_jwt_key_for_athlix_authentication'
+        getJwtSecret()
       ) as { id: string };
 
       const user = await User.findById(decoded.id).select('-password');

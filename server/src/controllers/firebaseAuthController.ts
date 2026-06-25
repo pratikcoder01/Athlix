@@ -5,6 +5,8 @@ import { User } from '../models/User';
 import { Profile } from '../models/Profile';
 import { CoachProfile } from '../models/CoachProfile';
 
+import { getJwtSecret } from '../config/jwt';
+
 /**
  * Generate a signed ATHLIX JWT (same format as legacy authController).
  * All downstream protect() middleware and role checks remain unchanged.
@@ -12,7 +14,7 @@ import { CoachProfile } from '../models/CoachProfile';
 const generateToken = (id: any): string =>
   jwt.sign(
     { id },
-    process.env.JWT_SECRET || 'super_secret_jwt_key_for_athlix_authentication',
+    getJwtSecret(),
     { expiresIn: '30d' }
   );
 
