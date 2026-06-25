@@ -10,7 +10,10 @@ export async function askClaudeJSON<T>(
   userPrompt: string,
   maxTokens: number = 4000
 ): Promise<T> {
-  const apiKey = process.env.FEATHERLESS_API_KEY || 'rc_37e72745fdd1e1e4c2dc83a211f28ab79e39b99ec7940dbe19237f3cb433594a';
+  const apiKey = process.env.FEATHERLESS_API_KEY;
+  if (!apiKey) {
+    throw new Error('FEATHERLESS_API_KEY environment variable is required but not set');
+  }
   const model = process.env.FEATHERLESS_MODEL || 'deepseek-ai/DeepSeek-V3.2';
 
   // System instruction to strictly demand JSON formatting
