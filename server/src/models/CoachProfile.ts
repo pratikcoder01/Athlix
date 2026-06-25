@@ -69,6 +69,10 @@ const CoachProfileSchema = new Schema<ICoachProfileDocument>(
       type: Boolean,
       default: true,
     },
+    autoConfirm: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

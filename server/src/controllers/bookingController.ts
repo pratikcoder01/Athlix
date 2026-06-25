@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { Booking } from '../models/Booking';
 import { User } from '../models/User';
+import { CoachProfile } from '../models/CoachProfile';
 import { Notification } from '../models/Notification';
 import { AuthenticatedRequest } from '../types';
 
@@ -44,46 +45,107 @@ export const createBooking = async (req: AuthenticatedRequest, res: Response, ne
       });
     }
 
+    const coachProfile = await CoachProfile.findOne({ userId: coachId });
+    const autoConfirm = !!coachProfile?.autoConfirm;
+
     const booking = await Booking.create({
       athleteId,
       coachId,
       scheduledTime: new Date(scheduledTime),
       durationMinutes,
       price,
-      status: 'pending',
+      status: autoConfirm ? 'accepted' : 'pending',
     });
 
-    // Create a notification for the coach
-    const notificationMessage = `Athlete ${req.user.name} requested a training session on ${new Date(scheduledTime).toLocaleString()}`;
-    const notification = await Notification.create({
-      recipientId: coachId,
-      senderId: athleteId,
-      type: 'booking',
-      message: notificationMessage,
-      read: false,
-      link: '/bookings',
-    });
-
-    // Emit real-time socket notification if IO is configured
     const io = req.app.get('io');
-    if (io) {
-      io.to(coachId.toString()).emit('notification', {
-        id: notification._id,
+
+    if (autoConfirm) {
+      // Create a notification for the coach
+      const coachNotificationMessage = `Athlete ${req.user.name} booked a training session on ${new Date(scheduledTime).toLocaleString()} (Auto-Confirmed)`;
+      const coachNotification = await Notification.create({
+        recipientId: coachId,
+        senderId: athleteId,
+        type: 'booking',
+        message: coachNotificationMessage,
+        read: false,
+        link: '/bookings',
+      });
+
+      // Create a notification for the athlete
+      const athleteNotificationMessage = `Your booking request with Coach ${coach.name} on ${new Date(scheduledTime).toLocaleString()} has been automatically confirmed`;
+      const athleteNotification = await Notification.create({
+        recipientId: athleteId,
+        senderId: coachId,
+        type: 'booking',
+        message: athleteNotificationMessage,
+        read: false,
+        link: '/bookings',
+      });
+
+      // Emit real-time socket notifications if IO is configured
+      if (io) {
+        // Emit to coach
+        io.to(coachId.toString()).emit('notification', {
+          id: coachNotification._id,
+          type: 'booking',
+          message: coachNotificationMessage,
+          createdAt: coachNotification.createdAt,
+        });
+        io.to(coachId.toString()).emit('booking_update', {
+          type: 'new_booking',
+          booking,
+        });
+
+        // Emit to athlete
+        io.to(athleteId.toString()).emit('notification', {
+          id: athleteNotification._id,
+          type: 'booking',
+          message: athleteNotificationMessage,
+          createdAt: athleteNotification.createdAt,
+        });
+        io.to(athleteId.toString()).emit('booking_update', {
+          type: 'status_changed',
+          booking,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Booking automatically confirmed',
+        booking,
+      });
+    } else {
+      // Create a notification for the coach (pending request)
+      const notificationMessage = `Athlete ${req.user.name} requested a training session on ${new Date(scheduledTime).toLocaleString()}`;
+      const notification = await Notification.create({
+        recipientId: coachId,
+        senderId: athleteId,
         type: 'booking',
         message: notificationMessage,
-        createdAt: notification.createdAt,
+        read: false,
+        link: '/bookings',
       });
-      io.to(coachId.toString()).emit('booking_update', {
-        type: 'new_booking',
+
+      // Emit real-time socket notification if IO is configured
+      if (io) {
+        io.to(coachId.toString()).emit('notification', {
+          id: notification._id,
+          type: 'booking',
+          message: notificationMessage,
+          createdAt: notification.createdAt,
+        });
+        io.to(coachId.toString()).emit('booking_update', {
+          type: 'new_booking',
+          booking,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Booking request sent to coach',
         booking,
       });
     }
-
-    res.status(201).json({
-      success: true,
-      message: 'Booking request sent to coach',
-      booking,
-    });
   } catch (error) {
     next(error);
   }

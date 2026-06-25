@@ -119,7 +119,7 @@ export const updateCoachProfile = async (req: AuthenticatedRequest, res: Respons
       return res.status(403).json({ success: false, message: 'Access denied: Coaches only' });
     }
     const userId = req.user._id;
-    const { certifications, experienceYears, pricingPerHour, availability, active } = req.body;
+    const { certifications, experienceYears, pricingPerHour, availability, active, autoConfirm } = req.body;
 
     let coachProfile = await CoachProfile.findOne({ userId });
     if (!coachProfile) {
@@ -131,6 +131,7 @@ export const updateCoachProfile = async (req: AuthenticatedRequest, res: Respons
     if (pricingPerHour !== undefined) coachProfile.pricingPerHour = pricingPerHour;
     if (availability !== undefined) coachProfile.availability = availability;
     if (active !== undefined) coachProfile.active = active;
+    if (autoConfirm !== undefined) coachProfile.autoConfirm = autoConfirm;
 
     await coachProfile.save();
 

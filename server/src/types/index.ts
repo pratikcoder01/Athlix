@@ -45,6 +45,7 @@ export interface ICoachProfile {
   }>;
   ratings?: number;
   active?: boolean;
+  autoConfirm?: boolean;
 }
 
 export interface IAcademy {
