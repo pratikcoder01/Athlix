@@ -4,6 +4,7 @@ import { Tournament } from '../models/Tournament';
 import { User } from '../models/User';
 import { Profile } from '../models/Profile';
 import { askFeatherlessJSON } from '../utils/anthropic';
+import { Types } from 'mongoose';
 
 interface SeedOutput {
   seeds: Array<{
@@ -72,8 +73,14 @@ Respond strictly in JSON format matching this schema:
     const aiResult = await askFeatherlessJSON<SeedOutput>(systemPrompt, userPrompt);
 
     // Save seeding rationale/result back to the tournament document
-    // We will serialize and save it inside tournament.brackets or update brackets JSON
-    tournament.brackets = JSON.stringify(aiResult.seeds);
+    tournament.brackets = {
+      seeds: aiResult.seeds.map((s) => ({
+        fighterId: new Types.ObjectId(s.fighterId),
+        seed: Number(s.seed),
+        rationale: s.rationale,
+      })),
+      rounds: [], // Initialize/clear rounds
+    };
     await tournament.save();
 
     // Emit real-time bracket update to notify connected clients

@@ -40,8 +40,8 @@ export default function TournamentsPage() {
     const handleBracketUpdate = (update: any) => {
       if (update.brackets) {
         try {
-          const parsed = JSON.parse(update.brackets);
-          setBracketMatches(parsed);
+          const parsed = typeof update.brackets === 'string' ? JSON.parse(update.brackets) : update.brackets;
+          setBracketMatches(parsed.rounds || parsed);
         } catch {
           // If plain text / different schema, handle gracefully
         }

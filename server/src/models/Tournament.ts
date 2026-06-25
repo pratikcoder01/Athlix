@@ -53,8 +53,28 @@ const TournamentSchema = new Schema<ITournamentDocument>(
       }
     ],
     brackets: {
-      type: String, // Bracket structure (JSON or imageUrl)
-      default: '',
+      seeds: [
+        {
+          fighterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+          seed: { type: Number, required: true },
+          rationale: { type: String, required: true },
+        }
+      ],
+      rounds: [
+        {
+          round: { type: String, required: true },
+          matches: [
+            {
+              p1: { type: String, required: true },
+              p1_rationale: { type: String },
+              p2: { type: String, required: true },
+              p2_rationale: { type: String },
+              score: { type: String, default: 'Pending...' },
+              winner: { type: String, default: '' },
+            }
+          ]
+        }
+      ]
     },
     status: {
       type: String,

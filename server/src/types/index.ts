@@ -62,6 +62,31 @@ export interface IAcademy {
   membersCount?: number;
 }
 
+export interface ISeed {
+  fighterId: Types.ObjectId;
+  seed: number;
+  rationale: string;
+}
+
+export interface IMatch {
+  p1: string;
+  p1_rationale?: string;
+  p2: string;
+  p2_rationale?: string;
+  score: string;
+  winner?: string;
+}
+
+export interface IRound {
+  round: string;
+  matches: IMatch[];
+}
+
+export interface IBracket {
+  seeds: ISeed[];
+  rounds: IRound[];
+}
+
 export interface ITournament {
   title: string;
   description: string;
@@ -72,7 +97,7 @@ export interface ITournament {
   disciplines?: string[];
   organizerId: Types.ObjectId;
   registrations?: Types.ObjectId[];
-  brackets?: string;
+  brackets?: IBracket;
   status: 'upcoming' | 'ongoing' | 'completed';
 }
 

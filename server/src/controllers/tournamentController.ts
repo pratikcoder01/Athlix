@@ -74,7 +74,7 @@ export const createTournament = async (req: AuthenticatedRequest, res: Response,
       entryFee: Number(entryFee),
       disciplines: disciplines || [],
       organizerId: req.user._id,
-      brackets: brackets || '',
+      brackets: brackets ? (typeof brackets === 'string' ? JSON.parse(brackets) : brackets) : undefined,
       status: 'upcoming',
     });
 
@@ -145,7 +145,27 @@ export const updateTournamentBrackets = async (req: AuthenticatedRequest, res: R
       return res.status(404).json({ success: false, message: 'Tournament not found' });
     }
 
-    if (brackets !== undefined) tournament.brackets = brackets;
+    if (brackets !== undefined) {
+      let parsedBrackets: any = brackets;
+      if (typeof brackets === 'string') {
+        try {
+          parsedBrackets = JSON.parse(brackets);
+        } catch {
+          // ignore parsing error
+        }
+      }
+
+      if (parsedBrackets && (parsedBrackets.rounds || parsedBrackets.seeds)) {
+        tournament.brackets = parsedBrackets;
+      } else if (Array.isArray(parsedBrackets)) {
+        tournament.brackets = {
+          seeds: tournament.brackets?.seeds || [],
+          rounds: parsedBrackets,
+        };
+      } else {
+        tournament.brackets = parsedBrackets;
+      }
+    }
     if (status !== undefined) tournament.status = status;
 
     await tournament.save();
