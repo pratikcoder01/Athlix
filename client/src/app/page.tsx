@@ -833,6 +833,90 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* AI-Powered Co-Pilot Section */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-border/60">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-3 py-1 text-[10px] font-bold text-primary tracking-widest uppercase mb-6 font-mono">
+            <Sparkles className="h-3.5 w-3.5" />
+            Intelligent co-pilot layer
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-display font-black text-text-primary tracking-tight uppercase">
+            AI-ASSISTED COMBAT PERFORMANCE
+          </h2>
+          <p className="mt-4 text-sm text-text-secondary leading-relaxed">
+            Athlix features built-in, secure assistant modules designed to optimize training schedules, pair you with optimal coaches, and structure competitive draws.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <SpotlightCard className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between min-h-[380px] relative overflow-hidden">
+            <div>
+              <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-sm flex items-center justify-center mb-6">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-display font-black uppercase tracking-wide mb-3">Training Plan Generator</h3>
+              <p className="text-xs text-text-secondary leading-relaxed mb-6 font-sans">
+                Draft customized drills and weekly scheduling routines. The assistant parses your belt rank, discipline history, and time constraints to generate target mat work and technical guidelines.
+              </p>
+            </div>
+            
+            {/* Visual element */}
+            <div className="bg-surface border border-border/40 p-4 rounded-sm font-mono text-[9px] text-text-secondary">
+              <div className="flex justify-between border-b border-border/30 pb-1.5 mb-2 font-bold uppercase text-[8px]">
+                <span>DRILLS GENERATOR</span>
+                <span className="text-primary font-bold">COMPILING...</span>
+              </div>
+              <span className="block font-bold text-text-primary">5 Guard Retention Reps</span>
+              <span className="block text-text-tertiary">30 mins mat work • Tuesday</span>
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between min-h-[380px] relative overflow-hidden">
+            <div>
+              <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-sm flex items-center justify-center mb-6">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-display font-black uppercase tracking-wide mb-3">Coach Matchmaker</h3>
+              <p className="text-xs text-text-secondary leading-relaxed mb-6 font-sans">
+                Find the perfect training partner. The matching engine evaluates coach certifications, availability slots, locations, and pricing to calculate compatibility and present logical fit rationales.
+              </p>
+            </div>
+            
+            {/* Visual element */}
+            <div className="bg-surface border border-border/40 p-4 rounded-sm font-mono text-[9px] text-text-secondary">
+              <div className="flex justify-between border-b border-border/30 pb-1.5 mb-2 font-bold uppercase text-[8px]">
+                <span>COMPATIBILITY FIT</span>
+                <span className="text-accent-gold font-bold">94% MATCH</span>
+              </div>
+              <span className="block font-bold text-text-primary">Prof. Renato Silva</span>
+              <span className="block text-text-tertiary">BJJ • 10:30 AM Slot Available</span>
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between min-h-[380px] relative overflow-hidden">
+            <div>
+              <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-sm flex items-center justify-center mb-6">
+                <Trophy className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-display font-black uppercase tracking-wide mb-3">Bracket Seeding</h3>
+              <p className="text-xs text-text-secondary leading-relaxed mb-6 font-sans">
+                Run objective and balanced tournament matchups. The seeding utility computes student rank statistics and records to automate the bracket seeding process, minimizing manual grouping errors.
+              </p>
+            </div>
+            
+            {/* Visual element */}
+            <div className="bg-surface border border-border/40 p-4 rounded-sm font-mono text-[9px] text-text-secondary">
+              <div className="flex justify-between border-b border-border/30 pb-1.5 mb-2 font-bold uppercase text-[8px]">
+                <span>SEEDING LOG</span>
+                <span className="text-success font-bold">COMPLETE</span>
+              </div>
+              <span className="block font-bold text-text-primary">Seed 1: Renato Silva</span>
+              <span className="block text-text-tertiary">Based on tournament history</span>
+            </div>
+          </SpotlightCard>
+        </div>
+      </section>
+
       {/* Testimonial Section - Clean, Specific Story */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-border/60 bg-secondary/20">
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center">

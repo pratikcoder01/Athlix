@@ -34,6 +34,7 @@ const capabilities = [
   { icon: MapPin,  label: 'Academy Finder' },
   { icon: Shield,  label: 'Role Security' },
   { icon: Code2,   label: 'REST APIs' },
+  { icon: Sparkles, label: 'AI Assistants' },
 ];
 
 /* ── Main alternating feature blocks ── */
@@ -167,6 +168,35 @@ const features = [
     ),
     flip: true,
   },
+  {
+    id: 'ai-copilot',
+    num: '05',
+    label: 'Intelligent Systems',
+    icon: Sparkles,
+    heading: 'AI-DRIVEN TRAINING & SEEDING',
+    body: 'Leverage our integrated machine intelligence layer to match with top coaching instructors, draft structured training routines tailored to your belt rank, and auto-seed tournament brackets based on fighter statistics.',
+    bullets: ['Personalized drill plan generation', 'Contextual coach compatibility matching', 'Objective bracket seed scheduling'],
+    visual: (
+      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
+        <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
+          <span>AI ENGINE METRICS</span>
+          <span className="text-accent-gold font-bold">READY</span>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
+            <span className="text-[9px] text-text-secondary block">COACH MATCH COMPATIBILITY</span>
+            <span className="font-bold text-text-primary block mt-0.5">Renato Silva: 94% Match Fit</span>
+            <span className="text-[8px] text-text-tertiary block mt-0.5 font-bold">Fits availability, 77kg weight class, BJJ focus</span>
+          </div>
+          <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
+            <span className="text-[9px] text-text-secondary block">DRILL ROUTINE GENERATED</span>
+            <span className="font-bold text-text-primary block mt-0.5">5 Guard Retention drills (Purple Belt BJJ)</span>
+          </div>
+        </div>
+      </div>
+    ),
+    flip: false,
+  },
 ];
 
 export default function FeaturesPage() {
@@ -237,7 +267,7 @@ export default function FeaturesPage() {
           variants={fadeUp(0.3)}
           initial="hidden"
           animate="visible"
-          className="mt-16 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 border-t border-border/60 pt-10"
+          className="mt-16 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 border-t border-border/60 pt-10"
         >
           {capabilities.map(({ icon: Icon, label }) => (
             <div
