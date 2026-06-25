@@ -22,6 +22,28 @@ export const createBooking = async (req: AuthenticatedRequest, res: Response, ne
       return res.status(404).json({ success: false, message: 'Coach not found or user is not a registered coach' });
     }
 
+    // Check for overlapping bookings (pending or accepted) for the same coach
+    const requestedStart = new Date(scheduledTime);
+    const requestedEnd = new Date(requestedStart.getTime() + durationMinutes * 60000);
+
+    const conflictingBooking = await Booking.findOne({
+      coachId,
+      status: { $in: ['pending', 'accepted'] },
+      $expr: {
+        $and: [
+          { $lt: ['$scheduledTime', requestedEnd] },
+          { $gt: [{ $add: ['$scheduledTime', { $multiply: ['$durationMinutes', 60000] }] }, requestedStart] }
+        ]
+      }
+    });
+
+    if (conflictingBooking) {
+      return res.status(409).json({
+        success: false,
+        message: 'This coach already has a booking that overlaps with the requested time',
+      });
+    }
+
     const booking = await Booking.create({
       athleteId,
       coachId,
