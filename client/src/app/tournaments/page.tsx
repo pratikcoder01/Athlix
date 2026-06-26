@@ -240,21 +240,58 @@ export default function TournamentsPage() {
                   </div>
 
                   {/* Finals */}
-                  <div className="flex flex-col justify-center flex-1">
-                    <span className="text-xs font-bold text-text-tertiary tracking-widest uppercase text-center mb-4 block flex-[0] self-center">Finals</span>
-                    <GlassCard padding="sm" variant="glow" className="relative group ring-1 ring-accent/20">
-                      <div className="absolute -inset-1 bg-accent/20 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="flex justify-between items-center text-sm mb-3">
-                        <span className="font-semibold text-text-primary">{bracketMatches[1].matches[0].p1 || 'TBD'}</span>
-                      </div>
-                      <div className="h-px bg-border w-full mb-3" />
-                      <div className="flex justify-between items-center text-sm mb-3">
-                        <span className="font-semibold text-text-primary">{bracketMatches[1].matches[0].p2 || 'TBD'}</span>
-                      </div>
-                      <div className="text-xs text-accent bg-accent/10 py-1.5 rounded-md text-center font-mono animate-pulse">
-                        {bracketMatches[1].matches[0].score}
-                      </div>
-                    </GlassCard>
+                  <div className="flex flex-col justify-center flex-1 gap-6">
+                    <div>
+                      <span className="text-xs font-bold text-text-tertiary tracking-widest uppercase text-center mb-4 block flex-[0] self-center">Finals</span>
+                      <GlassCard padding="sm" variant="glow" className="relative group ring-1 ring-accent/20">
+                        <div className="absolute -inset-1 bg-accent/20 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex justify-between items-center text-sm mb-3">
+                          <span className="font-semibold text-text-primary">{bracketMatches[1].matches[0].p1 || 'TBD'}</span>
+                        </div>
+                        <div className="h-px bg-border w-full mb-3" />
+                        <div className="flex justify-between items-center text-sm mb-3">
+                          <span className="font-semibold text-text-primary">{bracketMatches[1].matches[0].p2 || 'TBD'}</span>
+                        </div>
+                        <div className="text-xs text-accent bg-accent/10 py-1.5 rounded-md text-center font-mono animate-pulse">
+                          {bracketMatches[1].matches[0].score}
+                        </div>
+                      </GlassCard>
+                    </div>
+
+                    {/* Feature 4: Share Champion Result Card */}
+                    <AnimatePresence>
+                      {bracketMatches[1].matches[0].winner && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="flex flex-col gap-4"
+                        >
+                          <div id="champion-share-card" className="p-5 bg-gradient-to-br from-accent/10 via-background to-purple-500/5 border border-accent/30 rounded-2xl text-center relative overflow-hidden shadow-glow">
+                            <div className="absolute -top-12 -right-12 w-24 h-24 bg-accent/20 blur-2xl rounded-full" />
+                            <Award className="w-10 h-10 text-accent mx-auto mb-3 animate-bounce" />
+                            <p className="text-[10px] text-text-tertiary uppercase tracking-widest font-mono">Division Champion</p>
+                            <h4 className="text-lg font-black text-text-primary mt-1 uppercase tracking-wide">
+                              {bracketMatches[1].matches[0].winner}
+                            </h4>
+                            <p className="text-xs text-text-secondary mt-1">77kg Submission Division</p>
+                          </div>
+
+                          <MagneticButton
+                            variant="premium"
+                            size="sm"
+                            onClick={() => {
+                              const shareText = `🏆 Congratulations to ${bracketMatches[1].matches[0].winner} for winning the 77kg Submission Division at Athlix!`;
+                              navigator.clipboard.writeText(shareText);
+                              alert('Champion share card data copied to clipboard!');
+                            }}
+                            className="w-full justify-center"
+                          >
+                            Share Result Card
+                          </MagneticButton>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                 </div>

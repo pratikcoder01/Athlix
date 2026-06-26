@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Activity, Calendar, Award, TrendingUp, User, Users, Compass,
-  Settings, Bell, CheckSquare, ChevronRight, Plus, Zap, Star
+  Settings, Bell, CheckSquare, ChevronRight, Plus, Zap, Star, Sparkles
 } from 'lucide-react';
 import { GlassCard } from '../../components/shared/GlassCard';
 import MagneticButton from '../../components/shared/MagneticButton';
@@ -186,6 +186,17 @@ export default function DashboardPage() {
                       <span>Purple</span>
                       <span>Brown</span>
                       <span>Black</span>
+                    </div>
+                  </div>
+
+                  {/* Feature 3: Belt Promotion Readiness Insight */}
+                  <div className="mt-6 p-4 bg-accent/5 border-l-2 border-accent rounded-r-xl flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-accent font-black uppercase tracking-wider">AI Readiness Insight</p>
+                      <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                        Based on your logged <strong className="text-text-primary">42.5 sparring hours</strong> and exceptional <strong className="text-text-primary">78.3% win rate</strong>, you are tracking 15% ahead of typical Purple belt promotion timelines. Focus on tightening guard retention to close your remaining technical gap.
+                      </p>
                     </div>
                   </div>
                 </GlassCard>

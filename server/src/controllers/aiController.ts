@@ -305,26 +305,19 @@ export const matchCoach = async (
       return (disciplineMatches && locationMatches && pricingMatches) || keywordMatches;
     });
 
-    // If fewer than 3 match the pre-filtering database constraints, skip AI call
-    if (filteredCoaches.length < 3) {
-      return res.status(200).json({
-        success: true,
-        skipAI: true,
-        message: 'Broaden your search criteria to discover more matches.',
-        coaches: [],
-      });
-    }
+    // If database pre-filtering returned fewer than 3 coaches, fallback to comparing all coaches in the database to allow AI to make the best recommendations.
+    const coachesToRank = filteredCoaches.length >= 3 ? filteredCoaches : coachesData;
 
-    // 3. Ask Claude to rank the top 5 matches
+    // 3. Ask Claude/Featherless to rank the top 5 matches
     const systemPrompt = `You are an elite combat sports matchmaker. Your job is to rank the suitability of combat sports coaches based on a user's specific training requirements and constraints (such as discipline, budget, location, and experience).`;
 
     const userPrompt = `A student is searching for a coach with this requirement:
 "${query}"
 Fighter's Location: "${athleteLocation || 'Not provided'}"
-
+ 
 Here is the roster of available coaches:
-${JSON.stringify(filteredCoaches, null, 2)}
-
+${JSON.stringify(coachesToRank, null, 2)}
+ 
 Select and rank the top 5 best-fit coaches. Give each a suitability matchScore (integer from 0 to 100) and a brief one-sentence reason why.
 Respond strictly in JSON format matching this schema:
 {
