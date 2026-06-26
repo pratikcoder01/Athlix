@@ -49,7 +49,7 @@ export default function TournamentsPage() {
       }
     };
     socket.on('bracket_update', handleBracketUpdate);
-    return () => socket.off('bracket_update', handleBracketUpdate);
+    return () => { socket.off('bracket_update', handleBracketUpdate); };
   }, [socket]);
 
   return (
