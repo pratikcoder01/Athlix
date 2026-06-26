@@ -34,11 +34,11 @@ export default function DashboardPage() {
 
   const upcomingEvents = [
     { title: 'Las Vegas Grappling Open', date: 'July 15, 2026', time: '09:00 AM', location: 'Las Vegas, NV' },
-    { title: 'Open Sparring Review', date: 'June 28, 2026', time: '06:00 PM', location: 'Renzo Gracie SF' }
+    { title: 'Open Sparring Review', date: 'June 28, 2026', time: '06:00 PM', location: 'Apex Grappling Lab' }
   ];
 
   const recommendedCoaches = [
-    { name: 'Prof. Renato Silva', rank: 'BJJ Black Belt 3rd Degree', rate: '$90/hr', rating: '5.0 (88 reviews)' },
+    { name: 'Prof. Thiago Valente', rank: 'BJJ Black Belt 3rd Degree', rate: '$90/hr', rating: '5.0 (88 reviews)' },
     { name: 'Coach Kru Somchai', rank: 'Muay Thai Kru', rate: '$75/hr', rating: '4.9 (124 reviews)' }
   ];
 

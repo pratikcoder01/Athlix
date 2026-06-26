@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useReducedMotion } from 'framer-motion';
 
 // An animated floating cage (octahedron wireframe)
 const FloatingCage = () => {
@@ -68,6 +69,7 @@ const FloatingStars = () => {
 
 export const R3FBackground: React.FC = () => {
   const [mounted, setMounted] = useState(false);
+  const shouldReduce = useReducedMotion();
 
   useEffect(() => {
     setMounted(true);
@@ -85,16 +87,18 @@ export const R3FBackground: React.FC = () => {
       <div className="absolute top-0 right-0 h-[40%] w-[40%] bg-primary/3 blur-[120px] rounded-full z-0" />
       <div className="absolute bottom-0 left-0 h-[40%] w-[40%] bg-border/15 blur-[120px] rounded-full z-0" />
       
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 60 }}
-        style={{ background: 'transparent', width: '100%', height: '100%' }}
-        gl={{ alpha: true, antialias: true }}
-      >
-        <ambientLight intensity={0.4} />
-        <pointLight position={[10, 10, 10]} intensity={1.0} />
-        <FloatingCage />
-        <FloatingStars />
-      </Canvas>
+      {!shouldReduce && (
+        <Canvas
+          camera={{ position: [0, 0, 5], fov: 60 }}
+          style={{ background: 'transparent', width: '100%', height: '100%' }}
+          gl={{ alpha: true, antialias: true }}
+        >
+          <ambientLight intensity={0.4} />
+          <pointLight position={[10, 10, 10]} intensity={1.0} />
+          <FloatingCage />
+          <FloatingStars />
+        </Canvas>
+      )}
     </div>
   );
 };

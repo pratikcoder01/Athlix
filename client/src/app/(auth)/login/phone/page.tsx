@@ -192,7 +192,7 @@ export default function PhoneLoginPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Marcus Silva"
+                  placeholder="e.g. Lucas Vianna"
                   className="w-full bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                 />
               </div>

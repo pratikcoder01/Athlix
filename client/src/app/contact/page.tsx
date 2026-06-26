@@ -95,7 +95,7 @@ export default function ContactPage() {
                     <input
                       type="text"
                       className="bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
-                      placeholder="Marcus Silva"
+                      placeholder="Lucas Vianna"
                       required
                     />
                   </div>

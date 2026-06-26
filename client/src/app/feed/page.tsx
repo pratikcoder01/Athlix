@@ -18,7 +18,7 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<any[]>([
     {
       id: '1',
-      author: 'Prof. Renato Silva',
+      author: 'Prof. Thiago Valente',
       role: 'BJJ Black Belt',
       content: 'Just finished filming technical reviews for the upcoming guard passing module. Uploading details soon to the academy portal!',
       likes: 42,

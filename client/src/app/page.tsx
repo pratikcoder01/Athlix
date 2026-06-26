@@ -35,21 +35,21 @@ interface Athlete {
 }
 
 const initialAthletes: Athlete[] = [
-  { id: '1', name: 'Renato Silva', weight: '77 kg', seed: 'Seed 1', team: 'Renzo Gracie SF', avatar: 'RS' },
-  { id: '2', name: 'Marcus Silva', weight: '77 kg', seed: 'Seed 8', team: 'Silva BJJ', avatar: 'MS' },
-  { id: '3', name: 'Kevin Lee', weight: '77 kg', seed: 'Seed 4', team: 'Academy X', avatar: 'KL' },
-  { id: '4', name: 'Ryan Gracie', weight: '77 kg', seed: 'Seed 5', team: 'Gracie Barra', avatar: 'RG' },
-  { id: '5', name: 'Gordon Ryan', weight: '99 kg', seed: 'Seed 2', team: 'New Wave BJJ', avatar: 'GR' },
-  { id: '6', name: 'Nicholas Meregali', weight: '99 kg', seed: 'Seed 7', team: 'Dream Art', avatar: 'NM' },
-  { id: '7', name: 'Craig Jones', weight: '88 kg', seed: 'Seed 3', team: 'B-Team', avatar: 'CJ' },
-  { id: '8', name: 'Lachlan Giles', weight: '77 kg', seed: 'Seed 6', team: 'Absolute MMA', avatar: 'LG' },
+  { id: '1', name: 'Thiago Valente', weight: '77 kg', seed: 'Seed 1', team: 'Apex Grappling Lab', avatar: 'TV' },
+  { id: '2', name: 'Lucas Vianna', weight: '77 kg', seed: 'Seed 8', team: 'Vianna Combat Academy', avatar: 'LV' },
+  { id: '3', name: 'Derek Vance', weight: '77 kg', seed: 'Seed 4', team: 'Vanguard Martial Arts', avatar: 'DV' },
+  { id: '4', name: 'Rodrigo Santos', weight: '77 kg', seed: 'Seed 5', team: 'Horizon Jiu-Jitsu', avatar: 'RS' },
+  { id: '5', name: 'Garrison Thorne', weight: '99 kg', seed: 'Seed 2', team: 'Aether Submission Studio', avatar: 'GT' },
+  { id: '6', name: 'Mateo Brandao', weight: '99 kg', seed: 'Seed 7', team: 'Nebula Jiu-Jitsu', avatar: 'MB' },
+  { id: '7', name: 'Callum Pierce', weight: '88 kg', seed: 'Seed 3', team: 'Redline Grappling', avatar: 'CP' },
+  { id: '8', name: 'Alastair Sinclair', weight: '77 kg', seed: 'Seed 6', team: 'Summit Submission Academy', avatar: 'AS' },
 ];
 
 const mockStats: { [key: string]: string } = {
-  qf1: "Silva leads head-to-head 2-0. 85% submission rate from back mount.",
-  qf2: "Gracie carries 4-match submission streak. Lee has a 3-1 takedown advantage.",
-  qf3: "Ryan: 18-0 undefeated record. Meregali: 90% guard pass efficiency.",
-  qf4: "Jones: Leg-lock specialist. Giles: Veteran heel hook entry master.",
+  qf1: "Valente leads head-to-head 2-0. 85% submission rate from back mount.",
+  qf2: "Santos carries 4-match submission streak. Vance has a 3-1 takedown advantage.",
+  qf3: "Thorne: 18-0 undefeated record. Brandao: 90% guard pass efficiency.",
+  qf4: "Pierce: Leg-lock specialist. Sinclair: Veteran heel hook entry master.",
   sf1: "Projected Semifinal Matchup. Winner advances to the Gold Medal Round.",
   sf2: "Projected Semifinal Matchup. Heavily anticipated submission battle.",
   finals: "Championship Gold Match. Winner takes the tournament trophy."
@@ -111,7 +111,7 @@ const AthleteSlot: React.FC<{
       </div>
       {isSelected && (
         <span className="text-[8px] font-bold text-accent-gold tracking-widest font-mono shrink-0 flex items-center gap-0.5">
-          ADV <CheckCircle2 className="h-3 w-3 text-accent-gold" />
+          ADV <CheckCircle2 className="h-3 w-3 text-accent-gold" aria-hidden="true" />
         </span>
       )}
     </motion.div>
@@ -205,7 +205,7 @@ const ChampionBox: React.FC<{
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="bg-accent-gold/10 border border-accent-gold p-4 rounded-sm w-[180px] flex flex-col items-center relative"
           >
-            <Trophy className="h-8 w-8 text-accent-gold mb-2 animate-bounce" style={{ animationDuration: '2.5s' }} />
+            <Trophy className="h-8 w-8 text-accent-gold mb-2 animate-bounce" style={{ animationDuration: '2.5s' }} aria-hidden="true" />
             <span className="text-[9px] font-bold font-mono tracking-widest text-accent-gold uppercase">
               GOLD MEDALIST
             </span>
@@ -568,7 +568,7 @@ export default function LandingPage() {
               animate="visible"
               className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-3 py-1 text-[10px] font-bold text-primary tracking-widest uppercase mb-6 font-mono"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Direct scheduling & live brackets
             </motion.div>
 
@@ -653,16 +653,16 @@ export default function LandingPage() {
                       </div>
                       <nav className="flex flex-col gap-1 text-[10px] text-text-secondary font-bold">
                         <div className="px-2 py-1.5 hover:text-text-primary flex items-center gap-2 cursor-pointer">
-                          <User className="w-3.5 h-3.5" /> ATHLETES
+                          <User className="w-3.5 h-3.5" aria-hidden="true" /> ATHLETES
                         </div>
                         <div className="px-2 py-1.5 hover:text-text-primary flex items-center gap-2 cursor-pointer text-text-primary bg-surface/30 rounded-sm">
-                          <Calendar className="w-3.5 h-3.5 text-primary" /> BOOKINGS
+                          <Calendar className="w-3.5 h-3.5 text-primary" aria-hidden="true" /> BOOKINGS
                         </div>
                         <div className="px-2 py-1.5 hover:text-text-primary flex items-center gap-2 cursor-pointer">
-                          <Award className="w-3.5 h-3.5" /> BRACKETS
+                          <Award className="w-3.5 h-3.5" aria-hidden="true" /> BRACKETS
                         </div>
                         <div className="px-2 py-1.5 hover:text-text-primary flex items-center gap-2 cursor-pointer">
-                          <Activity className="w-3.5 h-3.5" /> PROGRESS
+                          <Activity className="w-3.5 h-3.5" aria-hidden="true" /> PROGRESS
                         </div>
                       </nav>
                     </div>
@@ -674,12 +674,12 @@ export default function LandingPage() {
                     <div className="bg-surface/40 p-4 border border-border rounded-sm flex flex-col justify-between">
                       <div>
                         <h4 className="font-bold text-[10px] text-text-primary flex items-center gap-1.5 mb-3 uppercase tracking-wider">
-                          <Calendar className="w-3.5 h-3.5 text-primary" /> WEEKLY CALENDAR
+                          <Calendar className="w-3.5 h-3.5 text-primary" aria-hidden="true" /> WEEKLY CALENDAR
                         </h4>
                         <div className="flex flex-col gap-2 text-[10px]">
                           <div className="p-2 bg-background/60 border border-border/40 rounded-sm">
                             <span className="block font-bold text-text-primary">Gi Sparring Session</span>
-                            <span className="text-text-secondary">Mon 10:00 AM • Prof. Renato Silva</span>
+                             <span className="text-text-secondary">Mon 10:00 AM • Prof. Thiago Valente</span>
                           </div>
                           <div className="p-2 bg-background/60 border border-border/40 rounded-sm">
                             <span className="block font-bold text-text-primary">Wrestling Takedowns</span>
@@ -696,7 +696,7 @@ export default function LandingPage() {
                     <div className="bg-surface/40 p-4 border border-border rounded-sm flex flex-col justify-between">
                       <div>
                         <h4 className="font-bold text-[10px] text-text-primary flex items-center gap-1.5 mb-3 uppercase tracking-wider">
-                          <Award className="w-3.5 h-3.5 text-primary" /> STRIPE MILESTONES
+                          <Award className="w-3.5 h-3.5 text-primary" aria-hidden="true" /> STRIPE MILESTONES
                         </h4>
                         <div className="flex flex-col gap-3 pl-2 border-l border-border/65 ml-1 text-[10px]">
                           <div>
@@ -795,7 +795,7 @@ export default function LandingPage() {
               Coaches customize hourly rates, specify sparring availability times, and approve student requests instantly, eliminating back-and-forth messaging.
             </p>
             <Link href="/features" className="mt-6 inline-flex items-center text-xs font-bold text-text-primary hover:text-primary gap-1 tracking-wider uppercase font-mono">
-              Explore calendar details <ChevronRight className="h-3.5 w-3.5" />
+              Explore calendar details <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -811,7 +811,7 @@ export default function LandingPage() {
               Create a permanent digital timeline of your combat career. Log sparring logs, attach video rolls, tag coaching instructors, and record belt rank advancements.
             </p>
             <Link href="/features" className="mt-6 inline-flex items-center text-xs font-bold text-text-primary hover:text-primary gap-1 tracking-wider uppercase font-mono">
-              See rank metrics <ChevronRight className="h-3.5 w-3.5" />
+              See rank metrics <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
           <div className="lg:col-span-6">
@@ -824,7 +824,7 @@ export default function LandingPage() {
                 <span className="text-lg">🥋</span>
                 <div>
                   <span className="block font-bold text-text-primary">First Stripe on BJJ Blue Belt</span>
-                  <span className="text-[10px] text-text-secondary block mt-0.5">Approved by Head Coach Renato Silva</span>
+                  <span className="text-[10px] text-text-secondary block mt-0.5">Approved by Head Coach Thiago Valente</span>
                   <span className="text-[9px] text-text-tertiary block mt-1">1 month ago</span>
                 </div>
               </div>
@@ -837,7 +837,7 @@ export default function LandingPage() {
       <section className="relative z-10 mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-border/60">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-3 py-1 text-[10px] font-bold text-primary tracking-widest uppercase mb-6 font-mono">
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             Intelligent co-pilot layer
           </div>
           <h2 className="text-3xl sm:text-4xl font-display font-black text-text-primary tracking-tight uppercase">
@@ -852,7 +852,7 @@ export default function LandingPage() {
           <SpotlightCard className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between min-h-[380px] relative overflow-hidden">
             <div>
               <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-sm flex items-center justify-center mb-6">
-                <Activity className="h-5 w-5 text-primary" />
+                <Activity className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-lg font-display font-black uppercase tracking-wide mb-3">Training Plan Generator</h3>
               <p className="text-xs text-text-secondary leading-relaxed mb-6 font-sans">
@@ -874,7 +874,7 @@ export default function LandingPage() {
           <SpotlightCard className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between min-h-[380px] relative overflow-hidden">
             <div>
               <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-sm flex items-center justify-center mb-6">
-                <User className="h-5 w-5 text-primary" />
+                <User className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-lg font-display font-black uppercase tracking-wide mb-3">Coach Matchmaker</h3>
               <p className="text-xs text-text-secondary leading-relaxed mb-6 font-sans">
@@ -888,7 +888,7 @@ export default function LandingPage() {
                 <span>COMPATIBILITY FIT</span>
                 <span className="text-accent-gold font-bold">94% MATCH</span>
               </div>
-              <span className="block font-bold text-text-primary">Prof. Renato Silva</span>
+              <span className="block font-bold text-text-primary">Prof. Thiago Valente</span>
               <span className="block text-text-tertiary">BJJ • 10:30 AM Slot Available</span>
             </div>
           </SpotlightCard>
@@ -896,7 +896,7 @@ export default function LandingPage() {
           <SpotlightCard className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between min-h-[380px] relative overflow-hidden">
             <div>
               <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-sm flex items-center justify-center mb-6">
-                <Trophy className="h-5 w-5 text-primary" />
+                <Trophy className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-lg font-display font-black uppercase tracking-wide mb-3">Bracket Seeding</h3>
               <p className="text-xs text-text-secondary leading-relaxed mb-6 font-sans">
@@ -910,7 +910,7 @@ export default function LandingPage() {
                 <span>SEEDING LOG</span>
                 <span className="text-success font-bold">COMPLETE</span>
               </div>
-              <span className="block font-bold text-text-primary">Seed 1: Renato Silva</span>
+              <span className="block font-bold text-text-primary">Seed 1: Thiago Valente</span>
               <span className="block text-text-tertiary">Based on tournament history</span>
             </div>
           </SpotlightCard>
@@ -928,11 +928,11 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center gap-3.5 mt-8">
             <div className="h-10 w-10 bg-primary/20 flex items-center justify-center font-bold text-primary text-xs rounded-full font-mono uppercase border border-primary/30">
-              RS
+              TV
             </div>
             <div className="text-left font-mono">
-              <span className="block text-xs font-bold text-text-primary uppercase">Prof. Renato Silva</span>
-              <span className="block text-[10px] text-text-secondary">Head Instructor, Renzo Gracie SF</span>
+              <span className="block text-xs font-bold text-text-primary uppercase">Prof. Thiago Valente</span>
+              <span className="block text-[10px] text-text-secondary">Head Instructor, Apex Grappling Lab</span>
             </div>
           </div>
         </div>

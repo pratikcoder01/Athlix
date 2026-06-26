@@ -23,10 +23,10 @@ export default function TournamentsPage() {
   const [bracketMatches, setBracketMatches] = useState<any[]>([
     { round: 'SEMIFINALS', matches: [
       { p1: 'Pratik (ATHLIX)', p1_rationale: '', p2: 'John Doe', p2_rationale: '', score: '3 - 0 (Armbar)', winner: 'Pratik (ATHLIX)' },
-      { p1: 'Mike Smith', p1_rationale: '', p2: 'Renato Silva', p2_rationale: '', score: '0 - 2 (Points)', winner: 'Renato Silva' }
+      { p1: 'Mike Smith', p1_rationale: '', p2: 'Thiago Valente', p2_rationale: '', score: '0 - 2 (Points)', winner: 'Thiago Valente' }
     ]},
     { round: 'FINALS', matches: [
-      { p1: 'Pratik (ATHLIX)', p1_rationale: '', p2: 'Renato Silva', p2_rationale: '', score: 'Pending...', winner: '' }
+      { p1: 'Pratik (ATHLIX)', p1_rationale: '', p2: 'Thiago Valente', p2_rationale: '', score: 'Pending...', winner: '' }
     ]}
   ]);
 

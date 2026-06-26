@@ -14,7 +14,7 @@ export default function BookingsPage() {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedDate, setSelectedDate] = useState('2026-06-25');
   const [selectedSlot, setSelectedSlot] = useState('10:00 AM - 11:30 AM');
-  const [coachName] = useState('Prof. Renato Silva');
+  const [coachName] = useState('Prof. Thiago Valente');
   const [bookingStatus, setBookingStatus] = useState<string>('pending');
 
   const slots = [
@@ -50,7 +50,7 @@ export default function BookingsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        // We'll mock the coachId/price for now, or match Prof. Renato Silva in the DB
+        // We'll mock the coachId/price for now, or match Prof. Thiago Valente in the DB
         body: JSON.stringify({
           coachId: '6584282f1f5139c27b0c3a2f', // Example ID or dynamically set
           scheduledTime: new Date(selectedDate),

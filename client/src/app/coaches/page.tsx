@@ -21,7 +21,7 @@ export default function DiscoverCoachesPage() {
   const coaches = [
     {
       id: 1,
-      name: 'Prof. Renato Silva',
+      name: 'Prof. Thiago Valente',
       discipline: 'BJJ',
       rank: 'Black Belt 3rd Degree',
       experience: '15 years',

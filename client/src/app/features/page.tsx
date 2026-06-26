@@ -50,14 +50,14 @@ const features = [
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
-          <span>TIMELINE — MARCUS SILVA</span>
+          <span>TIMELINE — LUCAS VIANNA</span>
           <span className="text-primary font-bold">12-WEEK STREAK</span>
         </div>
         <div className="flex flex-col gap-4 pl-3 relative border-l border-border/60 ml-2">
           <div className="relative">
             <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-border-strong border border-background" />
             <span className="font-bold text-text-primary">Gi Sparring Log Submitted</span>
-            <span className="block text-[9px] text-text-tertiary mt-0.5">3 hrs logged · Coach Renato</span>
+            <span className="block text-[9px] text-text-tertiary mt-0.5">3 hrs logged · Coach Thiago</span>
           </div>
           <div className="relative">
             <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-border-strong border border-background" />
@@ -67,7 +67,7 @@ const features = [
           <div className="relative">
             <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-primary border border-background animate-pulse" />
             <span className="font-bold text-primary">3rd Stripe — Blue Belt Awarded</span>
-            <span className="block text-[9px] text-text-secondary mt-0.5">Verified by Prof. Renato Silva</span>
+            <span className="block text-[9px] text-text-secondary mt-0.5">Verified by Prof. Thiago Valente</span>
           </div>
         </div>
       </div>
@@ -123,7 +123,7 @@ const features = [
         </div>
         <div className="flex flex-col gap-2">
           <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-sm flex justify-between items-center">
-            <span className="font-bold text-text-primary">Marcus Silva</span>
+            <span className="font-bold text-text-primary">Lucas Vianna</span>
             <span className="text-xs text-primary font-bold">WIN — Armbar</span>
           </div>
           <div className="p-2.5 bg-background/30 border border-border/20 rounded-sm opacity-50 flex justify-between items-center">
@@ -132,7 +132,7 @@ const features = [
           </div>
           <div className="mt-3 h-px w-full bg-border/40" />
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm flex justify-between items-center">
-            <span className="font-bold text-text-primary">Gordon Ryan</span>
+            <span className="font-bold text-text-primary">Garrison Thorne</span>
             <span className="text-xs text-accent-gold font-bold">FINAL NEXT</span>
           </div>
         </div>
@@ -156,11 +156,11 @@ const features = [
         </div>
         <pre className="text-[10px] text-text-secondary leading-relaxed overflow-x-auto">
 {`{
-  "athlete": "Marcus Silva",
+  "athlete": "Lucas Vianna",
   "belt": "Purple",
   "stripes": 3,
   "verified": true,
-  "academy": "Renzo Gracie SF",
+  "academy": "Apex Grappling Lab",
   "role": "athlete"
 }`}
         </pre>
@@ -185,7 +185,7 @@ const features = [
         <div className="flex flex-col gap-3">
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
             <span className="text-[9px] text-text-secondary block">COACH MATCH COMPATIBILITY</span>
-            <span className="font-bold text-text-primary block mt-0.5">Renato Silva: 94% Match Fit</span>
+            <span className="font-bold text-text-primary block mt-0.5">Thiago Valente: 94% Match Fit</span>
             <span className="text-[8px] text-text-tertiary block mt-0.5 font-bold">Fits availability, 77kg weight class, BJJ focus</span>
           </div>
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">

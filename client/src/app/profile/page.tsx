@@ -25,7 +25,7 @@ export default function ProfilePage() {
   ];
 
   const timelineLogs = [
-    { title: 'PROMOTED TO PURPLE BELT (3 STRIPES)', date: 'June 10, 2026', desc: 'Promoted by Prof. Renato Silva after successful submission matches at open mat.' },
+    { title: 'PROMOTED TO PURPLE BELT (3 STRIPES)', date: 'June 10, 2026', desc: 'Promoted by Prof. Thiago Valente after successful submission matches at open mat.' },
     { title: 'GOLD MEDAL AT VEGAS GRAPPLING OPEN', date: 'May 15, 2026', desc: 'Finished 3 opponents by armbar inside the light-heavyweight division.' }
   ];
 
