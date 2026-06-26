@@ -1,32 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* LIGHT MODE */
-  --background: #faf9f7;
-  --secondary: #f4f3f0;
-  --surface: #ffffff;
-  --primary: #991b1b; /* Crimson red */
-  --accent-gold: #c28e1d; /* Accent Gold */
-  --text-primary: #1a1a1a;
-  --text-secondary: #6b6b6b;
-  --text-tertiary: #a3a3a3;
-  --border: rgba(26, 26, 26, 0.08);
-  --border-strong: rgba(26, 26, 26, 0.15);
+  /* Named palette */
+  --void: #0A0A0C;
+  --canvas: #F6F4F0;
+  --signal: #DC2626;
+  --championship: #C9A227;
+  --ink: #141416;
+  --tape: #8A8A8E;
+
+  /* Semantic tokens — light */
+  --background: var(--canvas);
+  --secondary: #EFEDE8;
+  --surface: #FFFFFF;
+  --primary: var(--signal);
+  --accent-gold: var(--championship);
+  --text-primary: var(--ink);
+  --text-secondary: #5C5C60;
+  --text-tertiary: var(--tape);
+  --border: rgba(20, 20, 22, 0.08);
+  --border-strong: rgba(20, 20, 22, 0.15);
   --success: #15803d;
-  --mat-grid-color: rgba(153, 27, 27, 0.015);
+  --mat-grid-color: rgba(220, 38, 38, 0.012);
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Radius scale */
+  --radius-sharp: 2px;
+  --radius-card: 4px;
+  --radius-panel: 6px;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --duration-instant: 120ms;
+  --duration-fast: 200ms;
+  --duration-base: 320ms;
+  --duration-slow: 480ms;
+  --duration-signature: 800ms;
 }
 
 .dark {
-  /* DARK MODE */
-  --background: #0a0a0b;
+  --background: var(--void);
   --secondary: #111012;
-  --surface: #161417;
-  --primary: #dc2626; /* Crimson red */
-  --accent-gold: #d4a437; /* Accent Gold */
-  --text-primary: #f5f3f0;
-  --text-secondary: #9a9a9a;
-  --text-tertiary: #4c4c4c;
+  --surface: #141418;
+  --primary: var(--signal);
+  --accent-gold: #D4A83A;
+  --text-primary: #F5F3F0;
+  --text-secondary: #9A9A9E;
+  --text-tertiary: #5C5C60;
   --border: rgba(245, 243, 240, 0.08);
   --border-strong: rgba(245, 243, 240, 0.15);
   --success: #16a34a;
@@ -47,20 +79,21 @@
   --color-border-strong: var(--border-strong);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Outfit', sans-serif;
+  --font-display: 'Barlow Condensed', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Force consistent sharp 4px border radius throughout standard Tailwind classes */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 4px;
-  --radius-2xl: 4px;
-  --radius-3xl: 4px;
+  --radius-sm: var(--radius-sharp);
+  --radius-md: var(--radius-card);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: var(--radius-panel);
+  --radius-3xl: var(--radius-panel);
 }
 
 body, nav, footer, div, section, header, button, input, select, textarea, a {
-  transition: background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out;
+  transition: background-color var(--duration-fast) var(--ease-out-expo),
+              border-color var(--duration-fast) var(--ease-out-expo),
+              color var(--duration-fast) var(--ease-out-expo);
 }
 
 body {
@@ -73,10 +106,25 @@ body {
   font-feature-settings: 'ss01', 'ss02', 'cv01';
 }
 
+/* Display skew — kinetic editorial accent */
+.display-skew {
+  transform: skewX(-3deg);
+  transform-origin: left center;
+}
+
+.display-skew > * {
+  transform: skewX(3deg);
+}
+
+/* Tabular data */
+.tabular-data {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Combat sports visual texture utility classes */
 .mat-grid {
   background-size: 44px 44px;
-  background-image: 
+  background-image:
     linear-gradient(to right, var(--mat-grid-color) 1px, transparent 1px),
     linear-gradient(to bottom, var(--mat-grid-color) 1px, transparent 1px);
 }
@@ -89,20 +137,41 @@ body {
 .bracket-line-draw {
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: drawLine 2s ease-out forwards;
+  animation: drawLine var(--duration-slow) var(--ease-out-expo) forwards;
 }
 
 @keyframes drawLine {
-  to {
-    stroke-dashoffset: 0;
-  }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Crown sequence light burst */
+@keyframes crownBurst {
+  0% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0); }
+  40% { box-shadow: 0 0 40px 8px rgba(201, 162, 39, 0.45); }
+  100% { box-shadow: 0 0 12px 2px rgba(201, 162, 39, 0.15); }
+}
+
+.crown-burst {
+  animation: crownBurst var(--duration-signature) var(--ease-out-expo) forwards;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--secondary) 25%, var(--surface) 50%, var(--secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
 }
 
 /* Keyboard-only focus */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: var(--radius-card);
 }
 :focus:not(:focus-visible) {
   outline: none;
@@ -119,3 +188,15 @@ html.lenis { height: auto; }
 ::-webkit-scrollbar-track { background: var(--background); }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .crown-burst { animation: none; box-shadow: 0 0 12px 2px rgba(201, 162, 39, 0.15); }
+  .skeleton { animation: none; }
+}

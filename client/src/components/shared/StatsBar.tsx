@@ -56,7 +56,7 @@ function StatItem({ stat, index }: { stat: typeof stats[number]; index: number }
       ref={ref}
       className="relative flex flex-col items-center text-center px-4 py-4"
     >
-      <span className="text-3xl sm:text-5xl font-bold tracking-tight text-text-primary tabular-nums">
+      <span className="text-3xl sm:text-5xl font-display font-black tracking-tight text-text-primary tabular-data">
         {displayValue}
       </span>
       <p className="text-xs font-medium text-text-secondary mt-2 font-sans">

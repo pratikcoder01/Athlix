@@ -143,14 +143,23 @@ export default function DiscoverCoachesPage() {
           )}
         </div>
 
-        {/* AI Matchmaker Search Input */}
-        <div className="mb-8 p-6 bg-secondary border border-border rounded-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-            <h2 className="text-sm font-display font-black uppercase tracking-wider text-text-primary">ATHLIX AI Matchmaker</h2>
+        {/* AI Matchmaker — prominent differentiator */}
+        <div className="mb-10 p-6 sm:p-8 bg-secondary border-2 border-primary/30 rounded-sm relative overflow-hidden shadow-[0_0_40px_rgba(220,38,38,0.06)]">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute left-0 top-0 w-1 h-full bg-primary" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">Powered by AI</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-display font-black uppercase tracking-wide text-text-primary display-skew inline-block mb-4">
+              <span>Athlix AI Matchmaker</span>
+            </h2>
+            <p className="text-xs text-text-secondary mb-5 max-w-2xl">
+              Describe your goals in plain language — discipline, schedule, budget — and we rank the best coach fits for you.
+            </p>
           </div>
-          <form onSubmit={handleAiMatch} className="flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleAiMatch} className="relative flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <input
                 type="text"
@@ -170,10 +179,9 @@ export default function DiscoverCoachesPage() {
         {/* Loading state */}
         {aiLoading && (
           <div className="mb-12 flex flex-col items-center justify-center py-16 bg-secondary border border-border rounded-sm">
-            <div className="relative w-16 h-16 mb-4">
-              <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-            </div>
-            <p className="text-xs font-mono text-text-primary font-bold uppercase tracking-wider animate-pulse">
+            <div className="w-full max-w-md h-12 skeleton rounded-sm mb-6" />
+            <div className="w-48 h-3 skeleton rounded-sm mb-4" />
+            <p className="text-xs font-mono text-text-primary font-bold uppercase tracking-wider">
               {stagedMessage}
             </p>
           </div>

@@ -12,7 +12,7 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   children,
   className = '',
-  glowColor = 'rgba(255, 90, 61, 0.15)',
+  glowColor = 'rgba(220, 38, 38, 0.12)',
   ...props
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -40,7 +40,7 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
       }}
       whileHover={shouldReduce ? {} : { y: -2 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
-      className={`relative overflow-hidden rounded-xl border border-border bg-secondary p-6 shadow-sm transition-colors duration-200 cursor-pointer ${className}`}
+      className={`relative overflow-hidden rounded-sm border border-border bg-secondary p-6 shadow-sm transition-colors duration-200 cursor-pointer ${className}`}
       style={{ borderColor: isFocused ? glowColor.replace('0.15', '0.35') : undefined }}
       tabIndex={0}
       role="article"

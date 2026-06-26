@@ -140,14 +140,14 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 my-auto">
-          <blockquote className="text-3xl font-display font-black uppercase tracking-wide leading-tight max-w-lg mb-6">
-            &ldquo;IT IS NOT THE CRITIC WHO COUNTS; NOT THE MAN WHO POINTS OUT HOW THE STRONG MAN STUMBLES...&rdquo;
+          <blockquote className="text-2xl sm:text-3xl font-display font-black uppercase tracking-wide leading-tight max-w-lg mb-6">
+            &ldquo;It is not the critic who counts; not the man who points out how the strong man stumbles, or where the doer of deeds could have done them better. The credit belongs to the man who is actually in the arena.&rdquo;
           </blockquote>
-          <cite className="text-xs font-bold tracking-widest text-primary uppercase font-mono block">
-            — Theodore Roosevelt
+          <cite className="text-xs font-bold tracking-widest text-primary uppercase font-mono block not-italic">
+            Theodore Roosevelt
           </cite>
           <span className="text-[10px] font-mono text-text-tertiary block mt-1 uppercase tracking-wider">
-            The Man in the Arena
+            &ldquo;The Man in the Arena&rdquo; &mdash; Citizenship in a Free Republic, Sorbonne, Paris, April 23, 1910
           </span>
         </div>
 

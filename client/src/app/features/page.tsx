@@ -11,20 +11,10 @@ import Footer from '../../components/shared/Footer';
 import MagneticButton from '../../components/shared/MagneticButton';
 import SpotlightCard from '../../components/shared/SpotlightCard';
 import Link from 'next/link';
+import { fadeUp, EASE_OUT_EXPO } from '../../lib/motion';
 
 /* ── Metadata is inherited from root layout.tsx
    Title = "ATHLIX | Combat Sports Schedules & Brackets"       ── */
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as [number, number, number, number];
-
-const fadeUp = (delay = 0) => ({
-  hidden: { y: 16, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { delay, duration: 0.4, ease: EASE_OUT },
-  },
-});
 
 /* ── Quick-scan capability grid at top ── */
 const capabilities = [
@@ -295,7 +285,7 @@ export default function FeaturesPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.45, ease: EASE_OUT }}
+              transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
               className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center"
             >
               {/* Text block */}
@@ -338,7 +328,7 @@ export default function FeaturesPage() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.45, ease: EASE_OUT }}
+            transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
             className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
           >
             <div className="lg:col-span-8">

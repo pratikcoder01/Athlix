@@ -128,7 +128,7 @@ export default function DashboardPage() {
             <SpotlightCard key={idx} className="bg-secondary p-5 border border-border rounded-sm flex justify-between items-center h-24">
               <div>
                 <span className="text-[9px] font-bold font-mono tracking-widest text-text-secondary uppercase">{stat.label}</span>
-                <h3 className="text-2xl font-black font-mono tracking-tight text-text-primary mt-1">{stat.value}</h3>
+                <h3 className="text-2xl font-display font-black tabular-data tracking-tight text-text-primary mt-1">{stat.value}</h3>
               </div>
               <div className="h-8 w-8 bg-surface rounded-sm flex items-center justify-center border border-border/30">{stat.icon}</div>
             </SpotlightCard>
