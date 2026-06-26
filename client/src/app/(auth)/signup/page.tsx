@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Lock, Mail, ChevronRight, Award, Shield, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { User, Lock, Mail, ChevronRight, AlertCircle, Shield, Zap, Award, Trophy } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
 import MagneticButton from '../../../components/shared/MagneticButton';
-import SpotlightCard from '../../../components/shared/SpotlightCard';
+import { GlassCard } from '../../../components/shared/GlassCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -23,6 +24,13 @@ const signupSchema = z.object({
 });
 
 type SignupFields = z.infer<typeof signupSchema>;
+
+const roles = [
+  { id: 'athlete', label: 'Athlete', icon: Zap, desc: 'Track your journey' },
+  { id: 'coach', label: 'Coach', icon: Shield, desc: 'Manage students' },
+  { id: 'academy_owner', label: 'Gym Owner', icon: Award, desc: 'Run your academy' },
+  { id: 'tournament_organizer', label: 'Organizer', icon: Trophy, desc: 'Host events' },
+] as const;
 
 export default function SignupPage() {
   const router = useRouter();
@@ -37,7 +45,7 @@ export default function SignupPage() {
     formState: { errors, isSubmitting },
   } = useForm<SignupFields>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { role: 'athlete' }
+    defaultValues: { role: 'athlete' },
   });
 
   const selectedRole = watch('role');
@@ -52,10 +60,7 @@ export default function SignupPage() {
       const res = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken,
-          role: selectedRole,
-        }),
+        body: JSON.stringify({ idToken, role: selectedRole }),
       });
 
       const json = await res.json();
@@ -79,11 +84,7 @@ export default function SignupPage() {
       const res = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken,
-          name: 'Anonymous Athlete',
-          role: selectedRole,
-        }),
+        body: JSON.stringify({ idToken, name: 'Anonymous Athlete', role: selectedRole }),
       });
 
       const json = await res.json();
@@ -99,28 +100,14 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFields) => {
     setAuthError(null);
     try {
-      // 1. Create Firebase account
-      const firebaseUserCred = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-
-      // 2. Update display name in Firebase
+      const firebaseUserCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(firebaseUserCred.user, { displayName: data.name });
-
-      // 3. Get Firebase ID token
       const idToken = await firebaseUserCred.user.getIdToken();
 
-      // 4. Exchange for ATHLIX JWT — passes role + name so MongoDB user is created correctly
       const res = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken,
-          name: data.name,
-          role: data.role,
-        }),
+        body: JSON.stringify({ idToken, name: data.name, role: data.role }),
       });
 
       const json = await res.json();
@@ -142,203 +129,190 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background text-text-primary">
-      
-      {/* Left split pane: Motivation */}
-      <div className="relative hidden lg:flex flex-col justify-between p-16 bg-secondary overflow-hidden border-r border-border">
-        {/* Fine background grid */}
-        <div className="absolute inset-0 mat-grid opacity-30" />
-        
+      {/* Left: Branding Panel */}
+      <div className="relative hidden lg:flex flex-col justify-between p-16 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-purple-500/5" />
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+        }} />
+
         <div className="relative z-10 flex items-center gap-2.5">
-          <svg className="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" className="fill-none stroke-current stroke-2" />
-            <polygon points="12 6 18 10 18 14 12 18 6 14 6 10" />
-          </svg>
-          <span className="text-xl font-display font-black tracking-widest text-text-primary uppercase">
-            ATHLIX<span className="text-primary">.</span>
-          </span>
+          <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-accent" stroke="currentColor" strokeWidth={2.5}>
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
+            </svg>
+          </div>
+          <span className="text-xl font-black tracking-widest">ATHLIX<span className="text-accent">.</span></span>
         </div>
 
-        <div className="relative z-10 my-auto">
-          <blockquote className="text-3xl font-display font-black uppercase tracking-wide leading-tight max-w-lg mb-6">
-            &ldquo;SUFFER THE PAIN OF DISCIPLINE OR SUFFER THE PAIN OF REGRET.&rdquo;
-          </blockquote>
-          <cite className="text-xs font-bold tracking-widest text-primary uppercase font-mono">
-            — ATHLIX MOTTO
-          </cite>
+        <div className="relative z-10 my-auto max-w-lg">
+          <motion.blockquote
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-3xl lg:text-4xl font-black tracking-tight leading-tight mb-6"
+          >
+            &ldquo;Suffer the pain of discipline or suffer the pain of regret.&rdquo;
+          </motion.blockquote>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-text-secondary text-sm"
+          >
+            Join thousands of athletes, coaches, and academy owners building their legacy on Athlix.
+          </motion.p>
         </div>
 
-        <div className="relative z-10 flex gap-6 text-[10px] font-mono font-bold text-text-secondary uppercase">
-          <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-primary" /> SECURE JWT</span>
-          <span className="flex items-center gap-1.5"><Award className="h-4 w-4 text-primary" /> DIRECT CALENDARS</span>
+        <div className="relative z-10 flex gap-6">
+          {[
+            { icon: Shield, label: 'Encrypted Auth' },
+            { icon: Award, label: 'Belt Tracking' },
+            { icon: Trophy, label: 'Live Brackets' },
+          ].map(({ icon: Icon, label }) => (
+            <span key={label} className="flex items-center gap-1.5 text-xs text-text-secondary">
+              <Icon className="w-4 h-4 text-accent" /> {label}
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* Right split pane: Form */}
-      <div className="flex items-center justify-center p-8 sm:p-12">
+      {/* Right: Form */}
+      <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
-          <div className="mb-6">
-            <div className="flex items-center gap-2.5 mb-4 lg:hidden">
-              <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" className="fill-none stroke-current stroke-2" />
-                <polygon points="12 6 18 10 18 14 12 18 6 14 6 10" />
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-6 lg:hidden">
+            <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={2.5}>
+                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
               </svg>
-              <span className="text-md font-display font-black tracking-widest text-text-primary uppercase">
-                ATHLIX<span className="text-primary">.</span>
-              </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
-              CREATE PROFILE
-            </h2>
-            <p className="text-text-secondary text-xs mt-2">
-              Select your platform role and enter credentials to join.
-            </p>
+            <span className="font-black tracking-widest">ATHLIX<span className="text-accent">.</span></span>
           </div>
 
-          <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm shadow-xl">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <h2 className="text-3xl font-black tracking-tight mb-1">Create Account</h2>
+            <p className="text-text-secondary text-sm mb-8">Select your role and join the platform.</p>
+          </motion.div>
+
+          <GlassCard padding="lg">
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-              
               {/* Role Selection */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Platform Role</label>
+              <div>
+                <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3 block">Your Role</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: 'athlete', label: 'ATHLETE' },
-                    { id: 'coach', label: 'COACH' },
-                    { id: 'academy_owner', label: 'GYM OWNER' },
-                    { id: 'tournament_organizer', label: 'ORGANIZER' }
-                  ].map((roleOption) => (
+                  {roles.map(({ id, label, icon: Icon, desc }) => (
                     <button
-                      key={roleOption.id}
+                      key={id}
                       type="button"
-                      onClick={() => setValue('role', roleOption.id as "athlete" | "coach" | "academy_owner" | "tournament_organizer")}
-                      className={`py-2 text-[10px] font-bold font-mono tracking-wider border rounded-sm cursor-pointer transition-all ${
-                        selectedRole === roleOption.id
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border bg-surface text-text-secondary hover:text-text-primary'
+                      onClick={() => setValue('role', id as SignupFields['role'])}
+                      className={`p-3 rounded-xl text-left border transition-all ${
+                        selectedRole === id
+                          ? 'border-accent bg-accent/10 ring-1 ring-accent/30'
+                          : 'border-border hover:border-accent/30'
                       }`}
                     >
-                      {roleOption.label}
+                      <Icon className={`w-4 h-4 mb-1 ${selectedRole === id ? 'text-accent' : 'text-text-tertiary'}`} />
+                      <p className={`text-sm font-bold ${selectedRole === id ? 'text-accent' : ''}`}>{label}</p>
+                      <p className="text-[10px] text-text-tertiary">{desc}</p>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Full Name */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Full Name</label>
+              {/* Inputs */}
+              <div>
+                <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Full Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-5.5 w-5.5 text-text-secondary" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                   <input
-                    type="text"
                     {...register('name')}
-                    className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-2.5 text-xs text-text-primary focus:outline-none focus:border-primary font-sans"
-                    placeholder="e.g. John Doe"
+                    className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                    placeholder="John Doe"
                   />
                 </div>
-                {errors.name && (
-                  <span className="text-[10px] text-primary font-mono font-bold mt-1 uppercase">{errors.name.message}</span>
-                )}
+                {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}
               </div>
 
-              {/* Email */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Email Address</label>
+              <div>
+                <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-5.5 w-5.5 text-text-secondary" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                   <input
                     type="email"
                     {...register('email')}
-                    className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-2.5 text-xs text-text-primary focus:outline-none focus:border-primary font-sans"
+                    className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                     placeholder="name@example.com"
                   />
                 </div>
-                {errors.email && (
-                  <span className="text-[10px] text-primary font-mono font-bold mt-1 uppercase">{errors.email.message}</span>
-                )}
+                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
               </div>
 
-              {/* Password */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Password</label>
+              <div>
+                <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5.5 w-5.5 text-text-secondary" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                   <input
                     type="password"
                     {...register('password')}
-                    className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-2.5 text-xs text-text-primary focus:outline-none focus:border-primary font-sans"
+                    className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                     placeholder="••••••••"
                   />
                 </div>
-                {errors.password && (
-                  <span className="text-[10px] text-primary font-mono font-bold mt-1 uppercase">{errors.password.message}</span>
-                )}
+                {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>}
               </div>
 
-              {/* Auth error display */}
+              {/* Auth error */}
               {authError && (
-                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
-                  <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                <div className="flex items-center gap-2 p-3 bg-red-400/10 border border-red-400/20 rounded-xl">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <p className="text-xs text-red-400">{authError}</p>
                 </div>
               )}
 
-              <MagneticButton
-                type="submit"
-                className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
-              >
-                {isSubmitting ? 'REGISTERING...' : 'REGISTER PROFILE'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
+              <MagneticButton type="submit" variant="premium" className="w-full justify-center">
+                {isSubmitting ? 'Creating...' : 'Create Account'} <ChevronRight className="w-4 h-4 ml-1" />
               </MagneticButton>
 
               {/* Divider */}
-              <div className="flex items-center my-2">
-                <div className="flex-grow border-t border-border"></div>
-                <span className="px-3 text-[10px] font-mono font-bold text-text-secondary uppercase">OR REGISTER WITH</span>
-                <div className="flex-grow border-t border-border"></div>
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-text-tertiary">or register with</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
 
-              {/* Social Logins */}
+              {/* Social */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
-                  className="flex items-center justify-center gap-2 py-2.5 border border-border bg-surface text-text-primary text-[10px] font-mono font-bold uppercase rounded-sm hover:border-primary transition-all cursor-pointer"
+                  className="flex items-center justify-center gap-2 py-3 border border-border rounded-xl text-sm font-semibold hover:border-accent/40 transition-all"
                 >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                   </svg>
                   Google
                 </button>
                 <button
                   type="button"
                   onClick={handleAnonymousSignIn}
-                  className="flex items-center justify-center gap-2 py-2.5 border border-border bg-surface text-text-primary text-[10px] font-mono font-bold uppercase rounded-sm hover:border-primary transition-all cursor-pointer"
+                  className="flex items-center justify-center gap-2 py-3 border border-border rounded-xl text-sm font-semibold hover:border-accent/40 transition-all"
                 >
-                  <User className="h-3.5 w-3.5 text-text-secondary" />
+                  <User className="w-4 h-4 text-text-tertiary" />
                   Guest
                 </button>
               </div>
             </form>
-          </SpotlightCard>
+          </GlassCard>
 
-          <p className="text-center text-xs text-text-secondary font-mono mt-6 uppercase font-bold">
-            Already have an ATHLIX profile?{' '}
-            <Link href="/login" className="text-primary hover:underline">
-              Login here
+          <p className="text-center text-sm text-text-secondary mt-6">
+            Already have an account?{' '}
+            <Link href="/login" className="text-accent font-semibold hover:underline">
+              Log in
             </Link>
           </p>
         </div>

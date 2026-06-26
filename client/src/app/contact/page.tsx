@@ -2,11 +2,20 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Send, MapPin, Mail, Phone, Sparkles } from 'lucide-react';
+import { Send, MapPin, Mail, Phone, MessageSquare, Clock, Globe } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import MagneticButton from '../../components/shared/MagneticButton';
-import SpotlightCard from '../../components/shared/SpotlightCard';
+import { GlassCard } from '../../components/shared/GlassCard';
+import { AnimatedBadge } from '../../components/shared/AnimatedBadge';
+import { AnimatedText } from '../../components/shared/AnimatedText';
+
+const contactInfo = [
+  { icon: MapPin, label: 'HQ Location', value: 'San Francisco, California', color: 'text-blue-400 bg-blue-400/10' },
+  { icon: Mail, label: 'Email', value: 'support@athlix.com', color: 'text-accent bg-accent/10' },
+  { icon: Phone, label: 'Phone', value: '+91 88799 81125', color: 'text-green-400 bg-green-400/10' },
+  { icon: Clock, label: 'Response Time', value: 'Within 24 hours', color: 'text-amber-400 bg-amber-400/10' },
+];
 
 export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
@@ -15,129 +24,143 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-text-primary overflow-hidden">
+    <div className="min-h-screen bg-background text-text-primary">
       <Navbar />
 
-      {/* Header Section */}
-      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 text-center relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-3 py-1 text-[10px] font-bold text-primary tracking-widest uppercase mb-6 font-mono"
-        >
-          <Sparkles className="h-3.5 w-3.5" /> Direct lines
-        </motion.div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 inline-flex">
+            <AnimatedBadge variant="accent" glow>
+              <MessageSquare className="w-3 h-3 mr-1.5" /> Get in Touch
+            </AnimatedBadge>
+          </motion.div>
+          <AnimatedText
+            text="Contact the Builders"
+            className="text-4xl md:text-6xl font-black tracking-tight mb-4"
+            delay={0.1}
+          />
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-text-secondary text-lg max-w-2xl mx-auto"
+          >
+            Connect directly with our team for school registrations, bracket configurations, or system onboarding.
+          </motion.p>
+        </div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08, duration: 0.35 }}
-          className="text-4xl sm:text-5xl lg:text-6xl font-display font-black tracking-tight uppercase"
-        >
-          CONTACT THE BUILDERS
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.16, duration: 0.35 }}
-          className="mt-6 text-sm sm:text-base text-text-secondary max-w-2xl mx-auto leading-relaxed"
-        >
-          Connect directly with our engineering team for school registrations, bracket configurations, or system onboarding.
-        </motion.p>
-      </section>
-
-      {/* Info details & form layout */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 border-t border-border/60 mb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left panel: Info */}
-          <div className="lg:col-span-1 flex flex-col gap-6">
-            <SpotlightCard className="bg-secondary p-6 border border-border rounded-sm">
-              <div className="flex gap-4 items-center">
-                <MapPin className="h-5 w-5 text-primary shrink-0" />
-                <div>
-                  <h4 className="text-xs font-bold font-mono uppercase tracking-widest text-text-primary">HQ LOCATION</h4>
-                  <p className="text-text-secondary text-xs mt-1 font-sans">San Francisco, California</p>
+        {/* Info Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {contactInfo.map(({ icon: Icon, label, value, color }, idx) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.08 + 0.2 }}
+            >
+              <GlassCard padding="md" variant="interactive" className="text-center h-full">
+                <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mx-auto mb-3`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-              </div>
-            </SpotlightCard>
+                <p className="text-[10px] text-text-tertiary uppercase tracking-widest mb-1">{label}</p>
+                <p className="font-semibold text-sm">{value}</p>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
 
-            <SpotlightCard className="bg-secondary p-6 border border-border rounded-sm">
-              <div className="flex gap-4 items-center">
-                <Mail className="h-5 w-5 text-primary shrink-0" />
-                <div>
-                  <h4 className="text-xs font-bold font-mono uppercase tracking-widest text-text-primary">DIRECT EMAIL</h4>
-                  <p className="text-text-secondary text-xs mt-1 font-sans">support@athlix.com</p>
+        {/* Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Left: Map placeholder */}
+          <div className="lg:col-span-2">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+              <GlassCard variant="glow" padding="none" className="h-full min-h-[400px] relative overflow-hidden">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)',
+                  backgroundSize: '28px 28px',
+                }} />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50" />
+                <div className="relative z-10 flex flex-col items-center justify-center h-full p-8 text-center">
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                    className="w-14 h-14 rounded-2xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4"
+                  >
+                    <Globe className="w-7 h-7 text-accent" />
+                  </motion.div>
+                  {[1, 2, 3].map(i => (
+                    <motion.div
+                      key={i}
+                      animate={{ scale: [1, 1.4 + i * 0.2], opacity: [0.3, 0] }}
+                      transition={{ repeat: Infinity, duration: 2 + i * 0.4, delay: i * 0.3, ease: 'easeOut' }}
+                      className="absolute w-14 h-14 rounded-full border border-accent/30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                    />
+                  ))}
+                  <h3 className="font-black text-lg mb-2">Athlix HQ</h3>
+                  <p className="text-text-secondary text-sm mb-1">San Francisco, CA</p>
+                  <p className="text-text-tertiary text-xs">Remote-first team — global coverage</p>
                 </div>
-              </div>
-            </SpotlightCard>
-
-            <SpotlightCard className="bg-secondary p-6 border border-border rounded-sm">
-              <div className="flex gap-4 items-center">
-                <Phone className="h-5 w-5 text-primary shrink-0" />
-                <div>
-                  <h4 className="text-xs font-bold font-mono uppercase tracking-widest text-text-primary">CONTACT TELEPHONE</h4>
-                  <p className="text-text-secondary text-xs mt-1 font-sans">+91 88799 81125</p>
-                </div>
-              </div>
-            </SpotlightCard>
+              </GlassCard>
+            </motion.div>
           </div>
 
-          {/* Right panel: Contact Form */}
-          <div className="lg:col-span-2">
-            <SpotlightCard className="bg-secondary p-8 border border-border rounded-sm">
-              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Full name</label>
+          {/* Right: Contact form */}
+          <div className="lg:col-span-3">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+              <GlassCard padding="lg">
+                <h3 className="font-black text-lg mb-6">Send a Message</h3>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Full Name</label>
+                      <input
+                        type="text"
+                        className="w-full bg-surface border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                        placeholder="Your name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Email</label>
+                      <input
+                        type="email"
+                        className="w-full bg-surface border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Subject</label>
                     <input
                       type="text"
-                      className="bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
-                      placeholder="Lucas Vianna"
+                      className="w-full bg-surface border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                      placeholder="e.g. Gym onboarding request"
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Email address</label>
-                    <input
-                      type="email"
-                      className="bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
-                      placeholder="marcus@graciesf.com"
+
+                  <div>
+                    <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Message</label>
+                    <textarea
+                      rows={5}
+                      className="w-full bg-surface border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none"
+                      placeholder="Tell us about your needs..."
                       required
                     />
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Subject</label>
-                  <input
-                    type="text"
-                    className="bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
-                    placeholder="e.g. Gym onboarding request"
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Message details</label>
-                  <textarea
-                    rows={5}
-                    className="bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
-                    placeholder="Provide details..."
-                    required
-                  />
-                </div>
-
-                <MagneticButton type="submit" className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase">
-                  <Send className="h-4.5 w-4.5 mr-2 inline" /> TRANSMIT INQUIRY
-                </MagneticButton>
-              </form>
-            </SpotlightCard>
+                  <MagneticButton type="submit" variant="premium" className="w-full justify-center">
+                    <Send className="w-4 h-4 mr-2" /> Send Message
+                  </MagneticButton>
+                </form>
+              </GlassCard>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>

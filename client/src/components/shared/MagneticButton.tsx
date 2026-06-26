@@ -18,8 +18,13 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   size = 'md',
   disabled = false,
   as = 'button',
-  ...props
+  ...restProps
 }) => {
+  // Extract standard button attributes and omit any custom/conflicting motion handler names if necessary.
+  // In React 19/Framer Motion, spreading HTMLButtonElement attributes directly onto motion.button can cause type clashes with properties like onDrag or others.
+  // Let's filter out custom props or explicitly cast if needed, or simply map known safe attributes.
+  const { type, onClick, id, title, style } = restProps as any;
+  const props = { type, onClick, id, title, style };
   const ref = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const shouldReduce = useReducedMotion();
@@ -75,7 +80,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
     animate: shouldReduce ? {} : { x: position.x, y: position.y },
     whileHover: shouldReduce || disabled ? {} : { scale: 1.02 },
     whileTap: shouldReduce || disabled ? {} : { scale: 0.95 },
-    transition: { type: 'spring', stiffness: 400, damping: 25, mass: 0.5 },
+    transition: { type: 'spring' as const, stiffness: 400, damping: 25, mass: 0.5 },
   };
 
   if (as === 'span') {
