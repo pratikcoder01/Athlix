@@ -69,7 +69,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     // Disconnect if user logs out
     if (!user) {
-      if (socket) {
+        if (socket) {
         socket.disconnect();
         setSocket(null);
       }

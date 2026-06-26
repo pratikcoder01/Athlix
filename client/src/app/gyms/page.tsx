@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Search, Star, Navigation, Building2, ChevronRight, Activity, ArrowLeft } from 'lucide-react';
+import { MapPin, Search, Star, Navigation, Building2, ChevronRight, Activity, ArrowLeft, Navigation2 } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import { GlassCard } from '../../components/shared/GlassCard';
@@ -20,140 +20,129 @@ interface Gym {
   reviews: number;
   address: string;
   description: string;
-  distance: string;
   color: string;
 }
 
 const mockGyms: Gym[] = [
   {
     id: 1,
-    name: 'Apex Grappling Lab',
-    lat: 37.7794,
-    lng: -122.4132,
+    name: 'Bangalore BJJ Academy',
+    lat: 12.9348,
+    lng: 77.6189,
     disciplines: ['BJJ', 'Wrestling'],
-    rating: 4.9,
+    rating: 4.92,
     reviews: 142,
-    address: '825 Market St, San Francisco, CA',
-    description: 'San Francisco\'s premier institute for submission grappling and freestyle wrestling. World-class mats and coaching.',
-    distance: '0.6 miles',
+    address: '45, 80 Feet Rd, Koramangala 4th Block, Bengaluru, Karnataka 560034',
+    description: 'Bengaluru\'s top school for Brazilian Jiu-Jitsu and submission grappling. Affiliated with international competition lineages.',
     color: 'purple',
   },
   {
     id: 2,
-    name: 'Redline Striking Academy',
-    lat: 37.7682,
-    lng: -122.4211,
-    disciplines: ['Muay Thai', 'Boxing'],
+    name: 'Combat Kinetics Bangalore',
+    lat: 12.9754,
+    lng: 77.6410,
+    disciplines: ['Muay Thai', 'MMA'],
     rating: 4.85,
     reviews: 96,
-    address: '1042 Valencia St, San Francisco, CA',
-    description: 'Elite kickboxing and Muay Thai classes. Home of active professional Muay Thai competitors and trainers.',
-    distance: '1.2 miles',
+    address: '1202, 100 Feet Rd, Indiranagar, Bengaluru, Karnataka 560038',
+    description: 'A premium combat sports lab specializing in Muay Thai striking, functional fitness, and amateur MMA preparation.',
     color: 'green',
   },
   {
     id: 3,
-    name: 'Golden Gate MMA',
-    lat: 37.7853,
-    lng: -122.4342,
-    disciplines: ['MMA', 'BJJ', 'Boxing'],
-    rating: 4.75,
+    name: 'Total Combat Club',
+    lat: 12.9221,
+    lng: 77.5855,
+    disciplines: ['Boxing', 'MMA'],
+    rating: 4.78,
     reviews: 118,
-    address: '1980 Post St, San Francisco, CA',
-    description: 'A complete combat sports center offering professional MMA fighter programs and beginner-friendly classes.',
-    distance: '1.5 miles',
+    address: '9th Main Rd, Jayanagar 3rd Block, Bengaluru, Karnataka 560011',
+    description: 'Elite boxing rings, heavy bag racks, and dynamic conditioning circuits. Home of regional amateur pugilists.',
     color: 'blue',
   },
   {
     id: 4,
-    name: 'Vanguard Wrestling Club',
-    lat: 37.7561,
-    lng: -122.4089,
-    disciplines: ['Wrestling'],
-    rating: 4.92,
-    reviews: 82,
-    address: '2450 17th St, San Francisco, CA',
-    description: 'Specialized training in freestyle and Greco-Roman wrestling. Perfect for athletes looking to improve their takedowns.',
-    distance: '2.0 miles',
-    color: 'amber',
-  },
-  {
-    id: 5,
-    name: 'Apex Boxing Gym',
-    lat: 37.7912,
-    lng: -122.4012,
-    disciplines: ['Boxing'],
-    rating: 4.68,
-    reviews: 64,
-    address: '450 Sansome St, San Francisco, CA',
-    description: 'Traditional sweet science training in the heart of the financial district. High-intensity sparring and mitt work.',
-    distance: '1.4 miles',
-    color: 'red',
-  },
-  {
-    id: 6,
-    name: 'Zenith Jiu-Jitsu SF',
-    lat: 37.7621,
-    lng: -122.4431,
+    name: 'Alliance Jiu-Jitsu India',
+    lat: 13.0285,
+    lng: 77.5896,
     disciplines: ['BJJ'],
-    rating: 4.8,
-    reviews: 74,
-    address: '1200 Stanyan St, San Francisco, CA',
-    description: 'Technical BJJ instruction for all levels, focusing on self-defense, competition, and core fitness.',
-    distance: 2.8 + ' miles',
+    rating: 4.95,
+    reviews: 82,
+    address: '18, 80 Feet Rd, RT Nagar, Bengaluru, Karnataka 560032',
+    description: 'First-generation BJJ academy in India, offering technical Gi and No-Gi training programs for beginners and competitors.',
     color: 'purple',
   },
   {
+    id: 5,
+    name: 'Deccan MMA & Wrestling',
+    lat: 12.9592,
+    lng: 77.6974,
+    disciplines: ['MMA', 'Wrestling'],
+    rating: 4.82,
+    reviews: 64,
+    address: 'Marathahalli Main Rd, opposite Innovative Multiplex, Bengaluru, Karnataka 560037',
+    description: 'High-intensity wrestling drills and MMA cage combat sessions. Perfect for improving takedowns and submission defense.',
+    color: 'amber',
+  },
+  {
+    id: 6,
+    name: 'Koramangala Boxing Ring',
+    lat: 12.9301,
+    lng: 77.6225,
+    disciplines: ['Boxing'],
+    rating: 4.7,
+    reviews: 74,
+    address: '14, 1st Cross Rd, Koramangala 5th Block, Bengaluru, Karnataka 560095',
+    description: 'Traditional boxing training with active sparring leagues, focus mitt routines, and expert coaching.',
+    color: 'red',
+  },
+  {
     id: 7,
-    name: 'Pacific Muay Thai',
-    lat: 37.7482,
-    lng: -122.4182,
+    name: 'Absolute Muay Thai India',
+    lat: 12.9815,
+    lng: 77.5921,
     disciplines: ['Muay Thai'],
-    rating: 4.9,
+    rating: 4.88,
     reviews: 112,
-    address: '3150 Mission St, San Francisco, CA',
-    description: 'Authentic Thai training and conditioning. Friendly community, certified Kru coaches, and junior programs.',
-    distance: '2.2 miles',
+    address: 'Cunningham Rd, Vasanth Nagar, Bengaluru, Karnataka 560051',
+    description: 'Authentic training style with traditional Kru coaches. Focuses on elbow/knee clinches and high-cardio training.',
     color: 'green',
   },
   {
     id: 8,
-    name: 'Bay Area Combat Club',
-    lat: 37.8021,
-    lng: -122.4251,
-    disciplines: ['MMA', 'Wrestling', 'BJJ'],
-    rating: 4.72,
+    name: 'Indian Grappling Academy',
+    lat: 12.9102,
+    lng: 77.6321,
+    disciplines: ['BJJ', 'Wrestling'],
+    rating: 4.9,
     reviews: 90,
-    address: '750 Beach St, San Francisco, CA',
-    description: 'Waterfront combat training facility providing conditioning, cage sparring, and cross-functional fitness.',
-    distance: '2.5 miles',
-    color: 'blue',
+    address: 'L-142, Sector 6, HSR Layout, Bengaluru, Karnataka 560102',
+    description: 'Technical BJJ and Olympic wrestling training. Modern mats, clean facility, and dedicated kids BJJ programs.',
+    color: 'purple',
   },
   {
     id: 9,
-    name: 'Iron Glove Boxing',
-    lat: 37.7391,
-    lng: -122.4392,
-    disciplines: ['Boxing', 'MMA'],
-    rating: 4.62,
+    name: 'Striker Boxing Club',
+    lat: 12.9632,
+    lng: 77.5321,
+    disciplines: ['Boxing'],
+    rating: 4.65,
     reviews: 48,
-    address: '415 Ocean Ave, San Francisco, CA',
-    description: 'Hardcore, old-school boxing club focusing on building mental toughness, stamina, and solid fundamentals.',
-    distance: '3.6 miles',
+    address: 'MC Layout, Vijayanagar, Bengaluru, Karnataka 560040',
+    description: 'Community-focused boxing club offering amateur training, youth programs, and intense cardio sessions.',
     color: 'red',
   },
   {
     id: 10,
-    name: 'Mission Submission BJJ',
-    lat: 37.7594,
-    lng: -122.4153,
-    disciplines: ['BJJ', 'Wrestling'],
-    rating: 4.88,
+    name: 'Apex Combat Sports',
+    lat: 13.0125,
+    lng: 77.6712,
+    disciplines: ['MMA', 'Muay Thai'],
+    rating: 4.74,
     reviews: 104,
-    address: '2980 16th St, San Francisco, CA',
-    description: 'High-level No-Gi grappling lab. Special focus on modern leglocks, back takes, and submission strategy.',
-    distance: '1.6 miles',
-    color: 'purple',
+    address: '80 Feet Rd, HRBR Layout, Kalyan Nagar, Bengaluru, Karnataka 560043',
+    description: 'A multidisciplinary combat gym with an indoor ring and crossfit cage. All levels welcome.',
+    color: 'blue',
   },
 ];
 
@@ -173,22 +162,64 @@ const mapColors: Record<string, string> = {
   red: '#ef4444',
 };
 
+// Haversine formula helper to calculate physical distance in kilometers
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return d;
+};
+
 export default function GymsPage() {
   const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDiscipline, setSelectedDiscipline] = useState('All');
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  // Live user location state
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locatingUser, setLocatingUser] = useState(false);
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const userMarkerRef = useRef<any>(null);
 
-  const filteredGyms = mockGyms.filter((gym) => {
-    const matchesSearch = gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      gym.address.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDiscipline = selectedDiscipline === 'All' || gym.disciplines.includes(selectedDiscipline);
-    return matchesSearch && matchesDiscipline;
-  });
+  // Compute dynamic distance for gyms
+  const getGymDistanceStr = (gym: Gym) => {
+    if (userLocation) {
+      const dist = calculateDistance(userLocation.lat, userLocation.lng, gym.lat, gym.lng);
+      return `${dist.toFixed(1)} km`;
+    }
+    // Static fallback default distance in Bengaluru (based on default center)
+    const dist = calculateDistance(12.9716, 77.5946, gym.lat, gym.lng);
+    return `${dist.toFixed(1)} km (from Center)`;
+  };
+
+  const filteredGyms = mockGyms
+    .filter((gym) => {
+      const matchesSearch =
+        gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        gym.address.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDiscipline = selectedDiscipline === 'All' || gym.disciplines.includes(selectedDiscipline);
+      return matchesSearch && matchesDiscipline;
+    })
+    .sort((a, b) => {
+      if (userLocation) {
+        const distA = calculateDistance(userLocation.lat, userLocation.lng, a.lat, a.lng);
+        const distB = calculateDistance(userLocation.lat, userLocation.lng, b.lat, b.lng);
+        return distA - distB;
+      }
+      return 0;
+    });
 
   // Client-side initialization of Leaflet
   useEffect(() => {
@@ -218,17 +249,17 @@ export default function GymsPage() {
     };
   }, []);
 
-  // Initialize Map and Render Markers
+  // Initialize Map and Render Markers (Indian Center - Bengaluru)
   useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current || typeof window === 'undefined') return;
     const L = (window as any).L;
     if (!L) return;
 
-    // Create Map (Initial Zoom-out state for fly-in animation)
+    // Center on Bengaluru, India
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
       attributionControl: false,
-    }).setView([37.74, -122.43], 11);
+    }).setView([12.91, 77.58], 11);
 
     mapInstanceRef.current = map;
 
@@ -237,18 +268,20 @@ export default function GymsPage() {
       maxZoom: 19,
     }).addTo(map);
 
-    // Apply Leaflet Zoom Control to bottom-right
     L.control.zoom({
       position: 'bottomright',
     }).addTo(map);
 
-    // Signature smooth Fly-in Zoom Animation on load
+    // Fly-in Zoom Animation on load (to Bengaluru core)
     setTimeout(() => {
-      map.flyTo([37.7749, -122.4194], 13.5, {
+      map.flyTo([12.9716, 77.5946], 12.5, {
         duration: 1.8,
         easeLinearity: 0.25,
       });
     }, 200);
+
+    // Request browser live geolocation automatically on load
+    requestLiveLocation(map);
 
     return () => {
       if (mapInstanceRef.current) {
@@ -257,6 +290,56 @@ export default function GymsPage() {
       }
     };
   }, [mapLoaded]);
+
+  // Request browser geolocation handler
+  const requestLiveLocation = (mapArg?: any) => {
+    if (typeof window === 'undefined' || !navigator.geolocation) return;
+    const L = (window as any).L;
+    const map = mapArg || mapInstanceRef.current;
+    if (!L || !map) return;
+
+    setLocatingUser(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserLocation({ lat, lng });
+        setLocatingUser(false);
+
+        // Remove old user marker
+        if (userMarkerRef.current) {
+          userMarkerRef.current.remove();
+        }
+
+        // Pulse blue dot for real-time user location
+        const userHtml = `
+          <div class="relative w-8 h-8 flex items-center justify-center">
+            <div class="absolute w-6 h-6 rounded-full bg-blue-500/30 animate-ping"></div>
+            <div class="w-4 h-4 rounded-full border-2 border-white shadow-lg bg-blue-500"></div>
+          </div>
+        `;
+        const userIcon = L.divIcon({
+          html: userHtml,
+          className: 'user-marker',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+
+        userMarkerRef.current = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+
+        // Fly camera to user's real coordinates
+        map.flyTo([lat, lng], 14, {
+          duration: 1.5,
+          easeLinearity: 0.25,
+        });
+      },
+      (err) => {
+        console.warn('Geolocation access denied/failed:', err.message);
+        setLocatingUser(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
 
   // Update Markers when filters change
   useEffect(() => {
@@ -273,7 +356,7 @@ export default function GymsPage() {
     // Render new markers
     filteredGyms.forEach((gym) => {
       const pinColor = mapColors[gym.color] || '#3b82f6';
-      
+
       const customHtml = `
         <div class="relative w-8 h-8 flex items-center justify-center">
           <div class="absolute w-6 h-6 rounded-full bg-[${pinColor}]/20 animate-ping"></div>
@@ -300,7 +383,7 @@ export default function GymsPage() {
 
       markersRef.current.push(marker);
     });
-  }, [mapLoaded, filteredGyms, searchQuery, selectedDiscipline]);
+  }, [mapLoaded, filteredGyms, searchQuery, selectedDiscipline, userLocation]);
 
   const handleGymSelect = (gym: Gym) => {
     setSelectedGym(gym);
@@ -323,11 +406,11 @@ export default function GymsPage() {
             <div>
               <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mb-2">
                 <AnimatedBadge variant="accent" glow>
-                  <MapPin className="w-3 h-3 mr-1" /> Gym Finder
+                  <MapPin className="w-3 h-3 mr-1" /> Real-time Finder
                 </AnimatedBadge>
               </motion.div>
-              <h1 className="text-2xl font-black tracking-tight mb-1">Nearby Gyms & Clubs</h1>
-              <p className="text-text-secondary text-xs">Discover verified martial arts training centers near San Francisco</p>
+              <h1 className="text-2xl font-black tracking-tight mb-1">Find Nearby Gyms</h1>
+              <p className="text-text-secondary text-xs">Explore certified martial arts clubs near Bengaluru, India</p>
             </div>
 
             {/* Search Input */}
@@ -337,7 +420,7 @@ export default function GymsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search gyms by name or address..."
+                placeholder="Search by name, district, or address..."
                 className="w-full bg-surface-hover border border-border rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-text-primary"
               />
             </div>
@@ -378,7 +461,9 @@ export default function GymsPage() {
                       <h4 className="font-bold text-sm text-text-primary group-hover:text-accent transition-colors">
                         {gym.name}
                       </h4>
-                      <span className="text-[10px] text-text-tertiary font-mono">{gym.distance}</span>
+                      <span className="text-[10px] text-accent font-bold font-mono whitespace-nowrap">
+                        {getGymDistanceStr(gym)}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1 mb-2">
@@ -432,14 +517,24 @@ export default function GymsPage() {
             }
           `}</style>
 
+          {/* Locate Me Floating Button */}
+          <button
+            onClick={() => requestLiveLocation()}
+            disabled={locatingUser}
+            className="absolute top-4 right-4 z-10 w-11 h-11 bg-surface border border-border hover:border-accent/40 rounded-xl flex items-center justify-center text-text-secondary hover:text-accent shadow-lg shadow-black/30 hover:bg-surface-hover transition-all pointer-events-auto"
+            title="Locate My Live Location"
+          >
+            <Navigation className={`w-5 h-5 ${locatingUser ? 'animate-spin text-accent' : ''}`} />
+          </button>
+
           {/* Floating Details slide-in Card */}
           <AnimatePresence>
             {selectedGym && (
               <motion.div
-                initial={{ opacity: 0, y: 100, x: '-50%' }}
-                animate={{ opacity: 1, y: 0, x: '-50%' }}
-                exit={{ opacity: 0, y: 100, x: '-50%' }}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100vw-32px)] sm:w-[450px] z-20 pointer-events-auto"
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                className="absolute bottom-6 left-4 right-4 md:left-1/2 md:ml-[-225px] md:w-[450px] z-20 pointer-events-auto"
               >
                 <GlassCard padding="lg" variant="glow" className="relative text-left border-accent/40">
                   <button
@@ -451,7 +546,7 @@ export default function GymsPage() {
 
                   <div className="mb-4">
                     <span className="text-[10px] text-accent font-bold uppercase tracking-wider block mb-1">
-                      Gym Details · {selectedGym.distance} Away
+                      Gym Details · {getGymDistanceStr(selectedGym)} Away
                     </span>
                     <h3 className="font-black text-xl text-text-primary mb-1">{selectedGym.name}</h3>
 
@@ -482,11 +577,22 @@ export default function GymsPage() {
                       ))}
                     </div>
 
-                    <Link href={`/bookings?gymId=${selectedGym.id}`}>
-                      <button className="px-4 py-2 bg-accent text-white font-bold rounded-xl text-xs hover:bg-accent-hover transition-colors shadow-lg shadow-accent/25 flex items-center gap-1">
-                        Book Session <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </Link>
+                    <div className="flex gap-2">
+                      {/* Live google maps navigation directions */}
+                      <a
+                        href={
+                          userLocation
+                            ? `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${selectedGym.lat},${selectedGym.lng}&travelmode=driving`
+                            : `https://www.google.com/maps/dir/?api=1&destination=${selectedGym.lat},${selectedGym.lng}&travelmode=driving`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <button className="px-4 py-2 bg-surface hover:bg-surface-hover border border-border hover:border-accent/40 text-text-primary font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5">
+                          <Navigation2 className="w-3.5 h-3.5 text-accent" /> Get Directions
+                        </button>
+                      </a>
+                    </div>
                   </div>
                 </GlassCard>
               </motion.div>

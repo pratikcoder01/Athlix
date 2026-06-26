@@ -5,6 +5,12 @@ import { User } from '../models/User';
 import { Profile } from '../models/Profile';
 import { askFeatherlessJSON } from '../utils/anthropic';
 import { Types } from 'mongoose';
+import { uploadVideo } from '../config/cloudinary';
+import { validateVideoFile } from '../utils/videoValidation';
+import { execSync } from 'child_process';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { writeFileSync, unlinkSync } from 'fs';
 
 interface SeedOutput {
   seeds: Array<{
