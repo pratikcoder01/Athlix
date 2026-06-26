@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <span className="text-[10px] font-bold tracking-widest text-text-tertiary uppercase font-mono">
-                AFFILIATED PLATFORMS & CLUBS (PLACEHOLDER LIST)
+                AFFILIATED PLATFORMS & CLUBS
               </span>
             </div>
             <div className="flex flex-wrap gap-6 items-center">
@@ -87,7 +87,7 @@ export const Footer: React.FC = () => {
                   <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
                 </svg>
               </a>
-              <a href="mailto:info@athlix.com" aria-label="Email" className="hover:text-primary transition-colors duration-150">
+              <a href="mailto:support@athlix.com" aria-label="Email" className="hover:text-primary transition-colors duration-150">
                 <Mail className="h-4 w-4" />
               </a>
             </div>

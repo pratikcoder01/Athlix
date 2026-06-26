@@ -79,7 +79,7 @@ export default function ContactPage() {
                 <Phone className="h-5 w-5 text-primary shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold font-mono uppercase tracking-widest text-text-primary">CONTACT TELEPHONE</h4>
-                  <p className="text-text-secondary text-xs mt-1 font-sans">+1 (415) 555-1234</p>
+                  <p className="text-text-secondary text-xs mt-1 font-sans">+91 88799 81125</p>
                 </div>
               </div>
             </SpotlightCard>
