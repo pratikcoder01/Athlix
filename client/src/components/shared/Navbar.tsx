@@ -97,7 +97,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) => (
               <NavLink key={link.name} href={link.href} active={isActive(link.href)}>
                 {link.name.toUpperCase()}
@@ -106,7 +106,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* CTA & Actions */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             <button
               onClick={toggleTheme}
               className="relative rounded-full p-2 hover:bg-surface transition-colors cursor-pointer text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary w-8 h-8 flex items-center justify-center overflow-hidden"
@@ -221,7 +221,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-2 lg:hidden">
             <button
               onClick={toggleTheme}
               className="relative rounded-full p-2 hover:bg-surface text-text-secondary w-8 h-8 flex items-center justify-center overflow-hidden"
@@ -262,7 +262,7 @@ export const Navbar: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
             />
 
             {/* Sidebar drawer content */}
@@ -271,7 +271,7 @@ export const Navbar: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'tween', ease: 'easeOut', duration: 0.25 }}
-              className="fixed inset-y-0 right-0 z-50 w-72 bg-secondary border-l border-border px-6 py-6 flex flex-col justify-between shadow-2xl md:hidden"
+              className="fixed inset-y-0 right-0 z-50 w-72 bg-secondary border-l border-border px-6 py-6 flex flex-col justify-between shadow-2xl lg:hidden"
             >
               <div className="flex flex-col gap-8">
                 {/* Header inside drawer */}

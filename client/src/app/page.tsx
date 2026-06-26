@@ -105,7 +105,7 @@ const AthleteSlot: React.FC<{
           {athlete.avatar}
         </div>
         <div className="truncate">
-          <span className="block text-xs uppercase tracking-wide truncate max-w-[100px]">{athlete.name}</span>
+          <span className="block text-[11px] uppercase tracking-wide truncate max-w-[125px]">{athlete.name}</span>
           <span className="block text-[8px] text-text-secondary truncate">{athlete.weight} • {athlete.seed}</span>
         </div>
       </div>
@@ -299,7 +299,7 @@ function InteractiveBracketSimulator() {
             TEST THE BRACKET MATCHMAKER
           </h3>
           <p className="text-xs text-text-secondary mt-1">
-            Tap athletes below to advance seeds round-by-round. Hover matches for statistical insights.
+            Tap athletes below to advance seeds round-by-round and view live matchup statistics.
           </p>
         </div>
         <button

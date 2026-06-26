@@ -143,9 +143,12 @@ export default function LoginPage() {
           <blockquote className="text-3xl font-display font-black uppercase tracking-wide leading-tight max-w-lg mb-6">
             &ldquo;IT IS NOT THE CRITIC WHO COUNTS; NOT THE MAN WHO POINTS OUT HOW THE STRONG MAN STUMBLES...&rdquo;
           </blockquote>
-          <cite className="text-xs font-bold tracking-widest text-primary uppercase font-mono">
-            — THE MAN IN THE ARENA
+          <cite className="text-xs font-bold tracking-widest text-primary uppercase font-mono block">
+            — Theodore Roosevelt
           </cite>
+          <span className="text-[10px] font-mono text-text-tertiary block mt-1 uppercase tracking-wider">
+            The Man in the Arena
+          </span>
         </div>
 
         <div className="relative z-10 flex gap-6 text-[10px] font-mono font-bold text-text-secondary uppercase">
