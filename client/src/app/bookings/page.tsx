@@ -16,6 +16,9 @@ export default function BookingsPage() {
   const [selectedSlot, setSelectedSlot] = useState('10:00 AM - 11:30 AM');
   const [coachName] = useState('Prof. Thiago Valente');
   const [bookingStatus, setBookingStatus] = useState<string>('pending');
+  const coachAvatar = '/images/avatars/coaches/thiago-valente.png';
+  const coachRank = 'BJJ Black Belt · 3rd Degree';
+  const coachRate = '$90 / 90 min';
 
   const slots = [
     '09:00 AM - 10:30 AM',
@@ -87,14 +90,21 @@ export default function BookingsPage() {
             <form onSubmit={handleBooking} className="flex flex-col gap-6">
               
               {/* Instructor display */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">SELECTED INSTRUCTOR</label>
-                <input
-                  type="text"
-                  value={coachName}
-                  disabled
-                  className="w-full bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none cursor-default font-semibold"
-                />
+                <div className="flex items-center gap-4 bg-surface border border-border rounded-sm px-4 py-3">
+                  <img
+                    src={coachAvatar}
+                    alt={coachName}
+                    className="h-12 w-12 rounded-sm object-cover border border-border/60 shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-text-primary tracking-wide uppercase">{coachName}</p>
+                    <p className="text-[9px] font-mono text-text-secondary mt-0.5 uppercase">{coachRank}</p>
+                    <p className="text-[9px] font-mono text-primary mt-0.5 font-bold">{coachRate}</p>
+                  </div>
+                </div>
               </div>
 
               {/* Date selection & Pricing rates */}

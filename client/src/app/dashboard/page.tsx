@@ -38,8 +38,9 @@ export default function DashboardPage() {
   ];
 
   const recommendedCoaches = [
-    { name: 'Prof. Thiago Valente', rank: 'BJJ Black Belt 3rd Degree', rate: '$90/hr', rating: '5.0 (88 reviews)' },
-    { name: 'Coach Kru Somchai', rank: 'Muay Thai Kru', rate: '$75/hr', rating: '4.9 (124 reviews)' }
+    { name: 'Prof. Thiago Valente', rank: 'BJJ Black Belt 3rd Degree', rate: '$90/hr', rating: '5.0 (88 reviews)', avatar: '/images/avatars/coaches/thiago-valente.png' },
+    { name: 'Coach Kru Somchai', rank: 'Muay Thai Kru', rate: '$75/hr', rating: '4.9 (124 reviews)', avatar: '/images/avatars/coaches/kru-somchai.png' },
+    { name: 'Coach Elena Dubova', rank: 'Freestyle Wrestling Master', rate: '$80/hr', rating: '4.9 (97 reviews)', avatar: '/images/avatars/coaches/elena-dubova.png' }
   ];
 
   return (
@@ -198,12 +199,20 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-4">
                 {recommendedCoaches.map((coach, idx) => (
                   <div key={idx} className="bg-surface p-4 border border-border/60 rounded-sm flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold text-xs text-text-primary uppercase tracking-wide">{coach.name}</h4>
-                        <p className="text-[9px] text-text-secondary mt-0.5 uppercase font-mono">{coach.rank}</p>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={coach.avatar}
+                        alt={coach.name}
+                        className="h-10 w-10 rounded-sm object-cover border border-border/40 shrink-0"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display='none';
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-xs text-text-primary uppercase tracking-wide truncate">{coach.name}</h4>
+                        <p className="text-[9px] text-text-secondary mt-0.5 uppercase font-mono truncate">{coach.rank}</p>
                       </div>
-                      <span className="text-xs font-bold text-primary font-mono">{coach.rate}</span>
+                      <span className="text-xs font-bold text-primary font-mono shrink-0">{coach.rate}</span>
                     </div>
                     <div className="flex justify-between items-center text-[9px] font-mono">
                       <span className="text-text-secondary">{coach.rating}</span>

@@ -18,6 +18,15 @@ export default function DiscoverCoachesPage() {
   const [aiMatches, setAiMatches] = useState<any[] | null>(null);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
 
+  const getCoachAvatar = (name: string) => {
+    if (name.includes('Thiago')) return '/images/avatars/thiago-valente.png';
+    if (name.includes('Somchai')) return '/images/avatars/somchai.png';
+    if (name.includes('Elena')) return '/images/avatars/elena-rostova.png';
+    if (name.includes('Marcus')) return '/images/avatars/marcus-vance.png';
+    if (name.includes('Sarah')) return '/images/avatars/sarah-jenkins.png';
+    return '/images/avatars/demo-user.svg';
+  };
+
   const coaches = [
     {
       id: 1,
@@ -29,7 +38,8 @@ export default function DiscoverCoachesPage() {
       rating: '5.0',
       reviews: 88,
       certifications: ['IBJJF Certified', 'First Aid Certified'],
-      availability: 'Mon, Wed, Fri (09:00 - 17:00)'
+      availability: 'Mon, Wed, Fri (09:00 - 17:00)',
+      avatar: '/images/avatars/thiago-valente.png'
     },
     {
       id: 2,
@@ -41,7 +51,47 @@ export default function DiscoverCoachesPage() {
       rating: '4.9',
       reviews: 124,
       certifications: ['MTIA Certified Instructor'],
-      availability: 'Tue, Thu, Sat (10:00 - 18:00)'
+      availability: 'Tue, Thu, Sat (10:00 - 18:00)',
+      avatar: '/images/avatars/somchai.png'
+    },
+    {
+      id: 3,
+      name: 'Coach Elena Rostova',
+      discipline: 'Wrestling',
+      rank: 'Master of Sport',
+      experience: '8 years',
+      rate: '$80/hr',
+      rating: '4.8',
+      reviews: 56,
+      certifications: ['USA Wrestling Coach Card', 'SafeSport Certified'],
+      availability: 'Mon, Tue, Thu (12:00 - 19:00)',
+      avatar: '/images/avatars/elena-rostova.png'
+    },
+    {
+      id: 4,
+      name: 'Coach Marcus Vance',
+      discipline: 'Boxing',
+      rank: 'Golden Gloves Champion',
+      experience: '20 years',
+      rate: '$100/hr',
+      rating: '5.0',
+      reviews: 95,
+      certifications: ['AIBA Certified Coach', 'USA Boxing Certified'],
+      availability: 'Wed, Thu, Fri (08:00 - 15:00)',
+      avatar: '/images/avatars/marcus-vance.png'
+    },
+    {
+      id: 5,
+      name: 'Coach Sarah Jenkins',
+      discipline: 'MMA',
+      rank: 'UFC Veteran',
+      experience: '10 years',
+      rate: '$110/hr',
+      rating: '4.9',
+      reviews: 72,
+      certifications: ['NAC Certified Referee', 'ISKA Trainer Certification'],
+      availability: 'Mon, Wed, Sat (11:00 - 18:00)',
+      avatar: '/images/avatars/sarah-jenkins.png'
     }
   ];
 
@@ -220,9 +270,14 @@ export default function DiscoverCoachesPage() {
                         
                         <div>
                           <div className="flex justify-between items-start mb-4 pr-24">
-                            <div>
-                              <h3 className="text-xl font-display font-black uppercase tracking-wide">{coach.name}</h3>
-                              <span className="text-[10px] text-text-secondary font-mono mt-1 block uppercase font-bold">{coach.beltRank} • {coach.discipline}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="h-12 w-12 rounded-sm overflow-hidden bg-surface border border-border shrink-0">
+                                <img src={getCoachAvatar(coach.name)} alt={coach.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-display font-black uppercase tracking-wide leading-tight">{coach.name}</h3>
+                                <span className="text-[10px] text-text-secondary font-mono mt-0.5 block uppercase font-bold">{coach.beltRank || coach.rank || 'Verified'} • {coach.discipline}</span>
+                              </div>
                             </div>
                           </div>
 
@@ -286,9 +341,14 @@ export default function DiscoverCoachesPage() {
                     <SpotlightCard key={coach.id} className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between h-[360px]">
                       <div>
                         <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-display font-black uppercase tracking-wide">{coach.name}</h3>
-                            <span className="text-[10px] text-text-secondary font-mono mt-1 block uppercase font-bold">{coach.rank} • {coach.discipline}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-sm overflow-hidden bg-surface border border-border shrink-0">
+                              <img src={coach.avatar} alt={coach.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-display font-black uppercase tracking-wide leading-tight">{coach.name}</h3>
+                              <span className="text-[10px] text-text-secondary font-mono mt-0.5 block uppercase font-bold">{coach.rank} • {coach.discipline}</span>
+                            </div>
                           </div>
                           <div className="flex items-center gap-1 bg-surface px-2.5 py-1 rounded-sm text-[10px] font-mono font-bold text-primary border border-border/40">
                             <Star className="h-3.5 w-3.5 fill-primary stroke-primary" /> {coach.rating}

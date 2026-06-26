@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="cyberGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#dc2626" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d2d30"/>
+      <stop offset="50%" stop-color="#1e1e1f"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Shield -->
+  <rect width="100" height="100" fill="url(#metal)" rx="6" />
+  <circle cx="50" cy="50" r="45" fill="url(#cyberGlow)" stroke="#dc2626" stroke-width="1.5" stroke-opacity="0.6" />
+  
+  <!-- Belt Strip Representative border at bottom -->
+  <path d="M 15 75 Q 50 85 85 75" fill="none" stroke="#1a1a2e" stroke-width="6" stroke-linecap="round" />
+  <path d="M 40 78.5 L 60 78.5" fill="none" stroke="#000000" stroke-width="6" />
+  
+  <!-- Initials Text -->
+  <text x="50" y="54" fill="#ffffff" font-family="monospace" font-size="28" font-weight="900" text-anchor="middle" letter-spacing="1">LV</text>
+  <text x="50" y="68" fill="#a0a0b0" font-family="sans-serif" font-size="7" font-weight="bold" text-anchor="middle" opacity="0.8">BLACK BELT</text>
+</svg>

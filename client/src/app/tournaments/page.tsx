@@ -15,8 +15,11 @@ export default function TournamentsPage() {
   const { socket } = useSocket();
   
   const tournaments = [
-    { id: 1, title: 'Grappling Championship 2026', date: 'July 15, 2026', location: 'Las Vegas, NV', fee: '$50', discipline: 'BJJ', entries: '184 fighters' },
-    { id: 2, title: 'Muay Thai Stadium Cup', date: 'August 20, 2026', location: 'Bangkok, TH', fee: '$45', discipline: 'Muay Thai', entries: '96 fighters' }
+    { id: 1, title: 'Grappling Championship 2026', date: 'July 15, 2026', location: 'Las Vegas, NV', fee: '$50', discipline: 'BJJ', entries: '184 fighters', banner: '/images/covers/tourney-vegas-open.svg' },
+    { id: 2, title: 'Muay Thai Stadium Cup', date: 'August 20, 2026', location: 'Bangkok, TH', fee: '$45', discipline: 'Muay Thai', entries: '96 fighters', banner: '/images/covers/tourney-bangkok-cup.svg' },
+    { id: 3, title: 'Wrestling Nationals 2026', date: 'September 5, 2026', location: 'Denver, CO', fee: '$35', discipline: 'Wrestling', entries: '128 fighters', banner: '/images/covers/tourney-wrestling-nationals.svg' },
+    { id: 4, title: 'Pan-American Open Circuit', date: 'October 12, 2026', location: 'Miami, FL', fee: '$60', discipline: 'BJJ', entries: '220 fighters', banner: '/images/covers/tourney-pan-am.svg' },
+    { id: 5, title: 'MMA Striker Showdown', date: 'November 8, 2026', location: 'Los Angeles, CA', fee: '$75', discipline: 'MMA', entries: '64 fighters', banner: '/images/covers/tourney-combat-fights.svg' }
   ];
 
   // Live state of bracketMatches
@@ -105,29 +108,30 @@ export default function TournamentsPage() {
             </div>
 
             {/* List grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tournaments.map(t => (
-                <SpotlightCard key={t.id} className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between h-64">
-                  <div>
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-[9px] font-bold text-primary font-mono tracking-widest uppercase bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-sm">
-                        {t.discipline}
-                      </span>
-                      <span className="text-xs font-bold text-primary font-mono">{t.fee} ENTRY</span>
-                    </div>
-                    
-                    <h3 className="text-xl font-display font-black uppercase tracking-wide mb-3">{t.title}</h3>
-                    
-                    <div className="flex flex-col gap-1.5 text-[10px] text-text-secondary font-mono mb-4">
+                <SpotlightCard key={t.id} className="bg-secondary border border-border rounded-sm flex flex-col justify-between overflow-hidden">
+                  {/* Banner Image */}
+                  <div className="relative h-28 overflow-hidden shrink-0 bg-surface border-b border-border">
+                    <img src={t.banner} alt={t.title} className="w-full h-full object-cover opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-[9px] font-bold text-primary font-mono tracking-widest uppercase bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-sm">
+                      {t.discipline}
+                    </span>
+                    <span className="absolute bottom-2 right-3 text-xs font-bold text-primary font-mono">{t.fee} ENTRY</span>
+                  </div>
+
+                  <div className="p-5 flex flex-col gap-3 flex-1">
+                    <h3 className="text-lg font-display font-black uppercase tracking-wide leading-tight">{t.title}</h3>
+                    <div className="flex flex-col gap-1.5 text-[10px] text-text-secondary font-mono">
                       <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {t.date.toUpperCase()}</span>
                       <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {t.location.toUpperCase()}</span>
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {t.entries.toUpperCase()}</span>
                     </div>
+                    <MagneticButton className="w-full bg-primary hover:bg-opacity-95 text-white py-2.5 rounded-sm text-xs font-mono font-bold tracking-wider uppercase mt-auto">
+                      REGISTER FOR TOURNAMENT
+                    </MagneticButton>
                   </div>
-                  
-                  <MagneticButton className="w-full bg-primary hover:bg-opacity-95 text-white py-2.5 rounded-sm text-xs font-mono font-bold tracking-wider uppercase">
-                    REGISTER FOR TOURNAMENT
-                  </MagneticButton>
                 </SpotlightCard>
               ))}
             </div>

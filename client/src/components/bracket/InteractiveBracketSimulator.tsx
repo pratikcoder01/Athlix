@@ -13,18 +13,30 @@ interface Athlete {
   seed: string;
   team: string;
   avatar: string;
+  rank?: string;
+  record?: string;
 }
 
-const initialAthletes: Athlete[] = [
-  { id: '1', name: 'Thiago Valente', weight: '77 kg', seed: 'Seed 1', team: 'Apex Grappling Lab', avatar: 'TV' },
-  { id: '2', name: 'Lucas Vianna', weight: '77 kg', seed: 'Seed 8', team: 'Vianna Combat Academy', avatar: 'LV' },
-  { id: '3', name: 'Derek Vance', weight: '77 kg', seed: 'Seed 4', team: 'Vanguard Martial Arts', avatar: 'DV' },
-  { id: '4', name: 'Rodrigo Santos', weight: '77 kg', seed: 'Seed 5', team: 'Horizon Jiu-Jitsu', avatar: 'RS' },
-  { id: '5', name: 'Garrison Thorne', weight: '99 kg', seed: 'Seed 2', team: 'Aether Submission Studio', avatar: 'GT' },
-  { id: '6', name: 'Mateo Brandao', weight: '99 kg', seed: 'Seed 7', team: 'Nebula Jiu-Jitsu', avatar: 'MB' },
-  { id: '7', name: 'Callum Pierce', weight: '88 kg', seed: 'Seed 3', team: 'Redline Grappling', avatar: 'CP' },
-  { id: '8', name: 'Alastair Sinclair', weight: '77 kg', seed: 'Seed 6', team: 'Summit Submission Academy', avatar: 'AS' },
+const registeredAthletes: Athlete[] = [
+  { id: '1', name: 'Thiago Valente', weight: '77 kg', seed: 'Seed 1', team: 'Apex Grappling Lab', avatar: '/images/avatars/thiago-valente.png', rank: 'BJJ Black Belt', record: '88-12-0' },
+  { id: '2', name: 'Lucas Vianna', weight: '77 kg', seed: 'Seed 8', team: 'Vianna Combat Academy', avatar: '/images/avatars/lucas-vianna.svg', rank: 'BJJ Black Belt', record: '42-10-0' },
+  { id: '3', name: 'Derek Vance', weight: '77 kg', seed: 'Seed 4', team: 'Vanguard Martial Arts', avatar: '/images/avatars/derek-vance.svg', rank: 'BJJ Brown Belt', record: '35-7-2' },
+  { id: '4', name: 'Rodrigo Santos', weight: '77 kg', seed: 'Seed 5', team: 'Horizon Jiu-Jitsu', avatar: '/images/avatars/rodrigo-santos.svg', rank: 'BJJ Purple Belt', record: '28-5-1' },
+  { id: '5', name: 'Garrison Thorne', weight: '99 kg', seed: 'Seed 2', team: 'Aether Submission Studio', avatar: '/images/avatars/garrison-thorne.svg', rank: 'BJJ Black Belt', record: '18-0-0' },
+  { id: '6', name: 'Mateo Brandao', weight: '99 kg', seed: 'Seed 7', team: 'Nebula Jiu-Jitsu', avatar: '/images/avatars/mateo-brandao.svg', rank: 'BJJ Purple Belt', record: '19-6-0' },
+  { id: '7', name: 'Callum Pierce', weight: '88 kg', seed: 'Seed 3', team: 'Redline Grappling', avatar: '/images/avatars/callum-pierce.svg', rank: 'BJJ Brown Belt', record: '31-9-0' },
+  { id: '8', name: 'Alastair Sinclair', weight: '77 kg', seed: 'Seed 6', team: 'Summit Submission Academy', avatar: '/images/avatars/alastair-sinclair.svg', rank: 'BJJ Blue Belt', record: '15-4-0' },
+  { id: '9', name: 'Carlos Gomez', weight: '88 kg', seed: 'Seed 9', team: 'Gracie Jiu-Jitsu SF', avatar: '/images/avatars/carlos-gomez.svg', rank: 'BJJ Blue Belt', record: '12-3-0' },
+  { id: '10', name: 'Yuki Tanaka', weight: '77 kg', seed: 'Seed 10', team: 'Alliance Silicon Valley', avatar: '/images/avatars/yuki-tanaka.svg', rank: 'BJJ Purple Belt', record: '22-8-1' },
+  { id: '11', name: 'Liam O\'Connor', weight: '99 kg', seed: 'Seed 11', team: 'Vanguard Martial Arts', avatar: '/images/avatars/liam-oconnor.svg', rank: 'BJJ Brown Belt', record: '29-11-0' },
+  { id: '12', name: 'Aisha Mbaye', weight: '77 kg', seed: 'Seed 12', team: 'Horizon Jiu-Jitsu', avatar: '/images/avatars/aisha-mbaye.svg', rank: 'BJJ Blue Belt', record: '10-2-0' },
+  { id: '13', name: 'Chloe Dubois', weight: '88 kg', seed: 'Seed 13', team: 'Apex Grappling Lab', avatar: '/images/avatars/chloe-dubois.svg', rank: 'BJJ Purple Belt', record: '17-4-2' },
+  { id: '14', name: 'Tarik Al-Mansour', weight: '88 kg', seed: 'Seed 14', team: 'Aether Submission Studio', avatar: '/images/avatars/tarik-al-mansour.svg', rank: 'BJJ Black Belt', record: '45-15-0' },
+  { id: '15', name: 'Viktor Drago', weight: '99 kg', seed: 'Seed 15', team: 'Redline Grappling', avatar: '/images/avatars/viktor-drago.svg', rank: 'BJJ Brown Belt', record: '33-8-0' },
+  { id: '16', name: 'Aleksei Romanov', weight: '77 kg', seed: 'Seed 16', team: 'Nebula Jiu-Jitsu', avatar: '/images/avatars/aleksei-romanov.svg', rank: 'BJJ Purple Belt', record: '20-7-0' }
 ];
+
+const initialAthletes: Athlete[] = registeredAthletes.slice(0, 8);
 
 const mockStats: Record<string, string> = {
   qf1: 'Valente leads head-to-head 2-0. 85% submission rate from back mount.',
@@ -174,13 +186,17 @@ const AthleteSlot: React.FC<{
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div
-          className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-mono font-bold shrink-0 tabular-data ${
+          className={`w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-[9px] font-mono font-bold shrink-0 tabular-data ${
             isSelected
               ? 'bg-primary text-white border border-accent-gold/50'
               : 'bg-secondary text-text-secondary border border-border'
           }`}
         >
-          {athlete.avatar}
+          {athlete.avatar.startsWith('/') ? (
+            <img src={athlete.avatar} alt={athlete.name} className="w-full h-full object-cover" />
+          ) : (
+            athlete.avatar
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <span
@@ -457,6 +473,29 @@ export default function InteractiveBracketSimulator() {
         >
           Reset Bracket
         </button>
+      </div>
+
+      {/* Competitor Roster List (16 active fighters) */}
+      <div className="relative z-10 mb-10 border border-border bg-background/50 p-6 rounded-sm">
+        <h4 className="text-[10px] font-bold tracking-widest text-primary uppercase font-mono mb-4">
+          TOURNAMENT COMPETITOR ROSTER (16 REGISTERED COMPETITORS)
+        </h4>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          {registeredAthletes.map(ath => (
+            <div key={ath.id} className="bg-surface/60 border border-border/80 p-2.5 rounded-sm flex flex-col items-center text-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden mb-2 bg-secondary border border-border flex items-center justify-center">
+                {ath.avatar.startsWith('/') ? (
+                  <img src={ath.avatar} alt={ath.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] font-mono font-bold text-text-secondary">{ath.avatar}</span>
+                )}
+              </div>
+              <span className="text-[9px] font-mono font-black text-text-primary uppercase truncate w-full">{ath.name}</span>
+              <span className="text-[8px] text-text-secondary mt-0.5">{ath.rank?.toUpperCase() || ''}</span>
+              <span className="text-[8px] text-primary font-mono font-bold mt-1">{ath.record || ''}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Desktop Tree View */}

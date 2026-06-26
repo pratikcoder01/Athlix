@@ -15,7 +15,10 @@ export default function ProfilePage() {
   const achievements = [
     { title: 'GOLD MEDAL', subtitle: 'Las Vegas Sub Open 2026', icon: '🏆' },
     { title: 'IRON LUNGS', subtitle: '50 logged sparring hours', icon: '⚡' },
-    { title: 'FAST SUBMISSION', subtitle: 'Tap under 30 seconds', icon: '🥋' }
+    { title: 'FAST SUBMISSION', subtitle: 'Tap under 30 seconds', icon: '🥋' },
+    { title: 'BRACKET CLIMBER', subtitle: '5 tournament wins', icon: '🎯' },
+    { title: 'GI MASTER', subtitle: 'Complete Gi syllabus', icon: '🔵' },
+    { title: 'STREET READY', subtitle: '200+ live rolling reps', icon: '💪' }
   ];
 
   const galleryItems = [
@@ -26,7 +29,9 @@ export default function ProfilePage() {
 
   const timelineLogs = [
     { title: 'PROMOTED TO PURPLE BELT (3 STRIPES)', date: 'June 10, 2026', desc: 'Promoted by Prof. Thiago Valente after successful submission matches at open mat.' },
-    { title: 'GOLD MEDAL AT VEGAS GRAPPLING OPEN', date: 'May 15, 2026', desc: 'Finished 3 opponents by armbar inside the light-heavyweight division.' }
+    { title: 'GOLD MEDAL AT VEGAS GRAPPLING OPEN', date: 'May 15, 2026', desc: 'Finished 3 opponents by armbar inside the light-heavyweight division.' },
+    { title: 'COMPLETED 50 SPARRING HOURS MILESTONE', date: 'April 2, 2026', desc: 'Logged 50 cumulative hours of live sparring across 3 academies, earning the IRON LUNGS badge.' },
+    { title: 'ENROLLED: ADVANCED GUARD RETENTION', date: 'March 1, 2026', desc: 'Started 8-week intensive module with Coach Kru Somchai focusing on closed guard and lasso systems.' }
   ];
 
   return (
@@ -35,7 +40,8 @@ export default function ProfilePage() {
 
       {/* Cover Banner */}
       <div className="h-64 w-full bg-secondary border-b border-border relative overflow-hidden flex items-end">
-        <div className="absolute inset-0 mat-grid opacity-30" />
+        <img src="/images/covers/tourney-vegas-open.svg" alt="Profile cover" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
         <div className="absolute bottom-6 right-6 z-10">
           <MagneticButton className="bg-surface hover:bg-opacity-95 text-text-primary px-4 py-2 rounded-sm border border-border text-xs font-mono font-bold flex items-center gap-1.5 uppercase">
             <Share2 className="h-3.5 w-3.5" /> Share profile
@@ -47,9 +53,18 @@ export default function ProfilePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-20 mb-16">
         <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
-            {/* Avatar - Sharp 4px */}
-            <div className="h-32 w-32 rounded-sm border-4 border-background bg-secondary flex items-center justify-center font-bold text-primary text-5xl font-mono shadow-2xl">
-              {user?.name ? user.name[0] : 'A'}
+            {/* Avatar */}
+            <div className="h-32 w-32 rounded-sm border-4 border-background bg-secondary flex items-center justify-center font-bold text-primary text-5xl font-mono shadow-2xl overflow-hidden shrink-0">
+              <img
+                src="/images/avatars/athlete-1.svg"
+                alt={user?.name || 'Athlete'}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = 'none';
+                  el.parentElement!.innerHTML = user?.name?.[0] ?? 'A';
+                }}
+              />
             </div>
             <div>
               <h2 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">{user?.name || 'ATHLIX FIGHTER'}</h2>
