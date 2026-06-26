@@ -1,4 +1,4 @@
-import { Request, File } from 'express';
+import { Request } from 'express';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -28,8 +28,8 @@ export const validateVideoFile = async (file: Express.Multer.File): Promise<void
   // Check file extension
   const allowedExtensions = ['.mp4', '.mov', '.avi', '.webm'];
   const fileExtension = file.originalname.substring(
-    file.originalname.lastIndexOf('.').toLowerCase()
-  );
+    file.originalname.lastIndexOf('.')
+  ).toLowerCase();
 
   if (!allowedExtensions.includes(fileExtension)) {
     throw new VideoValidationError(
@@ -41,7 +41,7 @@ export const validateVideoFile = async (file: Express.Multer.File): Promise<void
   const maxSizeInBytes = 200 * 1024 * 1024; // 200MB
   if (file.size > maxSizeInBytes) {
     throw new VideoValidationError(
-      `Video file too large. Maximum size allowed is 200MB. Your file: ${(file.size / (10.024).toFixed(2)}MB`
+      `Video file too large. Maximum size allowed is 200MB. Your file: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
     );
   }
 
