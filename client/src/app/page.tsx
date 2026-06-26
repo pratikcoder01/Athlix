@@ -22,7 +22,7 @@ export default function Home() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   return (
-    <main className="min-h-screen bg-background relative selection:bg-accent selection:text-black">
+    <main className="min-h-screen bg-background relative selection:bg-accent selection:text-text-inverse">
       <Navbar />
 
       {/* 
@@ -34,7 +34,8 @@ export default function Home() {
         className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden flex flex-col items-center justify-center text-center min-h-[90vh]"
       >
         {/* Background Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] md:w-[600px] md:h-[600px] bg-accent/20 blur-[120px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] md:w-[600px] md:h-[600px] bg-accent/15 blur-[120px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/4 left-1/4 w-[40vw] h-[40vw] md:w-[300px] md:h-[300px] bg-accent-gold/10 blur-[100px] rounded-full pointer-events-none -z-10 animate-float" />
 
         <motion.div 
           style={{ y: heroY, opacity: heroOpacity }}
@@ -63,7 +64,7 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Schedule private training, manage academy calendars, and generate live brackets for BJJ, MMA, and wrestling—all in one unified, world-class platform.
+            The operating system for elite combat sports athletes. Schedule training, track progress, and compete at the highest level.
           </motion.p>
 
           <motion.div 
@@ -90,9 +91,9 @@ export default function Home() {
           initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.6, type: 'spring', damping: 20 }}
-          className="w-full max-w-6xl mx-auto px-4 mt-20 relative z-20 perspective-1000"
+          className="w-full max-w-6xl mx-auto px-4 mt-20 relative z-20"
         >
-          <div className="relative rounded-2xl md:rounded-[2rem] border border-border bg-surface/50 p-2 md:p-4 backdrop-blur-3xl shadow-2xl transform rotate-x-12 hover:rotate-x-0 transition-transform duration-700">
+          <div className="relative rounded-2xl md:rounded-[2rem] border border-border glass-panel p-2 md:p-4 shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-tr from-accent/10 to-transparent rounded-[2rem] -z-10" />
             <img 
               src="/images/covers/blog-bracket-mechanics.svg" 
@@ -106,7 +107,7 @@ export default function Home() {
       {/* 
         TRUST MARQUEE 
       */}
-      <section className="py-20 border-y border-border overflow-hidden bg-surface/30">
+      <section className="py-20 border-y border-border overflow-hidden bg-secondary">
         <div className="container mx-auto px-4 text-center mb-8">
           <p className="text-sm font-semibold tracking-widest text-text-tertiary uppercase">
             Trusted by World Champions & Academies
@@ -116,7 +117,7 @@ export default function Home() {
           {[...Array(2)].map((_, i) => (
             <div key={i} className="flex items-center gap-16 px-8">
               {['Gracie Barra', 'Alliance BJJ', 'American Top Team', '10th Planet', 'Evolve MMA', 'Sanford MMA'].map((logo, j) => (
-                <span key={`${i}-${j}`} className="text-2xl font-bold text-text-tertiary/50">
+                <span key={`${i}-${j}`} className="text-2xl font-bold text-text-tertiary">
                   {logo}
                 </span>
               ))}
@@ -147,7 +148,7 @@ export default function Home() {
                   Generate live, interactive brackets. Manage weigh-ins, seedings, and real-time scoring updates instantly.
                 </p>
               </div>
-              <div className="mt-8 relative h-48 overflow-hidden rounded-xl border border-border bg-background">
+              <div className="mt-8 relative h-48 overflow-hidden rounded-xl border border-border bg-surface">
                 <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10" />
                 <img src="/images/covers/tourney-pan-am.svg" alt="Tournament" className="w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               </div>
@@ -162,7 +163,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-8 flex gap-2">
-                <div className="w-full h-32 bg-background rounded-t-xl border-x border-t border-border flex items-end p-4">
+                <div className="w-full h-32 bg-surface rounded-t-xl border-x border-t border-border flex items-end p-4">
                   <div className="w-full flex justify-between items-end h-full gap-2">
                     {[40, 70, 45, 90, 65, 100].map((h, i) => (
                       <motion.div 
@@ -205,7 +206,7 @@ export default function Home() {
               </div>
               <div className="mt-8 grid grid-cols-4 gap-4 opacity-50 group-hover:opacity-100 transition-opacity">
                  {['logo-alliance.svg', 'logo-apex.svg', 'logo-horizon.svg', 'logo-vanguard.svg'].map((logo, i) => (
-                  <div key={i} className="aspect-square bg-background rounded-xl border border-border flex items-center justify-center p-4">
+                  <div key={i} className="aspect-square bg-surface rounded-xl border border-border flex items-center justify-center p-4">
                     <img src={`/images/academies/${logo}`} className="w-full h-full object-contain" />
                   </div>
                  ))}

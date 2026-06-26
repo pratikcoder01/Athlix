@@ -122,7 +122,7 @@ export default function LoginPage() {
       
       {/* Left split pane: Branding & Motivation */}
       <div className="relative hidden lg:flex flex-col justify-between p-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-purple-500/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-accent-gold/5" />
         <div className="absolute inset-0" style={{
           backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
@@ -225,9 +225,9 @@ export default function LoginPage() {
 
               {/* Auth error display */}
               {authError && (
-                <div className="flex items-center gap-2 p-3 bg-red-400/10 border border-red-400/20 rounded-xl">
-                  <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
-                  <p className="text-xs text-red-400">{authError}</p>
+                <div className="flex items-center gap-2 p-3 color-danger-bg border border-danger/20 rounded-xl">
+                  <AlertCircle className="h-4 w-4 text-danger shrink-0" />
+                  <p className="text-xs text-danger">{authError}</p>
                 </div>
               )}
 
@@ -252,6 +252,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   className="flex items-center justify-center gap-2 py-3 border border-border rounded-xl text-sm font-semibold hover:border-accent/40 transition-all cursor-pointer bg-transparent"
+                  aria-label="Sign in with Google"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path
@@ -277,6 +278,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={handleAnonymousSignIn}
                   className="flex items-center justify-center gap-2 py-3 border border-border rounded-xl text-sm font-semibold hover:border-accent/40 transition-all cursor-pointer bg-transparent"
+                  aria-label="Sign in as guest"
                 >
                   <User className="h-4 w-4 text-text-tertiary" />
                   Guest

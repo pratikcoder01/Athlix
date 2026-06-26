@@ -125,7 +125,7 @@ export default function DashboardPage() {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   active
                     ? 'bg-accent/15 text-accent border border-accent/20'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -150,13 +150,13 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border px-6 py-4 flex justify-between items-center">
+        <header className="sticky top-0 z-20 glass-panel border-b border-border px-6 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-xl font-black tracking-tight">Athlete Console</h1>
             <p className="text-text-secondary text-sm">Welcome back, {user?.name || 'Champ'} 👊</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center hover:border-accent/50 transition-colors">
+            <button className="relative w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center hover:border-accent/50 transition-colors" aria-label="Notifications">
               <Bell className="w-4 h-4 text-text-secondary" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent" />
             </button>
@@ -317,8 +317,8 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                            <span className="text-xs font-black text-amber-400 uppercase tracking-wider">High Training Load detected ({Math.round(ratio * 100)}% of baseline)</span>
+                            <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+                            <span className="text-xs font-black text-warning uppercase tracking-wider">High Training Load detected ({Math.round(ratio * 100)}% of baseline)</span>
                           </div>
                           <button
                             onClick={fetchWellbeingNudge}
@@ -331,16 +331,16 @@ export default function DashboardPage() {
                         </div>
                         {isNudgeLoading ? (
                           <div className="h-6 flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-warning border-t-transparent rounded-full animate-spin" />
                             <span className="text-xs text-text-secondary animate-pulse">DeepSeek V3.2 generating supportive nudge...</span>
                           </div>
                         ) : nudgeError ? (
-                          <p className="text-xs text-red-400 font-medium leading-relaxed">
+                          <p className="text-xs text-danger font-medium leading-relaxed">
                             ⚠️ {nudgeError}
                           </p>
                         ) : (
                           <div className="flex items-start gap-2.5">
-                            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                            <Sparkles className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                             <p className="text-xs text-text-secondary leading-relaxed italic">
                               "{nudgeText || 'No advice generated. Click recalculate.'}"
                             </p>
@@ -355,9 +355,9 @@ export default function DashboardPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl flex items-center gap-3"
                       >
-                        <div className="w-2 h-2 rounded-full bg-teal-400" />
+                        <div className="w-2 h-2 rounded-full bg-success" />
                         <div className="flex-1">
-                          <p className="text-xs font-black text-teal-400 uppercase tracking-wider mb-0.5">Optimal Load Level ({Math.round(ratio * 100)}%)</p>
+                          <p className="text-xs font-black text-success uppercase tracking-wider mb-0.5">Optimal Load Level ({Math.round(ratio * 100)}%)</p>
                           <p className="text-xs text-text-secondary">Your training volume is currently in a healthy range relative to your trailing average. Keep up the consistent work!</p>
                         </div>
                       </motion.div>
@@ -435,7 +435,7 @@ export default function DashboardPage() {
                   <div className="space-y-3">
                     {recommendedCoaches.map((coach, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border hover:border-accent/30 transition-colors group">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-background border border-border shrink-0">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-surface border border-border shrink-0">
                           <img
                             src={coach.avatar}
                             alt={coach.name}

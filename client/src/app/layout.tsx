@@ -21,14 +21,14 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Athlix | Premium Performance Platform',
-  description: 'World-class scheduling, tracking, and analytics for elite athletes.',
+  title: 'Athlix | Premium Combat Sports Platform',
+  description: 'World-class scheduling, tracking, and analytics for elite combat sports athletes and academies.',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://athlix-client.vercel.app',
-    title: 'Athlix | Premium Performance Platform',
-    description: 'World-class scheduling, tracking, and analytics for elite athletes.',
+    title: 'Athlix | Premium Combat Sports Platform',
+    description: 'World-class scheduling, tracking, and analytics for elite combat sports athletes and academies.',
   },
 };
 
@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("dark", inter.variable, jetbrainsMono.variable)}>
+    <html lang="en" className={cn(inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans text-text-primary antialiased selection:bg-accent selection:text-black">
         <QueryProvider>
           <SocketProvider>

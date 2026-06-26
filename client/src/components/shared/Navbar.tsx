@@ -29,7 +29,7 @@ const NavLink = ({
     onClick={onClick}
     className={cn(
       "relative px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-full",
-      active ? "text-primary" : "text-text-secondary hover:text-text-primary hover:bg-surface/50"
+      active ? "text-primary" : "text-text-secondary hover:text-text-primary hover:bg-surface-hover"
     )}
   >
     <span className="relative z-10">{children}</span>
@@ -91,7 +91,7 @@ export const Navbar: React.FC = () => {
       className={cn(
         "fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b",
         isScrolled 
-          ? "bg-background/70 backdrop-blur-xl border-border py-3 shadow-sm" 
+          ? "glass-panel border-border py-3 shadow-sm" 
           : "bg-transparent border-transparent py-5"
       )}
     >
@@ -126,7 +126,8 @@ export const Navbar: React.FC = () => {
           <div className="hidden lg:flex items-center gap-4 shrink-0">
             <button
               onClick={toggleTheme}
-              className="p-2 text-text-secondary hover:text-text-primary transition-colors rounded-full hover:bg-surface"
+              className="p-2 text-text-secondary hover:text-text-primary transition-colors rounded-full hover:bg-surface-hover"
+              aria-label="Toggle theme"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -159,7 +160,7 @@ export const Navbar: React.FC = () => {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-2 w-80 bg-background/90 backdrop-blur-xl border border-border rounded-2xl shadow-xl overflow-hidden"
+                        className="absolute right-0 mt-2 w-80 glass-panel-strong rounded-2xl shadow-xl overflow-hidden"
                       >
                         <div className="p-4 border-b border-border flex justify-between items-center">
                           <h4 className="text-sm font-semibold">Notifications</h4>
@@ -169,7 +170,7 @@ export const Navbar: React.FC = () => {
                             <div className="p-4 text-center text-sm text-text-tertiary">All caught up!</div>
                           ) : (
                             notifications.map(n => (
-                              <div key={n.id} className="p-3 mb-1 rounded-xl bg-surface/50 border border-border/50 text-sm">
+                              <div key={n.id} className="p-3 mb-1 rounded-xl bg-surface border border-border text-sm">
                                 {n.message}
                               </div>
                             ))
@@ -185,7 +186,7 @@ export const Navbar: React.FC = () => {
                     Console
                   </MagneticButton>
                 </Link>
-                <button onClick={handleLogout} className="p-2 text-text-tertiary hover:text-danger transition-colors">
+                <button onClick={handleLogout} className="p-2 text-text-tertiary hover:text-danger transition-colors" aria-label="Log out">
                   <LogOut className="h-4 w-4" />
                 </button>
               </div>
@@ -205,10 +206,10 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile Menu Toggle */}
           <div className="flex lg:hidden items-center gap-2">
-            <button onClick={toggleTheme} className="p-2 text-text-secondary">
+            <button onClick={toggleTheme} className="p-2 text-text-secondary" aria-label="Toggle theme">
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-            <button onClick={() => setIsOpen(true)} className="p-2 text-primary">
+            <button onClick={() => setIsOpen(true)} className="p-2 text-primary" aria-label="Open menu">
               <Menu className="h-6 w-6" />
             </button>
           </div>
@@ -224,11 +225,11 @@ export const Navbar: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 w-full sm:w-80 bg-background/95 backdrop-blur-2xl border-l border-border z-[100] flex flex-col p-6"
+            className="fixed inset-y-0 right-0 w-full sm:w-80 glass-panel-strong border-l border-border z-[100] flex flex-col p-6"
           >
             <div className="flex justify-between items-center mb-8">
               <span className="text-xl font-bold">Menu</span>
-              <button onClick={() => setIsOpen(false)} className="p-2 bg-surface rounded-full">
+              <button onClick={() => setIsOpen(false)} className="p-2 bg-surface rounded-full" aria-label="Close menu">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -240,7 +241,7 @@ export const Navbar: React.FC = () => {
                   href={link.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-2xl font-bold py-4 border-b border-border/50 transition-colors",
+                    "text-2xl font-bold py-4 border-b border-border transition-colors",
                     isActive(link.href) ? "text-accent" : "text-text-secondary hover:text-primary"
                   )}
                 >

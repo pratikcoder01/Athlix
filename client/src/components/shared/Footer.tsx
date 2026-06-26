@@ -93,12 +93,12 @@ export const Footer: React.FC = () => {
               World-class scheduling, tracking, and analytics for elite combat sports athletes and academies.
             </p>
             <div className="flex gap-4 text-text-secondary">
-              <a href="#" className="hover:text-primary transition-colors p-2 -ml-2 rounded-full hover:bg-surface" aria-label="X (formerly Twitter)">
+              <a href="#" className="hover:text-primary transition-colors p-2 -ml-2 rounded-full hover:bg-surface-hover" aria-label="X (formerly Twitter)">
                 <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </a>
-              <a href="#" className="hover:text-primary transition-colors p-2 rounded-full hover:bg-surface">
+              <a href="#" className="hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-hover">
                 <Mail className="h-5 w-5" />
               </a>
             </div>

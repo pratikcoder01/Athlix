@@ -322,7 +322,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* ── Bottom CTA band — matches site-wide pattern ── */}
-      <section className="border-t border-border/60 bg-secondary">
+      <section className="border-t border-border bg-secondary">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 16 }}

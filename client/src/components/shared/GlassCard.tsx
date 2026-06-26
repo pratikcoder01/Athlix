@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils';
 
 interface GlassCardProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
-  variant?: 'default' | 'glow' | 'interactive';
+  variant?: 'default' | 'glow' | 'interactive' | 'elevated';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
@@ -25,9 +25,10 @@ export const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(({
   };
 
   const variantStyles = {
-    default: 'bg-surface/60 backdrop-blur-2xl border border-border',
-    glow: 'bg-surface/80 backdrop-blur-3xl border border-border-strong shadow-glow',
-    interactive: 'bg-surface/60 backdrop-blur-2xl border border-border hover:border-accent hover:bg-surface/80 cursor-pointer transition-all duration-300',
+    default: 'glass-panel border border-border',
+    glow: 'glass-panel-strong border border-border-strong shadow-glow',
+    interactive: 'glass-panel border border-border hover:border-accent hover:bg-surface-hover cursor-pointer transition-all duration-300',
+    elevated: 'bg-surface-elevated border border-border shadow-lg',
   };
 
   return (

@@ -184,12 +184,12 @@ export default function PricingPage() {
                 <GlassCard
                   variant={tier.popular ? 'glow' : 'interactive'}
                   padding="lg"
-                  className={`h-full flex flex-col ${tier.popular ? 'ring-1 ring-accent/40' : tier.premium ? 'ring-1 ring-amber-400/40' : ''}`}
+                  className={`h-full flex flex-col ${tier.popular ? 'ring-1 ring-accent/40' : tier.premium ? 'ring-1 ring-accent-gold/40' : ''}`}
                 >
                   {/* Icon + Name */}
                   <div className="flex items-center gap-3 mb-6">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      tier.popular ? 'bg-accent/20 text-accent' : tier.premium ? 'bg-amber-400/20 text-amber-400' : 'bg-surface text-text-secondary'
+                      tier.popular ? 'bg-accent/20 text-accent' : tier.premium ? 'bg-accent-gold/20 text-accent-gold' : 'bg-surface text-text-secondary'
                     }`}>
                       <Icon className="w-5 h-5" />
                     </div>
@@ -224,7 +224,7 @@ export default function PricingPage() {
                     {tier.features.map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-3 text-sm text-text-secondary">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                          tier.popular ? 'bg-accent/20 text-accent' : tier.premium ? 'bg-amber-400/20 text-amber-400' : 'bg-surface text-success'
+                          tier.popular ? 'bg-accent/20 text-accent' : tier.premium ? 'bg-accent-gold/20 text-accent-gold' : 'bg-surface text-success'
                         }`}>
                           <Check className="w-3 h-3" />
                         </div>
@@ -235,7 +235,7 @@ export default function PricingPage() {
 
                   <MagneticButton
                     variant={tier.popular ? 'premium' : 'outline'}
-                    className={`w-full justify-center ${tier.premium ? 'border-amber-400/50 text-amber-400 hover:bg-amber-400/10' : ''}`}
+                    className={`w-full justify-center ${tier.premium ? 'border-accent-gold/50 text-accent-gold hover:bg-accent-gold/10' : ''}`}
                   >
                     {tier.cta}
                   </MagneticButton>

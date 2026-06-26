@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils';
 
 interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  variant?: 'primary' | 'ghost' | 'outline' | 'premium';
+  variant?: 'primary' | 'ghost' | 'outline' | 'premium' | 'accent';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   as?: 'button' | 'span';
 }
@@ -20,9 +20,6 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   as = 'button',
   ...restProps
 }) => {
-  // Extract standard button attributes and omit any custom/conflicting motion handler names if necessary.
-  // In React 19/Framer Motion, spreading HTMLButtonElement attributes directly onto motion.button can cause type clashes with properties like onDrag or others.
-  // Let's filter out custom props or explicitly cast if needed, or simply map known safe attributes.
   const { type, onClick, id, title, style } = restProps as any;
   const props = { type, onClick, id, title, style };
   const ref = useRef<HTMLElement>(null);
@@ -35,7 +32,6 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
     const { left, top, width, height } = ref.current.getBoundingClientRect();
     const centerX = left + width / 2;
     const centerY = top + height / 2;
-    // Stronger magnetic pull
     setPosition({ x: (clientX - centerX) * 0.3, y: (clientY - centerY) * 0.3 });
   };
 
@@ -49,10 +45,11 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   };
 
   const variantStyles = {
-    premium: 'bg-primary text-black bg-white dark:bg-white dark:text-black font-semibold shadow-glow hover:shadow-xl hover:scale-105',
-    primary: 'bg-accent text-black font-bold shadow-lg hover:shadow-xl hover:shadow-accent/20',
-    outline: 'border border-border-strong text-text-primary hover:bg-surface hover:border-text-secondary',
-    ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface',
+    premium: 'bg-primary text-text-inverse font-semibold shadow-glow hover:shadow-xl hover:scale-105',
+    primary: 'bg-accent text-text-inverse font-bold shadow-lg hover:shadow-xl hover:shadow-glow-accent',
+    accent: 'bg-accent-light text-text-inverse font-semibold shadow-lg hover:shadow-xl',
+    outline: 'border border-border-strong text-text-primary hover:bg-surface-hover hover:border-text-secondary',
+    ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
   };
 
   const classes = cn(
