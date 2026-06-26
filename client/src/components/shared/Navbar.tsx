@@ -78,6 +78,7 @@ export const Navbar: React.FC = () => {
     { name: 'Product', href: '/features' },
     { name: 'Coaches', href: '/coaches' },
     { name: 'Find Gyms', href: '/gyms' },
+    { name: 'Kata Analyzer', href: '/kata' },
     { name: 'Tournaments', href: '/tournaments' },
     { name: 'Academy Hub', href: '/organizer' },
     { name: 'Pricing', href: '/pricing' },

@@ -1,0 +1,6 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+temp_uploads/
+pose_landmarker_full.task
