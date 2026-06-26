@@ -180,7 +180,7 @@ export default function BookingsPage() {
             
             <div className="flex gap-4">
               <Link href="/dashboard">
-                <MagneticButton className="bg-primary hover:bg-opacity-95 text-white py-2.5 px-6 rounded-sm text-xs font-mono font-bold tracking-wider uppercase">
+                <MagneticButton as="span" className="bg-primary hover:bg-opacity-95 text-white py-2.5 px-6 rounded-sm text-xs font-mono font-bold tracking-wider uppercase">
                   BACK TO CONSOLE
                 </MagneticButton>
               </Link>

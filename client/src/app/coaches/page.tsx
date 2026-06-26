@@ -1,110 +1,116 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Search, Star, Award, Shield, Calendar, DollarSign, Clock, Sparkles, RotateCcw, AlertTriangle } from 'lucide-react';
+import {
+  Search, Star, Award, Calendar, DollarSign, Clock, Sparkles, RotateCcw, AlertTriangle, Filter, ChevronRight
+} from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
-import SpotlightCard from '../../components/shared/SpotlightCard';
+import { GlassCard } from '../../components/shared/GlassCard';
 import MagneticButton from '../../components/shared/MagneticButton';
+import { AnimatedBadge } from '../../components/shared/AnimatedBadge';
+import { AnimatedText } from '../../components/shared/AnimatedText';
+
+const coaches = [
+  {
+    id: 1,
+    name: 'Prof. Thiago Valente',
+    discipline: 'BJJ',
+    rank: 'Black Belt · 3rd Degree',
+    experience: '15 years',
+    rate: '$90/hr',
+    rating: 5.0,
+    reviews: 88,
+    certifications: ['IBJJF Certified', 'First Aid Certified'],
+    availability: 'Mon, Wed, Fri · 09:00–17:00',
+    avatar: '/images/avatars/thiago-valente.png',
+    bio: 'Former IBJJF Pan-American champion. Specializes in competition preparation and submission mechanics.',
+    students: 124,
+  },
+  {
+    id: 2,
+    name: 'Coach Kru Somchai',
+    discipline: 'Muay Thai',
+    rank: 'Lumpinee Stadium Veteran',
+    experience: '12 years',
+    rate: '$75/hr',
+    rating: 4.9,
+    reviews: 124,
+    certifications: ['MTIA Certified Instructor'],
+    availability: 'Tue, Thu, Sat · 10:00–18:00',
+    avatar: '/images/avatars/somchai.png',
+    bio: 'Competed in Lumpinee & MAX Muay Thai. Trains fighters from beginner to pro level.',
+    students: 198,
+  },
+  {
+    id: 3,
+    name: 'Coach Elena Rostova',
+    discipline: 'Wrestling',
+    rank: 'Master of Sport (Russia)',
+    experience: '8 years',
+    rate: '$80/hr',
+    rating: 4.8,
+    reviews: 56,
+    certifications: ['USA Wrestling Coach Card', 'SafeSport Certified'],
+    availability: 'Mon, Tue, Thu · 12:00–19:00',
+    avatar: '/images/avatars/elena-rostova.png',
+    bio: 'Olympic trials qualifier. Focuses on clinch work, takedown chains, and mat returns.',
+    students: 87,
+  },
+  {
+    id: 4,
+    name: 'Coach Marcus Vance',
+    discipline: 'Boxing',
+    rank: 'Golden Gloves Champion',
+    experience: '20 years',
+    rate: '$100/hr',
+    rating: 5.0,
+    reviews: 95,
+    certifications: ['AIBA Certified Coach', 'USA Boxing Certified'],
+    availability: 'Wed, Thu, Fri · 08:00–15:00',
+    avatar: '/images/avatars/marcus-vance.png',
+    bio: 'Golden Gloves champion and professional corner man. Expert in defensive boxing and counterpunching.',
+    students: 211,
+  },
+  {
+    id: 5,
+    name: 'Coach Sarah Jenkins',
+    discipline: 'MMA',
+    rank: 'UFC Veteran',
+    experience: '10 years',
+    rate: '$110/hr',
+    rating: 4.9,
+    reviews: 72,
+    certifications: ['NAC Certified Referee', 'ISKA Trainer Certification'],
+    availability: 'Mon, Wed, Sat · 11:00–18:00',
+    avatar: '/images/avatars/sarah-jenkins.png',
+    bio: '5 UFC bouts. Specializes in complete fighter development: striking integration with grappling.',
+    students: 163,
+  },
+];
+
+const disciplines = ['All', 'BJJ', 'Muay Thai', 'Wrestling', 'Boxing', 'MMA'];
+const disciplineColors: Record<string, string> = {
+  BJJ: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  'Muay Thai': 'text-red-400 bg-red-400/10 border-red-400/20',
+  Wrestling: 'text-green-400 bg-green-400/10 border-green-400/20',
+  Boxing: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+  MMA: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+};
 
 export default function DiscoverCoachesPage() {
   const [discipline, setDiscipline] = useState('All');
-  
-  // AI Matchmaker states
   const [matchQuery, setMatchQuery] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [stagedMessage, setStagedMessage] = useState('Understanding your goals...');
   const [aiMatches, setAiMatches] = useState<any[] | null>(null);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
 
-  const getCoachAvatar = (name: string) => {
-    if (name.includes('Thiago')) return '/images/avatars/thiago-valente.png';
-    if (name.includes('Somchai')) return '/images/avatars/somchai.png';
-    if (name.includes('Elena')) return '/images/avatars/elena-rostova.png';
-    if (name.includes('Marcus')) return '/images/avatars/marcus-vance.png';
-    if (name.includes('Sarah')) return '/images/avatars/sarah-jenkins.png';
-    return '/images/avatars/demo-user.svg';
-  };
-
-  const coaches = [
-    {
-      id: 1,
-      name: 'Prof. Thiago Valente',
-      discipline: 'BJJ',
-      rank: 'Black Belt 3rd Degree',
-      experience: '15 years',
-      rate: '$90/hr',
-      rating: '5.0',
-      reviews: 88,
-      certifications: ['IBJJF Certified', 'First Aid Certified'],
-      availability: 'Mon, Wed, Fri (09:00 - 17:00)',
-      avatar: '/images/avatars/thiago-valente.png'
-    },
-    {
-      id: 2,
-      name: 'Coach Kru Somchai',
-      discipline: 'Muay Thai',
-      rank: 'Lumpinee Stadium Vet',
-      experience: '12 years',
-      rate: '$75/hr',
-      rating: '4.9',
-      reviews: 124,
-      certifications: ['MTIA Certified Instructor'],
-      availability: 'Tue, Thu, Sat (10:00 - 18:00)',
-      avatar: '/images/avatars/somchai.png'
-    },
-    {
-      id: 3,
-      name: 'Coach Elena Rostova',
-      discipline: 'Wrestling',
-      rank: 'Master of Sport',
-      experience: '8 years',
-      rate: '$80/hr',
-      rating: '4.8',
-      reviews: 56,
-      certifications: ['USA Wrestling Coach Card', 'SafeSport Certified'],
-      availability: 'Mon, Tue, Thu (12:00 - 19:00)',
-      avatar: '/images/avatars/elena-rostova.png'
-    },
-    {
-      id: 4,
-      name: 'Coach Marcus Vance',
-      discipline: 'Boxing',
-      rank: 'Golden Gloves Champion',
-      experience: '20 years',
-      rate: '$100/hr',
-      rating: '5.0',
-      reviews: 95,
-      certifications: ['AIBA Certified Coach', 'USA Boxing Certified'],
-      availability: 'Wed, Thu, Fri (08:00 - 15:00)',
-      avatar: '/images/avatars/marcus-vance.png'
-    },
-    {
-      id: 5,
-      name: 'Coach Sarah Jenkins',
-      discipline: 'MMA',
-      rank: 'UFC Veteran',
-      experience: '10 years',
-      rate: '$110/hr',
-      rating: '4.9',
-      reviews: 72,
-      certifications: ['NAC Certified Referee', 'ISKA Trainer Certification'],
-      availability: 'Mon, Wed, Sat (11:00 - 18:00)',
-      avatar: '/images/avatars/sarah-jenkins.png'
-    }
-  ];
+  const filteredCoaches = discipline === 'All' ? coaches : coaches.filter(c => c.discipline === discipline);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-  const formatAvailability = (availability: any) => {
-    if (typeof availability === 'string') return availability;
-    if (!Array.isArray(availability) || availability.length === 0) return 'BY APPOINTMENT';
-    return availability.map((av: any) => {
-      const dayAbbrev = av.dayOfWeek ? av.dayOfWeek.slice(0, 3) : '';
-      return `${dayAbbrev} (${av.startTime}-${av.endTime})`;
-    }).join(', ');
-  };
 
   const handleAiMatch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +125,7 @@ export default function DiscoverCoachesPage() {
       "Analyzing coach profiles...",
       "Comparing availability schedules...",
       "Matching location preferences...",
-      "Ranking the best fits..."
+      "Ranking the best fits...",
     ];
     let msgIdx = 0;
     setStagedMessage(messages[0]);
@@ -134,26 +140,20 @@ export default function DiscoverCoachesPage() {
 
       const response = await fetch(`${API_URL}/api/ai/match-coach`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ query: matchQuery })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ query: matchQuery }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to find matches');
-      }
+      if (!response.ok) throw new Error('Failed to find matches');
 
       const data = await response.json();
       if (data.skipAI) {
-        setAiMessage(data.message || 'Broaden your search criteria to discover more matches.');
+        setAiMessage(data.message || 'Broaden your search to discover more matches.');
         setAiMatches([]);
       } else {
         setAiMatches(data.coaches || []);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setAiMessage('Failed to connect to the matchmaking service. Please try again.');
     } finally {
       clearInterval(interval);
@@ -167,222 +167,308 @@ export default function DiscoverCoachesPage() {
     setAiMessage(null);
   };
 
-  const filteredCoaches = discipline === 'All'
-    ? coaches
-    : coaches.filter(c => c.discipline === discipline);
+  const displayCoaches = aiMatches !== null ? aiMatches : filteredCoaches;
 
   return (
-    <div className="min-h-screen bg-background text-text-primary overflow-hidden">
+    <div className="min-h-screen bg-background text-text-primary">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        
-        {/* Header Title */}
-        <div className="mb-8 border-b border-border/60 pb-4 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-black tracking-wide uppercase">DISCOVER COACHES</h1>
-            <p className="text-text-secondary text-xs mt-1">Book private sparring and review slots with verified instructors</p>
-          </div>
-          {aiMatches !== null && (
-            <button 
-              onClick={resetSearch}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary hover:bg-surface border border-border text-xs font-mono font-bold rounded-sm cursor-pointer transition-all"
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+              <AnimatedBadge variant="accent" glow>
+                <Award className="w-3 h-3 mr-1.5" /> Verified Instructors
+              </AnimatedBadge>
+            </motion.div>
+            <AnimatedText
+              text="Discover Coaches"
+              className="text-4xl md:text-5xl font-black tracking-tight mb-2"
+              delay={0.1}
+            />
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-text-secondary text-lg"
             >
-              <RotateCcw className="h-3.5 w-3.5 text-primary" /> RESET SEARCH
-            </button>
+              Book private sessions with verified elite instructors.
+            </motion.p>
+          </div>
+
+          {aiMatches !== null && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={resetSearch}
+              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl text-sm font-semibold hover:border-accent/50 transition-all"
+            >
+              <RotateCcw className="w-4 h-4" /> Reset Search
+            </motion.button>
           )}
         </div>
 
-        {/* AI Matchmaker — prominent differentiator */}
-        <div className="mb-10 p-6 sm:p-8 bg-secondary border-2 border-primary/30 rounded-sm relative overflow-hidden shadow-[0_0_40px_rgba(220,38,38,0.06)]">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute left-0 top-0 w-1 h-full bg-primary" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">Powered by AI</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-display font-black uppercase tracking-wide text-text-primary display-skew inline-block mb-4">
-              <span>Athlix AI Matchmaker</span>
-            </h2>
-            <p className="text-xs text-text-secondary mb-5 max-w-2xl">
-              Describe your goals in plain language — discipline, schedule, budget — and we rank the best coach fits for you.
-            </p>
-          </div>
-          <form onSubmit={handleAiMatch} className="relative flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={matchQuery}
-                onChange={(e) => setMatchQuery(e.target.value)}
-                placeholder="Describe what you're looking for (e.g. Muay Thai coach for weekends under $50)..."
-                className="w-full bg-surface border border-border text-text-primary px-4 py-3.5 rounded-sm text-xs font-mono focus:outline-none focus:border-primary/80 pr-10"
-              />
-              <Search className="absolute right-3 top-3.5 h-4 w-4 text-text-secondary" />
-            </div>
-            <MagneticButton type="submit" className="bg-primary hover:bg-opacity-95 text-white px-6 py-3.5 rounded-sm text-xs font-mono font-bold tracking-wider uppercase flex items-center justify-center gap-2 min-w-[140px]">
-              <Sparkles className="h-4 w-4" /> MATCH ME
-            </MagneticButton>
-          </form>
-        </div>
-
-        {/* Loading state */}
-        {aiLoading && (
-          <div className="mb-12 flex flex-col items-center justify-center py-16 bg-secondary border border-border rounded-sm">
-            <div className="w-full max-w-md h-12 skeleton rounded-sm mb-6" />
-            <div className="w-48 h-3 skeleton rounded-sm mb-4" />
-            <p className="text-xs font-mono text-text-primary font-bold uppercase tracking-wider">
-              {stagedMessage}
-            </p>
-          </div>
-        )}
-
-        {/* AI Matches or Message */}
-        {!aiLoading && aiMessage && (
-          <div className="mb-8 p-6 bg-secondary border border-primary/20 rounded-sm flex items-start gap-4">
-            <AlertTriangle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-xs font-mono font-bold text-primary uppercase mb-1">Matchmaker Alert</h3>
-              <p className="text-[11px] font-mono text-text-secondary font-bold uppercase">{aiMessage}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Dynamic Coach Grid */}
-        {!aiLoading && (
-          <>
-            {aiMatches !== null ? (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-display font-black uppercase tracking-wide">AI Matchmaker Recommendations</h2>
-                  <span className="text-[10px] font-mono font-bold text-text-secondary bg-surface px-2.5 py-1 border border-border rounded-sm">
-                    {aiMatches.length} FIT{aiMatches.length !== 1 ? 'S' : ''} FOUND
-                  </span>
-                </div>
-
-                {aiMatches.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {aiMatches.map((coach) => (
-                      <SpotlightCard key={coach.id} className="bg-secondary border border-primary/30 rounded-sm p-6 flex flex-col justify-between min-h-[420px] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 bg-primary/10 border-l border-b border-primary/35 px-3.5 py-1 text-[10px] font-mono font-black text-primary tracking-widest uppercase animate-pulse">
-                          {coach.matchScore}% MATCH
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between items-start mb-4 pr-24">
-                            <div className="flex items-center gap-3">
-                              <div className="h-12 w-12 rounded-sm overflow-hidden bg-surface border border-border shrink-0">
-                                <img src={getCoachAvatar(coach.name)} alt={coach.name} className="w-full h-full object-cover" />
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-display font-black uppercase tracking-wide leading-tight">{coach.name}</h3>
-                                <span className="text-[10px] text-text-secondary font-mono mt-0.5 block uppercase font-bold">{coach.beltRank || coach.rank || 'Verified'} • {coach.discipline}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Highlighted AI Reason Callout */}
-                          <div className="mb-5 p-3.5 bg-primary/5 border-l-2 border-primary rounded-sm text-[10px] font-mono text-text-primary/95 leading-relaxed font-bold">
-                            <span className="text-primary mr-1">★ AI FIT RATIONALE:</span>
-                            {coach.reason}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-[10px] font-mono text-text-secondary mb-6 bg-surface/50 p-3.5 rounded-sm border border-border/30 font-bold uppercase">
-                            <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-primary" /> {coach.experienceYears} YEARS EXP</span>
-                            <span className="flex items-center gap-1.5"><DollarSign className="h-4 w-4 text-primary" /> ${coach.pricingPerHour}/HR RATE</span>
-                            <span className="flex items-center gap-1.5 sm:col-span-2"><Calendar className="h-4 w-4 text-primary" /> {formatAvailability(coach.availability).toUpperCase()}</span>
-                          </div>
-
-                          <div className="flex flex-wrap gap-1.5 mb-6">
-                            {coach.certifications.map((c: string, idx: number) => (
-                              <span key={idx} className="bg-surface border border-border text-[9px] font-bold font-mono px-2 py-0.5 rounded-sm text-text-secondary">
-                                {c.toUpperCase()}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        <Link href="/bookings" className="w-full">
-                          <MagneticButton className="w-full bg-primary hover:bg-opacity-95 text-white py-3 rounded-sm text-xs font-mono font-bold tracking-wider uppercase">
-                            BOOK INSTRUCTION SLOT
-                          </MagneticButton>
-                        </Link>
-                      </SpotlightCard>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center text-text-secondary font-mono text-xs font-bold uppercase">
-                    Use the reset button to view our default verified roster.
-                  </div>
-                )}
+        {/* AI Matchmaker */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-10"
+        >
+          <GlassCard variant="glow" padding="lg" className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-accent" />
+                <span className="text-accent text-xs font-black uppercase tracking-widest">Powered by AI</span>
               </div>
-            ) : (
-              <>
-                {/* Filter controls */}
-                <div className="flex flex-wrap gap-2.5 mb-8 bg-secondary p-4 rounded-sm border border-border">
-                  {['All', 'BJJ', 'Muay Thai', 'MMA', 'Boxing'].map((disc) => (
-                    <button
-                      key={disc}
-                      onClick={() => setDiscipline(disc)}
-                      className={`px-3 py-1.5 rounded-sm text-xs font-bold font-mono cursor-pointer transition-all ${
-                        discipline === disc
-                          ? 'bg-primary text-white'
-                          : 'bg-surface text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      {disc.toUpperCase()}
-                    </button>
-                  ))}
+              <h2 className="text-xl font-black mb-1">Athlix AI Matchmaker</h2>
+              <p className="text-text-secondary text-sm mb-5 max-w-2xl">
+                Describe your goals in plain language — discipline, schedule, budget — and we rank the best coach fits for you.
+              </p>
+
+              <form onSubmit={handleAiMatch} className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
+                  <input
+                    type="text"
+                    value={matchQuery}
+                    onChange={e => setMatchQuery(e.target.value)}
+                    placeholder="E.g. BJJ coach available on weekends, under $80/hr..."
+                    className="w-full bg-background/50 border border-border rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  />
                 </div>
+                <MagneticButton
+                  variant="premium"
+                  type="submit"
+                  disabled={aiLoading}
+                  className="min-w-[140px] justify-center"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {aiLoading ? 'Matching...' : 'Match Me'}
+                </MagneticButton>
+              </form>
+            </div>
+          </GlassCard>
+        </motion.div>
 
-                {/* List of coaches */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredCoaches.map((coach) => (
-                    <SpotlightCard key={coach.id} className="bg-secondary border border-border rounded-sm p-6 flex flex-col justify-between h-[360px]">
-                      <div>
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-12 w-12 rounded-sm overflow-hidden bg-surface border border-border shrink-0">
-                              <img src={coach.avatar} alt={coach.name} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                              <h3 className="text-xl font-display font-black uppercase tracking-wide leading-tight">{coach.name}</h3>
-                              <span className="text-[10px] text-text-secondary font-mono mt-0.5 block uppercase font-bold">{coach.rank} • {coach.discipline}</span>
-                            </div>
+        {/* AI Loading */}
+        <AnimatePresence>
+          {aiLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-10"
+            >
+              <GlassCard padding="lg" className="text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                  <p className="text-accent font-semibold animate-pulse">{stagedMessage}</p>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* AI Message */}
+        {!aiLoading && aiMessage && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
+            <GlassCard padding="md" className="flex items-start gap-4 border-warning/30">
+              <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-warning text-sm mb-1">Matchmaker Alert</p>
+                <p className="text-text-secondary text-sm">{aiMessage}</p>
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* Discipline Filter (only when not in AI mode) */}
+        {!aiLoading && aiMatches === null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-2 mb-8"
+          >
+            {disciplines.map(d => (
+              <button
+                key={d}
+                onClick={() => setDiscipline(d)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                  discipline === d
+                    ? 'bg-accent text-black border-accent shadow-lg shadow-accent/30'
+                    : 'border-border text-text-secondary hover:border-accent/50 hover:text-text-primary'
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </motion.div>
+        )}
+
+        {/* AI Match Header */}
+        {aiMatches !== null && !aiLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-between mb-6"
+          >
+            <h2 className="text-xl font-black">AI Matchmaker Results</h2>
+            <AnimatedBadge variant="accent">
+              {aiMatches.length} {aiMatches.length === 1 ? 'match' : 'matches'} found
+            </AnimatedBadge>
+          </motion.div>
+        )}
+
+        {/* Coach Grid */}
+        {!aiLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {displayCoaches.map((coach: any, idx: number) => {
+                const isAiMatch = aiMatches !== null;
+                const matchScore = coach.matchScore;
+                const discColor = disciplineColors[coach.discipline] || 'text-text-secondary bg-surface border-border';
+
+                return (
+                  <motion.div
+                    key={coach.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: idx * 0.07 }}
+                    layout
+                  >
+                    <GlassCard padding="none" variant="interactive" className="h-full flex flex-col group overflow-hidden">
+                      {/* Header */}
+                      <div className="p-5 pb-4 flex items-start gap-4 border-b border-border">
+                        <div className="relative shrink-0">
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface border border-border">
+                            <img
+                              src={coach.avatar}
+                              alt={coach.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const el = e.target as HTMLImageElement;
+                                el.parentElement!.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-surface text-xl font-black text-accent">${coach.name[0]}</div>`;
+                              }}
+                            />
                           </div>
-                          <div className="flex items-center gap-1 bg-surface px-2.5 py-1 rounded-sm text-[10px] font-mono font-bold text-primary border border-border/40">
-                            <Star className="h-3.5 w-3.5 fill-primary stroke-primary" /> {coach.rating}
-                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-background" />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-[10px] font-mono text-text-secondary mb-6 bg-surface/50 p-3.5 rounded-sm border border-border/30 font-bold uppercase">
-                          <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-primary" /> {coach.experience.toUpperCase()} EXP</span>
-                          <span className="flex items-center gap-1.5"><DollarSign className="h-4 w-4 text-primary" /> {coach.rate} RATE</span>
-                          <span className="flex items-center gap-1.5 sm:col-span-2"><Calendar className="h-4 w-4 text-primary" /> {coach.availability.toUpperCase()}</span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5 mb-6">
-                          {coach.certifications.map((c, idx) => (
-                            <span key={idx} className="bg-surface border border-border text-[9px] font-bold font-mono px-2 py-0.5 rounded-sm text-text-secondary">
-                              {c.toUpperCase()}
-                            </span>
-                          ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="font-black text-base leading-tight truncate group-hover:text-accent transition-colors">
+                              {coach.name}
+                            </h3>
+                            {isAiMatch && matchScore && (
+                              <span className="text-accent text-xs font-black bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full shrink-0">
+                                {matchScore}%
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-text-secondary text-xs mb-2 truncate">{coach.rank || coach.beltRank || 'Verified'}</p>
+                          <span className={`text-xs font-semibold border px-2 py-0.5 rounded-full ${discColor}`}>
+                            {coach.discipline}
+                          </span>
                         </div>
                       </div>
 
-                      <Link href="/bookings" className="w-full">
-                        <MagneticButton className="w-full bg-primary hover:bg-opacity-95 text-white py-3 rounded-sm text-xs font-mono font-bold tracking-wider uppercase">
-                          BOOK INSTRUCTION SLOT
-                        </MagneticButton>
-                      </Link>
-                    </SpotlightCard>
-                  ))}
-                </div>
-              </>
+                      {/* Stats */}
+                      <div className="p-5 flex-1 flex flex-col">
+                        {(coach.bio) && (
+                          <p className="text-text-secondary text-xs leading-relaxed mb-4 line-clamp-2">
+                            {coach.bio}
+                          </p>
+                        )}
+
+                        {isAiMatch && coach.reason && (
+                          <div className="bg-accent/5 border-l-2 border-accent rounded-r-xl p-3 mb-4">
+                            <p className="text-xs text-accent font-semibold">★ AI Rationale</p>
+                            <p className="text-xs text-text-secondary mt-1">{coach.reason}</p>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          <div className="bg-surface rounded-xl p-3 flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-text-tertiary shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-text-tertiary uppercase tracking-wide">Experience</p>
+                              <p className="text-xs font-bold">{coach.experience || `${coach.experienceYears} yrs`}</p>
+                            </div>
+                          </div>
+                          <div className="bg-surface rounded-xl p-3 flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-text-tertiary shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-text-tertiary uppercase tracking-wide">Rate</p>
+                              <p className="text-xs font-bold">{coach.rate || `$${coach.pricingPerHour}/hr`}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Rating */}
+                        {coach.rating && (
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map(s => (
+                                <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(coach.rating) ? 'fill-amber-400 text-amber-400' : 'text-border fill-border'}`} />
+                              ))}
+                            </div>
+                            <span className="text-xs font-bold text-text-primary">{coach.rating}</span>
+                            <span className="text-xs text-text-tertiary">({coach.reviews} reviews)</span>
+                          </div>
+                        )}
+
+                        {coach.availability && (
+                          <div className="flex items-center gap-2 mb-4 text-xs text-text-tertiary">
+                            <Calendar className="w-3.5 h-3.5 shrink-0" />
+                            <span>{coach.availability}</span>
+                          </div>
+                        )}
+
+                        {/* Certs */}
+                        {coach.certifications && (
+                          <div className="flex flex-wrap gap-1.5 mb-5">
+                            {coach.certifications.map((c: string, i: number) => (
+                              <span key={i} className="text-[10px] font-semibold border border-border rounded-full px-2 py-0.5 text-text-tertiary">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* CTA */}
+                        <div className="mt-auto">
+                          <Link href="/bookings" className="block">
+                            <MagneticButton variant="premium" className="w-full justify-center">
+                              Book Session <ChevronRight className="w-4 h-4 ml-1" />
+                            </MagneticButton>
+                          </Link>
+                        </div>
+                      </div>
+                    </GlassCard>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            {displayCoaches.length === 0 && !aiLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full text-center py-16 text-text-secondary"
+              >
+                <Filter className="w-10 h-10 mx-auto mb-4 opacity-30" />
+                <p className="font-semibold mb-2">No coaches found</p>
+                <p className="text-sm">Try adjusting your filters or search criteria.</p>
+              </motion.div>
             )}
-          </>
+          </div>
         )}
-      </div>
+      </main>
 
       <Footer />
     </div>

@@ -28,7 +28,7 @@ export default function NotFound() {
           </p>
 
           <Link href="/">
-            <MagneticButton className="w-full bg-primary hover:bg-opacity-95 text-white font-bold py-3 rounded-md font-bebas tracking-widest text-sm">
+            <MagneticButton as="span" className="w-full bg-primary hover:bg-opacity-95 text-white font-bold py-3 rounded-md font-bebas tracking-widest text-sm">
               RETURN TO ARENA
             </MagneticButton>
           </Link>

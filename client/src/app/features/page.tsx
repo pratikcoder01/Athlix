@@ -238,7 +238,7 @@ export default function FeaturesPage() {
               className="mt-8 flex items-center gap-4"
             >
               <Link href="/pricing">
-                <MagneticButton variant="primary" className="text-xs font-bold py-2.5 px-6 rounded-sm tracking-wider uppercase font-mono">
+                <MagneticButton as="span" variant="primary" className="text-xs font-bold py-2.5 px-6 rounded-sm tracking-wider uppercase font-mono">
                   View pricing
                 </MagneticButton>
               </Link>
@@ -345,7 +345,7 @@ export default function FeaturesPage() {
             </div>
             <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end">
               <Link href="/signup">
-                <MagneticButton variant="primary" className="w-full text-xs font-bold py-3 px-6 rounded-sm tracking-wider uppercase font-mono">
+                <MagneticButton as="span" variant="primary" className="w-full text-xs font-bold py-3 px-6 rounded-sm tracking-wider uppercase font-mono">
                   Get started free
                 </MagneticButton>
               </Link>

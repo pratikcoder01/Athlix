@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useReducedMotion } from 'framer-motion';
 
 function useCountUp(target: number, duration = 1800, inView: boolean) {
@@ -26,13 +25,13 @@ function useCountUp(target: number, duration = 1800, inView: boolean) {
 }
 
 const stats = [
-  { raw: 15000, display: (n: number) => `${(n / 1000).toFixed(n >= 15000 ? 0 : 1)}K+`, label: 'Active athletes' },
-  { raw: 987, display: (n: number) => `${(n / 10).toFixed(1)}%`, label: 'Booking accuracy' },
-  { raw: 450, display: (n: number) => `${n}+`, label: 'Tournaments run' },
-  { raw: 247, display: (n: number) => n >= 247 ? '24/7' : `${n}`, label: 'Real-time alerts' },
+  { raw: 18400, display: (n: number) => `${(n / 1000).toFixed(n >= 18000 ? 1 : 0)}K+`, label: 'Athlete profiles modeled' },
+  { raw: 3120, display: (n: number) => `${(n / 1000).toFixed(1)}K+`, label: 'Coach sessions booked' },
+  { raw: 912, display: (n: number) => `${n}+`, label: 'Brackets generated' },
+  { raw: 42, display: (n: number) => `${n}`, label: 'Academy cities tracked' },
 ];
 
-function StatItem({ stat, index }: { stat: typeof stats[number]; index: number }) {
+function StatItem({ stat }: { stat: typeof stats[number] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
   const shouldReduce = useReducedMotion();
@@ -54,12 +53,12 @@ function StatItem({ stat, index }: { stat: typeof stats[number]; index: number }
   return (
     <div
       ref={ref}
-      className="relative flex flex-col items-center text-center px-4 py-4"
+      className="relative flex flex-col items-start text-left px-4 py-5 bg-background/45 border border-border rounded-sm"
     >
-      <span className="text-3xl sm:text-5xl font-display font-black tracking-tight text-text-primary tabular-data">
+      <span className="text-3xl sm:text-5xl font-display font-black tracking-tight text-text-primary tabular-data leading-none">
         {displayValue}
       </span>
-      <p className="text-xs font-medium text-text-secondary mt-2 font-sans">
+      <p className="text-[10px] font-bold text-text-secondary mt-3 font-mono uppercase tracking-widest leading-relaxed">
         {stat.label}
       </p>
     </div>
@@ -68,10 +67,10 @@ function StatItem({ stat, index }: { stat: typeof stats[number]; index: number }
 
 export default function StatsBar() {
   return (
-    <section className="relative z-10 py-24 transition-colors duration-300">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
-        {stats.map((stat, i) => (
-          <StatItem key={stat.label} stat={stat} index={i} />
+    <section className="relative z-10 border-y border-border/70 bg-secondary/35 py-10 transition-colors duration-300">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {stats.map((stat) => (
+          <StatItem key={stat.label} stat={stat} />
         ))}
       </div>
     </section>
