@@ -83,11 +83,9 @@ export const Footer: React.FC = () => {
             viewport={{ once: true }}
             className="col-span-2 lg:col-span-2 flex flex-col gap-6"
           >
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-background">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
+                <img src="/logo.png" alt="Athlix Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold tracking-tight">Athlix</span>
             </div>

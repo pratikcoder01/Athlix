@@ -130,10 +130,8 @@ export default function LoginPage() {
         
         <div className="relative z-10 flex items-center gap-2.5">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-accent" stroke="currentColor" strokeWidth={2.5}>
-                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
-              </svg>
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
+              <img src="/logo.png" alt="Athlix Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-xl font-black tracking-widest">ATHLIX<span className="text-accent">.</span></span>
           </Link>
@@ -171,12 +169,9 @@ export default function LoginPage() {
       {/* Right split pane: Login Form */}
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
-          {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-6 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={2.5}>
-                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
-              </svg>
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/logo.png" alt="Athlix Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-black tracking-widest">ATHLIX<span className="text-accent">.</span></span>
           </div>
