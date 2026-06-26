@@ -2,10 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, Calendar, Award, TrendingUp, User, Users, Compass,
-  Settings, Bell, CheckSquare, ChevronRight, Plus, Zap, Star, Sparkles
+  Settings, Bell, CheckSquare, ChevronRight, Plus, Zap, Star, Sparkles, RefreshCw
 } from 'lucide-react';
 import { GlassCard } from '../../components/shared/GlassCard';
 import MagneticButton from '../../components/shared/MagneticButton';
@@ -25,6 +25,60 @@ const navLinks = [
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+
+  const [currentHours, setCurrentHours] = React.useState(4.5);
+  const [trailingAverage, setTrailingAverage] = React.useState(3.0);
+  const [nudgeText, setNudgeText] = React.useState('');
+  const [isNudgeLoading, setIsNudgeLoading] = React.useState(false);
+  const [nudgeError, setNudgeError] = React.useState('');
+
+  const ratio = currentHours / trailingAverage;
+  const exceedsThreshold = ratio >= 1.3;
+
+  const fetchWellbeingNudge = async () => {
+    setIsNudgeLoading(true);
+    setNudgeError('');
+    try {
+      const token = useAuthStore.getState().token;
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/ai/wellbeing-nudge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPeriodHours: currentHours,
+          trailingAverageHours: trailingAverage,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('AI wellbeing nudge call failed or was blocked.');
+      }
+      const data = await res.json();
+      if (data.success) {
+        setNudgeText(data.nudge);
+      } else {
+        throw new Error(data.message || 'Failed to fetch');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setNudgeError(err.message || 'AI nudge call failed or was blocked.');
+      setNudgeText('');
+    } finally {
+      setIsNudgeLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (exceedsThreshold) {
+      fetchWellbeingNudge();
+    } else {
+      setNudgeText('');
+      setNudgeError('');
+    }
+  }, [exceedsThreshold]);
 
   const analytics = [
     { label: 'Sparring Hours', value: '42.5', sub: '+3.2 this week', icon: Activity, color: 'text-cyan-400' },
@@ -199,6 +253,116 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
+                </GlassCard>
+              </motion.div>
+
+              {/* Feature 5: Injury-load Wellbeing Advisor */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                <GlassCard padding="lg">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="font-black text-base mb-1">Injury-Load & Wellbeing Advisor</h3>
+                      <p className="text-text-secondary text-sm">Monitor sparring volume vs. historic baseline to prevent overtraining</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                      <Activity className="w-5 h-5 text-teal-400" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Logged Sparring Hours Slider */}
+                    <div>
+                      <div className="flex justify-between text-xs text-text-secondary mb-2">
+                        <span>Current Period Sparring Hours</span>
+                        <span className="font-bold text-text-primary">{currentHours} hrs</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="20"
+                        step="0.5"
+                        value={currentHours}
+                        onChange={(e) => setCurrentHours(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-surface rounded-lg appearance-none cursor-pointer accent-accent"
+                      />
+                    </div>
+
+                    {/* Trailing Average Slider */}
+                    <div>
+                      <div className="flex justify-between text-xs text-text-secondary mb-2">
+                        <span>Trailing Weekly Average</span>
+                        <span className="font-bold text-text-primary">{trailingAverage} hrs</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="15"
+                        step="0.5"
+                        value={trailingAverage}
+                        onChange={(e) => setTrailingAverage(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-surface rounded-lg appearance-none cursor-pointer accent-accent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Wellbeing nudge output */}
+                  <AnimatePresence mode="wait">
+                    {exceedsThreshold ? (
+                      <motion.div
+                        key="alert"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-col gap-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                            <span className="text-xs font-black text-amber-400 uppercase tracking-wider">High Training Load detected ({Math.round(ratio * 100)}% of baseline)</span>
+                          </div>
+                          <button
+                            onClick={fetchWellbeingNudge}
+                            disabled={isNudgeLoading}
+                            className="text-text-tertiary hover:text-text-primary text-xs flex items-center gap-1 transition-colors"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isNudgeLoading ? 'animate-spin' : ''}`} />
+                            Recalculate Nudge
+                          </button>
+                        </div>
+                        {isNudgeLoading ? (
+                          <div className="h-6 flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs text-text-secondary animate-pulse">DeepSeek V3.2 generating supportive nudge...</span>
+                          </div>
+                        ) : nudgeError ? (
+                          <p className="text-xs text-red-400 font-medium leading-relaxed">
+                            ⚠️ {nudgeError}
+                          </p>
+                        ) : (
+                          <div className="flex items-start gap-2.5">
+                            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-text-secondary leading-relaxed italic">
+                              "{nudgeText || 'No advice generated. Click recalculate.'}"
+                            </p>
+                          </div>
+                        )}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="optimal"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl flex items-center gap-3"
+                      >
+                        <div className="w-2 h-2 rounded-full bg-teal-400" />
+                        <div className="flex-1">
+                          <p className="text-xs font-black text-teal-400 uppercase tracking-wider mb-0.5">Optimal Load Level ({Math.round(ratio * 100)}%)</p>
+                          <p className="text-xs text-text-secondary">Your training volume is currently in a healthy range relative to your trailing average. Keep up the consistent work!</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </GlassCard>
               </motion.div>
 

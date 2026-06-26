@@ -355,4 +355,36 @@ Respond strictly in JSON format matching this schema:
   }
 };
 
+export const generateWellbeingNudge = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { currentPeriodHours, trailingAverageHours } = req.body;
+
+    if (currentPeriodHours === undefined || trailingAverageHours === undefined) {
+      return res.status(400).json({ success: false, message: 'Missing parameters' });
+    }
+
+    const systemPrompt = `You are a supportive, empathetic combat sports training advisor. Focus on athletic recovery, injury prevention, and sustainable load management.`;
+    const userPrompt = `The athlete has logged ${currentPeriodHours} sparring hours for the current period, compared to their trailing weekly average of ${trailingAverageHours} hours (an increase of ${Math.round((currentPeriodHours / trailingAverageHours) * 100 - 100)}%).
+    Generate a supportive, low-key, one-line wellbeing nudge advising them on load management, recovery, or lighter training. Do NOT fabricate alarming language. Keep it under 120 characters.
+    Respond strictly in JSON format matching this schema:
+    {
+      "nudge": "string (the supportive wellbeing nudge)"
+    }`;
+
+    const result = await askFeatherlessJSON<{ nudge: string }>(systemPrompt, userPrompt);
+
+    return res.status(200).json({
+      success: true,
+      nudge: result.nudge,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 
