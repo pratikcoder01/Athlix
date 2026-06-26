@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
-  Search, Star, Award, Calendar, DollarSign, Clock, Sparkles, RotateCcw, AlertTriangle, Filter, ChevronRight
+  Search, Star, Award, Calendar, DollarSign, Clock, Sparkles, RotateCcw, AlertTriangle, Filter, ChevronRight, User, ShieldCheck
 } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
@@ -56,7 +56,7 @@ const coaches = [
     certifications: ['USA Wrestling Coach Card', 'SafeSport Certified'],
     availability: 'Mon, Tue, Thu · 12:00–19:00',
     avatar: '/images/avatars/elena-rostova.png',
-    bio: 'Olympic trials qualifier. Focuses on clinch work, takedown chains, and mat returns.',
+    bio: 'Olympic trials qualifier. Focuses on takedown chains, and mat returns.',
     students: 87,
   },
   {
@@ -93,11 +93,11 @@ const coaches = [
 
 const disciplines = ['All', 'BJJ', 'Muay Thai', 'Wrestling', 'Boxing', 'MMA'];
 const disciplineColors: Record<string, string> = {
-  BJJ: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
-  'Muay Thai': 'text-red-400 bg-red-400/10 border-red-400/20',
-  Wrestling: 'text-green-400 bg-green-400/10 border-green-400/20',
-  Boxing: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-  MMA: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+  BJJ: 'text-accent bg-accent/10 border-accent/25',
+  'Muay Thai': 'text-red-400 bg-red-400/10 border-red-400/25',
+  Wrestling: 'text-green-400 bg-green-400/10 border-green-400/25',
+  Boxing: 'text-amber-400 bg-amber-400/10 border-amber-400/25',
+  MMA: 'text-purple-400 bg-purple-400/10 border-purple-400/25',
 };
 
 export default function DiscoverCoachesPage() {
@@ -124,8 +124,8 @@ export default function DiscoverCoachesPage() {
       "Understanding your goals...",
       "Analyzing coach profiles...",
       "Comparing availability schedules...",
-      "Matching location preferences...",
-      "Ranking the best fits...",
+      "Comparing budget profiles...",
+      "Ranking matches...",
     ];
     let msgIdx = 0;
     setStagedMessage(messages[0]);
@@ -175,9 +175,9 @@ export default function DiscoverCoachesPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6 pb-6 border-b border-border">
           <div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-3 inline-flex">
               <AnimatedBadge variant="accent" glow>
                 <Award className="w-3 h-3 mr-1.5" /> Verified Instructors
               </AnimatedBadge>
@@ -191,9 +191,9 @@ export default function DiscoverCoachesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-text-secondary text-lg"
+              className="text-text-secondary text-sm"
             >
-              Book private sessions with verified elite instructors.
+              Book private sessions with verified elite combat sports instructors.
             </motion.p>
           </div>
 
@@ -202,7 +202,7 @@ export default function DiscoverCoachesPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               onClick={resetSearch}
-              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl text-sm font-semibold hover:border-accent/50 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl text-xs font-bold uppercase tracking-wider hover:border-accent transition-all cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" /> Reset Search
             </motion.button>
@@ -220,7 +220,7 @@ export default function DiscoverCoachesPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent pointer-events-none" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-5 h-5 text-accent" />
+                <Sparkles className="w-5 h-5 text-accent animate-pulse" />
                 <span className="text-accent text-xs font-black uppercase tracking-widest">Powered by AI</span>
               </div>
               <h2 className="text-xl font-black mb-1">Athlix AI Matchmaker</h2>
@@ -236,7 +236,7 @@ export default function DiscoverCoachesPage() {
                     value={matchQuery}
                     onChange={e => setMatchQuery(e.target.value)}
                     placeholder="E.g. BJJ coach available on weekends, under $80/hr..."
-                    className="w-full bg-background/50 border border-border rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                    className="w-full bg-surface border border-border rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                   />
                 </div>
                 <MagneticButton
@@ -263,9 +263,9 @@ export default function DiscoverCoachesPage() {
               className="mb-10"
             >
               <GlassCard padding="lg" className="text-center">
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-col items-center gap-4 py-6">
                   <div className="w-12 h-12 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                  <p className="text-accent font-semibold animate-pulse">{stagedMessage}</p>
+                  <p className="text-accent text-sm font-semibold animate-pulse">{stagedMessage}</p>
                 </div>
               </GlassCard>
             </motion.div>
@@ -291,16 +291,16 @@ export default function DiscoverCoachesPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-wrap gap-2 mb-8"
+            className="flex flex-wrap gap-2 bg-surface p-1 border border-border rounded-xl w-max mb-8 max-w-full"
           >
             {disciplines.map(d => (
               <button
                 key={d}
                 onClick={() => setDiscipline(d)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
                   discipline === d
-                    ? 'bg-accent text-black border-accent shadow-lg shadow-accent/30'
-                    : 'border-border text-text-secondary hover:border-accent/50 hover:text-text-primary'
+                    ? 'bg-accent text-black font-black shadow-md'
+                    : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {d}
@@ -338,12 +338,12 @@ export default function DiscoverCoachesPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: idx * 0.07 }}
+                    transition={{ delay: idx * 0.05 }}
                     layout
                   >
                     <GlassCard padding="none" variant="interactive" className="h-full flex flex-col group overflow-hidden">
                       {/* Header */}
-                      <div className="p-5 pb-4 flex items-start gap-4 border-b border-border">
+                      <div className="p-6 pb-4 flex items-start gap-4 border-b border-border">
                         <div className="relative shrink-0">
                           <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface border border-border">
                             <img
@@ -365,22 +365,24 @@ export default function DiscoverCoachesPage() {
                               {coach.name}
                             </h3>
                             {isAiMatch && matchScore && (
-                              <span className="text-accent text-xs font-black bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full shrink-0">
+                              <span className="text-accent text-[10px] font-black bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full shrink-0">
                                 {matchScore}%
                               </span>
                             )}
                           </div>
-                          <p className="text-text-secondary text-xs mb-2 truncate">{coach.rank || coach.beltRank || 'Verified'}</p>
-                          <span className={`text-xs font-semibold border px-2 py-0.5 rounded-full ${discColor}`}>
+                          <p className="text-text-secondary text-xs mb-2 truncate flex items-center gap-1">
+                            <ShieldCheck className="w-3.5 h-3.5 text-accent inline" /> {coach.rank || coach.beltRank || 'Verified'}
+                          </p>
+                          <span className={`text-[10px] font-bold border px-2.5 py-0.5 rounded-full uppercase tracking-wider ${discColor}`}>
                             {coach.discipline}
                           </span>
                         </div>
                       </div>
 
                       {/* Stats */}
-                      <div className="p-5 flex-1 flex flex-col">
+                      <div className="p-6 flex-1 flex flex-col">
                         {(coach.bio) && (
-                          <p className="text-text-secondary text-xs leading-relaxed mb-4 line-clamp-2">
+                          <p className="text-text-secondary text-sm leading-relaxed mb-4 line-clamp-2">
                             {coach.bio}
                           </p>
                         )}
@@ -393,18 +395,18 @@ export default function DiscoverCoachesPage() {
                         )}
 
                         <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="bg-surface rounded-xl p-3 flex items-center gap-2">
+                          <div className="bg-surface rounded-xl p-3 border border-border flex items-center gap-2">
                             <Clock className="w-4 h-4 text-text-tertiary shrink-0" />
                             <div>
-                              <p className="text-[10px] text-text-tertiary uppercase tracking-wide">Experience</p>
-                              <p className="text-xs font-bold">{coach.experience || `${coach.experienceYears} yrs`}</p>
+                              <p className="text-[9px] text-text-tertiary uppercase tracking-wider font-mono">Experience</p>
+                              <p className="text-xs font-bold mt-0.5">{coach.experience || `${coach.experienceYears} yrs`}</p>
                             </div>
                           </div>
-                          <div className="bg-surface rounded-xl p-3 flex items-center gap-2">
+                          <div className="bg-surface rounded-xl p-3 border border-border flex items-center gap-2">
                             <DollarSign className="w-4 h-4 text-text-tertiary shrink-0" />
                             <div>
-                              <p className="text-[10px] text-text-tertiary uppercase tracking-wide">Rate</p>
-                              <p className="text-xs font-bold">{coach.rate || `$${coach.pricingPerHour}/hr`}</p>
+                              <p className="text-[9px] text-text-tertiary uppercase tracking-wider font-mono">Rate</p>
+                              <p className="text-xs font-bold mt-0.5">{coach.rate || `$${coach.pricingPerHour}/hr`}</p>
                             </div>
                           </div>
                         </div>
@@ -433,7 +435,7 @@ export default function DiscoverCoachesPage() {
                         {coach.certifications && (
                           <div className="flex flex-wrap gap-1.5 mb-5">
                             {coach.certifications.map((c: string, i: number) => (
-                              <span key={i} className="text-[10px] font-semibold border border-border rounded-full px-2 py-0.5 text-text-tertiary">
+                              <span key={i} className="text-[10px] font-semibold border border-border rounded-full px-2 py-0.5 text-text-tertiary bg-surface/50">
                                 {c}
                               </span>
                             ))}
