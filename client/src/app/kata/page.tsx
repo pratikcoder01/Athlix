@@ -241,20 +241,6 @@ export default function KataAnalyzerPage() {
     setCurrentTime(0);
   };
 
-  // Generate Recharts Radar data
-  const getRadarData = () => {
-    if (!result) return [];
-    const s = result.scores;
-    return [
-      { subject: 'Stability', A: s.stability },
-      { subject: 'Precision', A: s.precision },
-      { subject: 'Power', A: s.power },
-      { subject: 'Guard', A: s.guard },
-      { subject: 'Timing', A: s.timing },
-      { subject: 'Overall', A: s.overall }
-    ];
-  };
-
   // Generate Recharts Line data (sampled every 10 frames to avoid lag)
   const getLineData = () => {
     if (!result || !result.frames) return [];
@@ -624,12 +610,12 @@ export default function KataAnalyzerPage() {
                   <span className="text-2xl font-black text-accent">{result.stats.peak_velocity} <span className="text-sm font-semibold">m/s</span></span>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center text-center p-4" padding="none">
-                  <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Punches</span>
-                  <span className="text-2xl font-black text-purple">{result.stats.total_punches}</span>
+                  <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Arm Strikes</span>
+                  <span className="text-2xl font-black text-purple">{result.stats.total_arm_strikes}</span>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center text-center p-4" padding="none">
-                  <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Kicks</span>
-                  <span className="text-2xl font-black text-info">{result.stats.total_kicks}</span>
+                  <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Leg Strikes</span>
+                  <span className="text-2xl font-black text-info">{result.stats.total_leg_strikes}</span>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center text-center p-4" padding="none">
                   <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Blocks</span>
@@ -754,14 +740,33 @@ export default function KataAnalyzerPage() {
                   <Award className="w-5 h-5 text-accent" />
                   Performance Calibration
                 </h3>
-                <p className="text-text-secondary text-xs self-start mb-6">
-                  Calculated against Olympic level reference data.
+                <p className="text-text-secondary text-xs self-start mb-2">
+                  Calculated from real pose landmark data.
                 </p>
+
+                {/* Score Formula Display */}
+                <div className="w-full bg-surface/30 border border-border rounded-xl p-3 mb-4">
+                  <p className="text-xs font-bold text-text-secondary mb-1">Score Formula:</p>
+                  <p className="text-xs text-text-primary font-mono">{result.score_formula?.description}</p>
+                  <div className="grid grid-cols-5 gap-2 mt-2 text-[10px]">
+                    {Object.entries(result.score_formula?.weights || {}).map(([key, val]) => (
+                      <div key={key} className="text-center p-1 bg-surface/50 rounded">
+                        {key.charAt(0).toUpperCase() + key.slice(1)}: {(val as number) * 100}%
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Recharts Radar Chart */}
                 <div className="w-full h-64 flex items-center justify-center text-xs">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={getRadarData()}>
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
+                      { subject: 'Stability', A: result.scores.stability },
+                      { subject: 'Guard', A: result.scores.guard },
+                      { subject: 'Velocity', A: result.scores.velocity },
+                      { subject: 'Precision', A: result.scores.precision },
+                      { subject: 'Symmetry', A: result.scores.symmetry }
+                    ]}>
                       <PolarGrid stroke="var(--border)" />
                       <PolarAngleAxis dataKey="subject" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--text-tertiary)' }} />
@@ -771,20 +776,43 @@ export default function KataAnalyzerPage() {
                 </div>
 
                 {/* Score Indicators Grid */}
-                <div className="grid grid-cols-3 w-full gap-2 border-t border-border pt-4">
+                <div className="grid grid-cols-5 w-full gap-2 border-t border-border pt-4">
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
                     <p className="text-[10px] font-bold text-text-secondary uppercase">Overall</p>
-                    <p className="text-lg font-black text-accent">{result.ai_report.overall_score || result.scores.overall}/100</p>
+                    <p className="text-lg font-black text-accent">{result.scores.overall}/100</p>
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
-                    <p className="text-[10px] font-bold text-text-secondary uppercase">Technique</p>
-                    <p className="text-lg font-black text-purple">{result.ai_report.technique_score || 80}/100</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase">Stability</p>
+                    <p className="text-lg font-black text-purple">{result.scores.stability}/100</p>
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
-                    <p className="text-[10px] font-bold text-text-secondary uppercase">Balance</p>
-                    <p className="text-lg font-black text-info">{result.ai_report.balance_score || 85}/100</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase">Guard</p>
+                    <p className="text-lg font-black text-info">{result.scores.guard}/100</p>
+                  </div>
+                  <div className="text-center p-2 bg-surface/50 rounded-xl">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase">Precision</p>
+                    <p className="text-lg font-black text-success">{result.scores.precision}/100</p>
+                  </div>
+                  <div className="text-center p-2 bg-surface/50 rounded-xl">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase">Symmetry</p>
+                    <p className="text-lg font-black text-yellow-500">{result.scores.symmetry}/100</p>
                   </div>
                 </div>
+              </GlassCard>
+
+              {/* Limitations Section */}
+              <GlassCard className="flex flex-col gap-3" padding="md">
+                <h3 className="font-bold text-sm flex items-center gap-2 text-text-secondary">
+                  <AlertTriangle className="w-4 h-4" />
+                  Important Limitations
+                </h3>
+                <ul className="text-xs text-text-secondary space-y-1">
+                  <li>• This app uses 2D monocular pose estimation (MediaPipe), not true 3D tracking</li>
+                  <li>• Depth estimation is approximate and should not be used for precise measurements</li>
+                  <li>• Technique classification is limited to broad categories (Arm Strike, Leg Strike, Block)</li>
+                  <li>• Kata name recognition is not available due to limited training data</li>
+                  <li>• Scores are based on pose landmarks only and do not measure physical force or power</li>
+                </ul>
               </GlassCard>
 
               {/* AI Coaching Report Section */}

@@ -3,8 +3,15 @@ from typing import List, Dict, Any
 
 class KarateRuleEngine:
     def __init__(self):
-        pass
-
+        # Define composite score weights (for transparency)
+        self.score_weights = {
+            "stability": 0.25,
+            "guard": 0.15,
+            "precision": 0.25,
+            "symmetry": 0.20,
+            "velocity": 0.15
+        }
+        
     def analyze_movement(self, video_data: Dict[str, Any]) -> Dict[str, Any]:
         frames = video_data.get("frames", [])
         fps = video_data.get("fps", 30.0)
@@ -12,6 +19,7 @@ class KarateRuleEngine:
         # 1. Classify each frame
         raw_stances = []
         raw_techniques = []
+        symmetry_values = []
         
         for f in frames:
             if not f["landmarks"]:
@@ -49,6 +57,13 @@ class KarateRuleEngine:
             l_knee = metrics["angles"]["left_knee"]
             r_knee = metrics["angles"]["right_knee"]
             
+            # Calculate symmetry for this frame
+            symmetry = 100 - min(100, (
+                abs(l_knee - r_knee) * 0.5 +
+                abs(metrics["angles"]["left_elbow"] - metrics["angles"]["right_elbow"]) * 0.3
+            ))
+            symmetry_values.append(symmetry)
+            
             # Stance Classification Rules
             stance = "Unknown"
             
@@ -63,42 +78,35 @@ class KarateRuleEngine:
             left_fwd = l_ankle_norm_y > r_ankle_norm_y + 0.05
             right_fwd = r_ankle_norm_y > l_ankle_norm_y + 0.05
             
-            # Stance checks
+            # Stance checks - limited to allowed stances only
             if feet_to_shoulder_ratio < 1.3:
                 # Narrow stances
                 if l_knee > 165 and r_knee > 165:
-                    stance = "Natural Stance (Heiko Dachi)"
-                elif (l_knee < 135 and r_knee > 155 and l_ankle_norm_y > r_ankle_norm_y) or \
-                     (r_knee < 135 and l_knee > 155 and r_ankle_norm_y > l_ankle_norm_y):
-                    stance = "Cat Stance (Neko Ashi Dachi)"
+                    stance = "Natural Stance"
                 else:
-                    stance = "Natural Stance (Heiko Dachi)"
+                    stance = "Natural Stance"
             elif feet_to_shoulder_ratio >= 1.3:
                 # Wide stances
-                # 1. Horse Stance (Kiba Dachi): feet parallel, knees bent, centered weight
+                # 1. Horse Stance: feet parallel, knees bent, centered weight
                 if l_knee < 135 and r_knee < 135 and abs(l_knee - r_knee) < 25:
-                    # Check if toes point out (Shiko Dachi) or parallel (Kiba Dachi)
-                    # For simplicity, we call it Horse Stance (Kiba Dachi)
-                    stance = "Horse Stance (Kiba Dachi)"
-                # 2. Front Stance (Zenkutsu Dachi): one straight, one bent
+                    stance = "Horse Stance"
+                # 2. Front Stance: one straight, one bent
                 elif l_knee < 130 and r_knee > 150:
-                    stance = "Left Front Stance (Zenkutsu Dachi)"
+                    stance = "Front Stance"
                 elif r_knee < 130 and l_knee > 150:
-                    stance = "Right Front Stance (Zenkutsu Dachi)"
-                # 3. Back Stance (Kokutsu Dachi): weight on back leg, back knee bent, front leg extended
+                    stance = "Front Stance"
+                # 3. Back Stance: weight on back leg, back knee bent, front leg extended
                 elif l_knee > 145 and r_knee < 135:
-                    # Left leg forward, right leg bent (back leg)
-                    stance = "Left Back Stance (Kokutsu Dachi)"
+                    stance = "Back Stance"
                 elif r_knee > 145 and l_knee < 135:
-                    # Right leg forward, left leg bent (back leg)
-                    stance = "Right Back Stance (Kokutsu Dachi)"
+                    stance = "Back Stance"
                 else:
                     # Fallback to general stance
-                    stance = "Natural Stance (Heiko Dachi)"
+                    stance = "Natural Stance"
             
             raw_stances.append(stance)
             
-            # Technique Detection Rules
+            # Technique Detection Rules - broad categories only
             tech = "None"
             
             l_wrist_vel = metrics["velocities"]["left_wrist"]
@@ -112,50 +120,22 @@ class KarateRuleEngine:
             # Hands tracking (Normalized y: negative is UP, positive is DOWN)
             l_wrist_y = pt(15)[1]
             r_wrist_y = pt(16)[1]
-            l_shoulder_y = pt(11)[1]
-            r_shoulder_y = pt(12)[1]
             l_hip_y = pt(23)[1]
             r_hip_y = pt(24)[1]
             head_y = pt(0)[1] # Nose
             
             # Kicks (look for high ankle speed)
-            if l_ankle_vel > 3.0 and l_ankle[1] < l_hip[1]: # Foot lifts above hip
-                # Front Kick (Mae Geri): foot extended forward
-                # Roundhouse Kick (Mawashi Geri): lateral movement
-                if abs(l_ankle[0] - r_ankle[0]) > 0.4:
-                    tech = "Left Roundhouse Kick (Mawashi Geri)"
-                else:
-                    tech = "Left Front Kick (Mae Geri)"
-            elif r_ankle_vel > 3.0 and r_ankle[1] < r_hip[1]:
-                if abs(r_ankle[0] - l_ankle[0]) > 0.4:
-                    tech = "Right Roundhouse Kick (Mawashi Geri)"
-                else:
-                    tech = "Right Front Kick (Mae Geri)"
+            if (l_ankle_vel > 3.0 and l_ankle[1] < l_hip[1]) or (r_ankle_vel > 3.0 and r_ankle[1] < r_hip[1]):
+                tech = "Leg Strike"
             
-            # Punches (look for high wrist speed and elbow extension)
-            elif l_wrist_vel > 2.5 and l_elbow > 150:
-                # Lunge vs Reverse punch based on forward stance
-                if "Left Front Stance" in stance:
-                    tech = "Left Punch (Oi Zuki)"
-                else:
-                    tech = "Left Punch (Gyaku Zuki)"
-            elif r_wrist_vel > 2.5 and r_elbow > 150:
-                if "Right Front Stance" in stance:
-                    tech = "Right Punch (Oi Zuki)"
-                else:
-                    tech = "Right Punch (Gyaku Zuki)"
+            # Punches/Arm Strikes (look for high wrist speed and elbow extension)
+            elif (l_wrist_vel > 2.5 and l_elbow > 150) or (r_wrist_vel > 2.5 and r_elbow > 150):
+                tech = "Arm Strike"
                     
             # Blocks
-            # 1. Rising Block (Age Uke): hand above head
-            elif l_wrist_y < head_y and l_wrist_vel > 1.8:
-                tech = "Left Rising Block (Age Uke)"
-            elif r_wrist_y < head_y and r_wrist_vel > 1.8:
-                tech = "Right Rising Block (Age Uke)"
-            # 2. Downward Block (Gedan Barai): sweeping down to hip level
-            elif l_wrist_y > l_hip_y and l_wrist_vel > 1.8 and l_elbow > 140:
-                tech = "Left Downward Block (Gedan Barai)"
-            elif r_wrist_y > r_hip_y and r_wrist_vel > 1.8 and r_elbow > 140:
-                tech = "Right Downward Block (Gedan Barai)"
+            elif (l_wrist_y < head_y and l_wrist_vel > 1.8) or (r_wrist_y < head_y and r_wrist_vel > 1.8) or \
+                 (l_wrist_y > l_hip_y and l_wrist_vel > 1.8 and l_elbow > 140) or (r_wrist_y > r_hip_y and r_wrist_vel > 1.8 and r_elbow > 140):
+                tech = "Block"
                 
             raw_techniques.append(tech)
 
@@ -251,14 +231,17 @@ class KarateRuleEngine:
         if total_standing_frames > 0:
             guard_score = max(0, min(100, int(100 - (guard_drops / total_standing_frames) * 100)))
 
-        # - Power estimate: based on peak speeds of punches/kicks
+        # - Velocity score: based on peak speeds of movements
         speeds = []
         for f in frames:
             if not f["metrics"]: continue
             vels = f["metrics"]["velocities"]
             speeds.append(max(vels["left_wrist"], vels["right_wrist"], vels["left_ankle"], vels["right_ankle"]))
         peak_speed = max(speeds) if speeds else 1.0
-        power_score = max(30, min(98, int(30 + (peak_speed * 12))))
+        velocity_score = max(30, min(98, int(30 + (peak_speed * 12))))
+        
+        # - Symmetry score: use the symmetry values we collected earlier
+        symmetry_score = int(sum(symmetry_values) / len(symmetry_values)) if symmetry_values else 80
         
         # - Precision: check stance angles correctness
         precisions = []
@@ -269,9 +252,8 @@ class KarateRuleEngine:
             r_knee = f["metrics"]["angles"]["right_knee"]
             if "Front Stance" in s:
                 # In front stance, front knee should be bent (90-120), back leg straight (>155)
-                front_leg_bend = l_knee if "Left" in s else r_knee
-                back_leg_straight = r_knee if "Left" in s else l_knee
-                score = 100 - abs(front_leg_bend - 105) - max(0, 160 - back_leg_straight)
+                # We'll calculate a generic score since we don't track left/right anymore
+                score = 100 - abs(min(l_knee, r_knee) - 105) - max(0, 160 - max(l_knee, r_knee))
                 precisions.append(max(0, min(100, score)))
             elif "Horse Stance" in s:
                 # Both knees bent 90-120
@@ -280,38 +262,24 @@ class KarateRuleEngine:
                 
         precision_score = int(sum(precisions) / len(precisions)) if precisions else 80
 
+        # - Calculate composite score using explicit weights
+        overall_score = int(
+            stability_score * self.score_weights["stability"] +
+            guard_score * self.score_weights["guard"] +
+            precision_score * self.score_weights["precision"] +
+            symmetry_score * self.score_weights["symmetry"] +
+            velocity_score * self.score_weights["velocity"]
+        )
+
         # Stance / Technique Timelines count
         stances_seen = list(set([seg["name"] for seg in stance_segments]))
         techs_seen = list(set([seg["name"] for seg in technique_segments]))
 
-        # 5. Kata Recognition
-        # Recognizes common Kata sequences
-        # e.g., Taikyoku Shodan or Heian Shodan usually starts with: Downward Block (Gedan Barai) -> Front Stance Punch (Oi Zuki) -> Downward Block -> etc.
-        kata_name = "Custom / Free Sparring"
+        # 5. Kata Recognition - honest only, no silent guessing
+        kata_name = "Not confident enough to classify"
         kata_confidence = 0.0
         
-        tech_sequence = [seg["name"] for seg in technique_segments]
-        
-        if len(tech_sequence) >= 3:
-            # Match Heian Shodan/Taikyoku Shodan (Gedan Barai followed by Oi Zuki)
-            has_gedan = any("Downward Block" in t for t in tech_sequence)
-            has_oizuki = any("Oi Zuki" in t for t in tech_sequence)
-            has_kicks = any("Kick" in t for t in tech_sequence)
-            
-            if has_gedan and has_oizuki:
-                if has_kicks:
-                    kata_name = "Heian Yondan"
-                    kata_confidence = 0.65
-                else:
-                    kata_name = "Taikyoku Shodan"
-                    kata_confidence = 0.88
-            elif has_kicks:
-                kata_name = "Heian Nidan"
-                kata_confidence = 0.55
-        
-        if kata_confidence < 0.5:
-            kata_name = "Unknown / Freestyle"
-            kata_confidence = 0.30
+        # No attempt to guess kata names as per spec
 
         return {
             "stance_segments": stance_segments,
@@ -325,16 +293,20 @@ class KarateRuleEngine:
             "scores": {
                 "stability": stability_score,
                 "guard": guard_score,
-                "power": power_score,
+                "velocity": velocity_score,
                 "precision": precision_score,
-                "timing": 85,  # Estimated
-                "overall": int((stability_score + guard_score + power_score + precision_score + 85) / 5)
+                "symmetry": symmetry_score,
+                "overall": overall_score
+            },
+            "score_formula": {
+                "weights": self.score_weights,
+                "description": "Composite score = (stability * 0.25) + (guard * 0.15) + (precision * 0.25) + (symmetry * 0.20) + (velocity * 0.15)"
             },
             "stats": {
                 "peak_velocity": round(peak_speed, 2),
                 "avg_sway": round(avg_sway, 3),
-                "total_punches": sum(1 for t in technique_segments if "Punch" in t["name"]),
-                "total_kicks": sum(1 for t in technique_segments if "Kick" in t["name"]),
+                "total_arm_strikes": sum(1 for t in technique_segments if "Arm Strike" in t["name"]),
+                "total_leg_strikes": sum(1 for t in technique_segments if "Leg Strike" in t["name"]),
                 "total_blocks": sum(1 for t in technique_segments if "Block" in t["name"])
             }
         }

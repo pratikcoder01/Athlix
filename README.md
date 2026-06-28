@@ -68,3 +68,38 @@ npm run dev
 For full configuration keys and cloud deployment setup guides, refer to the [Setup Guide](file:///docs/setup_guide.md).
 For database design details, see [Database Design](file:///docs/db_design.md).
 For API maps and Socket channels, see [API Route Map](file:///docs/api_map.md).
+
+---
+
+## 📊 What This Actually Measures
+
+The Kata Analyzer feature uses **2D monocular pose estimation** (MediaPipe) and rule-based calculations to provide honest, transparent feedback. Here's exactly what it measures and what it does NOT measure:
+
+### 🟢 What It Does Measure (Real, Calculated Metrics)
+- **Joint Angles**: Elbow, knee, hip, and shoulder angles using vector dot product math
+- **Center of Mass (COM)**: Weighted average of hip and shoulder landmark positions
+- **Stability**: Frame-to-frame variance in COM position (lower variance = more stable)
+- **Symmetry**: Comparison of left vs. right joint angles during stances
+- **Guard Position**: How often hands stay above hip level when not performing techniques
+- **Movement Velocity**: Frame-to-frame displacement of wrists/ankles divided by time
+- **Stance Width**: Normalized distance between ankles (relative to shoulder width)
+
+### 🟢 What It Actually Detects
+- **Broad Stances**: Natural Stance, Front Stance, Horse Stance, Back Stance
+- **Broad Techniques**: Arm Strike, Leg Strike, Block (no fine-grained technique classification)
+
+### 🔴 What It Does NOT Measure
+- **True 3D Position**: Uses approximate world coordinates from MediaPipe, not true 3D tracking
+- **Physical Force / Power**: Cannot measure force without additional sensors
+- **Impact / Contact**: Cannot detect if a strike makes contact with a target
+- **Fine-Grained Technique Names**: Does not distinguish between Oi Zuki, Gyaku Zuki, etc.
+- **Kata Recognition**: No attempt to guess or classify specific kata sequences
+- **Weight Distribution**: Cannot accurately tell how much weight is on each foot
+
+### Composite Score Formula
+The overall score is a weighted sum of calculated metrics:
+```
+Overall Score = (Stability × 0.25) + (Guard × 0.15) + (Precision × 0.25) + (Symmetry × 0.20) + (Velocity × 0.15)
+```
+
+All scores are calculated directly from pose landmark data and are displayed with full transparency.
