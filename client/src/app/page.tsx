@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Users, Trophy, Brain, TrendingUp, Shield, Star, ChevronRight, Activity, Zap, Target, Calendar, Video, MessageSquare, CheckCircle } from 'lucide-react';
 import Navbar from '../components/shared/Navbar';
 import Footer from '../components/shared/Footer';
