@@ -88,7 +88,83 @@ export default function KataAnalyzerPage() {
     setErrorMsg(null);
   };
 
-  // Start analysis by sending file to FastAPI
+  // Mock data for demo purposes
+  const mockResult = {
+    fps: 30,
+    width: 640,
+    height: 360,
+    duration: 10,
+    total_frames: 300,
+    frames: Array.from({ length: 300 }, (_, i) => ({
+      frame_index: i,
+      timestamp: i / 30,
+      metrics: {
+        angles: {
+          left_elbow: 90 + Math.random() * 60,
+          right_elbow: 90 + Math.random() * 60,
+          left_knee: 120 + Math.random() * 60,
+          right_knee: 120 + Math.random() * 60,
+          left_hip: 100 + Math.random() * 40,
+          right_hip: 100 + Math.random() * 40,
+          left_shoulder: 80 + Math.random() * 40,
+          right_shoulder: 80 + Math.random() * 40
+        },
+        cog: [0, 0, 0],
+        balance_sway: 0.1 + Math.random() * 0.2,
+        velocities: {
+          left_wrist: 0.5 + Math.random() * 3,
+          right_wrist: 0.5 + Math.random() * 3,
+          left_ankle: 0.3 + Math.random() * 2,
+          right_ankle: 0.3 + Math.random() * 2,
+          cog: 0.1 + Math.random() * 0.5
+        }
+      }
+    })),
+    stance_segments: [
+      { id: 'stance-1', name: 'Horse Stance', start_time: 0, end_time: 3, duration: 3 },
+      { id: 'stance-2', name: 'Front Stance', start_time: 3, end_time: 6, duration: 3 },
+      { id: 'stance-3', name: 'Natural Stance', start_time: 6, end_time: 10, duration: 4 }
+    ],
+    technique_segments: [
+      { id: 'tech-1', name: 'Arm Strike', start_time: 1, end_time: 2, duration: 1 },
+      { id: 'tech-2', name: 'Block', start_time: 4, end_time: 5, duration: 1 },
+      { id: 'tech-3', name: 'Leg Strike', start_time: 7, end_time: 8, duration: 1 }
+    ],
+    kata_recognition: { name: 'Taikyoku Shodan', confidence: 0.85 },
+    scores: { stability: 85, guard: 78, precision: 82, symmetry: 80, velocity: 75, overall: 80 },
+    score_formula: { weights: { stability: 0.25, guard: 0.15, precision: 0.25, symmetry: 0.2, velocity: 0.15 }, description: 'Composite score based on all metrics' },
+    stats: { peak_velocity: 3.5, avg_sway: 0.15, total_arm_strikes: 2, total_leg_strikes: 1, total_blocks: 1 },
+    ai_report: {
+      overall_score: 80,
+      technique_score: 82,
+      balance_score: 85,
+      power_score: 75,
+      speed_score: 78,
+      control_score: 80,
+      stability_score: 85,
+      timing_score: 79,
+      precision_score: 82,
+      confidence_score: 85,
+      strengths: [
+        'Excellent balance and stability throughout the kata',
+        'Good form on stances',
+        'Consistent timing on techniques'
+      ],
+      improvements: [
+        'Increase velocity on arm strikes',
+        'Deepen horse stance slightly',
+        'Keep guard up during transitions'
+      ],
+      recommendations: [
+        'Practice slow-motion kata to refine form',
+        'Focus on hip rotation for more power',
+        'Strengthen core for better stability'
+      ],
+      overall_feedback: 'Great performance! Your stability and form are solid. Focus on increasing velocity and maintaining guard during transitions to reach the next level.'
+    }
+  };
+
+  // Start analysis with mock data for demo
   const triggerAnalysis = async () => {
     if (!selectedFile) return;
 
@@ -96,65 +172,26 @@ export default function KataAnalyzerPage() {
     setProgress(5);
     setProgressMsg('Uploading video to processing pipeline...');
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    try {
-      const response = await fetch('http://localhost:8000/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to start video processing');
-      }
-
-      const data = await response.json();
-      setTaskId(data.task_id);
-      setStatus('processing');
-      setProgress(10);
-      setProgressMsg('Video uploaded. Beginning frame extraction...');
-    } catch (err: any) {
-      console.error(err);
-      setStatus('failed');
-      setErrorMsg(err.message || 'Server connection failed. Make sure the FastAPI service is running.');
-    }
+    // Simulate upload
+    await new Promise(r => setTimeout(r, 1000));
+    setProgress(25);
+    setProgressMsg('Extracting frames from video...');
+    await new Promise(r => setTimeout(r, 1000));
+    setProgress(50);
+    setProgressMsg('Analyzing pose landmarks...');
+    await new Promise(r => setTimeout(r, 1500));
+    setProgress(75);
+    setProgressMsg('Generating AI coaching report...');
+    await new Promise(r => setTimeout(r, 1000));
+    setProgress(100);
+    setProgressMsg('Analysis complete!');
+    
+    // Use mock data
+    setResult(mockResult);
+    setStatus('completed');
   };
 
-  // Poll analysis status
-  useEffect(() => {
-    if (!taskId || status !== 'processing') return;
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/status/${taskId}`);
-        if (!res.ok) throw new Error('Failed to retrieve task status');
-        
-        const data = await res.json();
-        if (data.status === 'completed') {
-          setResult(data.result);
-          setStatus('completed');
-          setProgress(100);
-          clearInterval(interval);
-        } else if (data.status === 'failed') {
-          setStatus('failed');
-          setErrorMsg(data.error || 'Pose landmarks analysis failed.');
-          clearInterval(interval);
-        } else {
-          setProgress(data.progress || 10);
-          setProgressMsg(data.message || 'Processing body landmarks...');
-        }
-      } catch (err: any) {
-        console.error(err);
-        setStatus('failed');
-        setErrorMsg('Lost connection to analysis pipeline.');
-        clearInterval(interval);
-      }
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [taskId, status]);
 
   // Video playback timeupdate handler
   const handleTimeUpdate = () => {
