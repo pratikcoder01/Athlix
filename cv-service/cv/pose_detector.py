@@ -10,8 +10,9 @@ from typing import Dict, List, Any, Callable
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task"
-MODEL_PATH = "pose_landmarker_full.task"
+# Use the most accurate MediaPipe Pose Landmarker model (Heavy)
+MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task"
+MODEL_PATH = "pose_landmarker_heavy.task"
 
 def ensure_model_exists():
     """Download the Pose Landmarker task model file if it does not exist locally."""
@@ -42,15 +43,15 @@ class PoseAnalyzer:
     def __init__(self):
         ensure_model_exists()
         
-        # Configure modern MediaPipe options
+        # Configure modern MediaPipe options for maximum accuracy
         base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
         options = vision.PoseLandmarkerOptions(
             base_options=base_options,
             running_mode=vision.RunningMode.VIDEO,
             output_segmentation_masks=False,
-            min_pose_detection_confidence=0.5,
-            min_pose_presence_confidence=0.5,
-            min_tracking_confidence=0.5
+            min_pose_detection_confidence=0.8,
+            min_pose_presence_confidence=0.8,
+            min_tracking_confidence=0.8
         )
         self.landmarker = vision.PoseLandmarker.create_from_options(options)
 
