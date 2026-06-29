@@ -86,22 +86,7 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        {/* Floating App Preview Dashboard Graphic */}
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.6, type: 'spring', damping: 20 }}
-          className="w-full max-w-6xl mx-auto px-4 mt-20 relative z-20"
-        >
-          <div className="relative rounded-2xl md:rounded-[2rem] border border-border glass-panel p-2 md:p-4 shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-tr from-accent/10 to-transparent rounded-[2rem] -z-10" />
-            <img 
-              src="/images/covers/blog-bracket-mechanics.svg" 
-              alt="Athlix Dashboard Preview" 
-              className="w-full h-auto rounded-xl md:rounded-2xl border border-border-strong opacity-90 object-cover aspect-video"
-            />
-          </div>
-        </motion.div>
+
       </section>
 
       {/* 
