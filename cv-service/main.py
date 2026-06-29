@@ -3,6 +3,7 @@ import uuid
 import shutil
 import threading
 import logging
+import cv2
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,6 +11,7 @@ from typing import Dict, Any
 
 from cv.pose_detector import PoseAnalyzer
 from cv.rule_engine import KarateRuleEngine
+from cv.custom_classifier import CustomKataClassifier
 from ai.coach import generate_coaching_report
 
 # Configure logging
@@ -30,6 +32,9 @@ app.add_middleware(
 TEMP_DIR = "temp_uploads"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+# Initialize classifiers
+classifier = CustomKataClassifier()
+
 # Memory store for task status. In production, this would be a Redis or DB cache.
 # We store task progress, status, and final outputs here.
 TASKS: Dict[str, Dict[str, Any]] = {}
@@ -39,6 +44,16 @@ def process_video_background(task_id: str, file_path: str):
     try:
         TASKS[task_id]["status"] = "processing"
         TASKS[task_id]["message"] = "Initializing video frames..."
+        
+        # 0. Read video frames for custom classifier
+        video_frames = []
+        cap = cv2.VideoCapture(file_path)
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            video_frames.append(frame)
+        cap.release()
         
         # 1. Pose estimation
         logger.info(f"Task {task_id}: Starting pose analyzer...")
@@ -57,6 +72,16 @@ def process_video_background(task_id: str, file_path: str):
         
         rules_engine = KarateRuleEngine()
         rule_data = rules_engine.analyze_movement(cv_data)
+        
+        # 2b. Custom Kata Classifier
+        if classifier.model is not None:
+            TASKS[task_id]["message"] = "Using custom model to recognize kata..."
+            custom_prediction = classifier.predict(video_frames)
+            if custom_prediction is not None and custom_prediction["confidence"] > 0.7:
+                rule_data["kata_recognition"] = {
+                    "name": custom_prediction["label"].replace("_", " ").title(),
+                    "confidence": custom_prediction["confidence"]
+                }
         
         # 3. AI Coach report generation
         TASKS[task_id]["progress"] = 95.0

@@ -1,0 +1,12 @@
+ultralytics
+tensorflow
+pandas
+scikit-learn
+matplotlib
+seaborn
+opencv-python
+mediapipe
+numpy
+joblib
+xgboost
+tqdm
