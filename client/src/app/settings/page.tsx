@@ -2,15 +2,59 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Eye, User, Save, Sun, Moon, Bell, Shield, Palette, ChevronRight } from 'lucide-react';
+import { Settings as SettingsIcon, Eye, User, Save, Sun, Moon, Bell, Shield, Palette } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
-import { GlassCard } from '../../components/shared/GlassCard';
-import MagneticButton from '../../components/shared/MagneticButton';
-import { AnimatedBadge } from '../../components/shared/AnimatedBadge';
-import { AnimatedText } from '../../components/shared/AnimatedText';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import { cn } from '../../lib/utils';
+
+function SettingsCard({ icon: Icon, iconColor, iconBg, title, desc, children }: {
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  iconColor: string;
+  iconBg: string;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center border', iconBg)}>
+          <Icon className={cn('w-4.5 h-4.5', iconColor)} />
+        </div>
+        <div>
+          <h3 className="font-bold text-base text-text-primary">{title}</h3>
+          <p className="text-text-tertiary text-xs">{desc}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      aria-pressed={value}
+      className={cn(
+        'relative w-12 h-6 rounded-full border transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background',
+        value ? 'bg-accent border-accent/50' : 'bg-surface-elevated border-border'
+      )}
+    >
+      <motion.div
+        layout
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        className={cn('absolute top-1 w-4 h-4 rounded-full shadow-sm', value ? 'left-7 bg-white' : 'left-1 bg-text-tertiary/60')}
+      />
+    </button>
+  );
+}
+
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } } };
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
@@ -19,10 +63,12 @@ export default function SettingsPage() {
   const [allowPublic, setAllowPublic] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [pushNotifs, setPushNotifs] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Settings updated successfully!');
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   };
 
   return (
@@ -30,188 +76,124 @@ export default function SettingsPage() {
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
+
         {/* Header */}
-        <div className="mb-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
-            <AnimatedBadge variant="default">
-              <SettingsIcon className="w-3 h-3 mr-1.5" /> Configuration
-            </AnimatedBadge>
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+          className="mb-10"
+        >
+          <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-surface text-text-tertiary text-xs font-semibold mb-4">
+            <SettingsIcon className="w-3 h-3" /> Configuration
           </motion.div>
-          <AnimatedText
-            text="Platform Settings"
-            className="text-3xl md:text-4xl font-black tracking-tight mb-2"
-            delay={0.1}
-          />
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-text-secondary"
-          >
+          <motion.h1 variants={fadeUp} className="text-3xl md:text-4xl font-extrabold font-display tracking-tight text-text-primary mb-2">
+            Platform Settings
+          </motion.h1>
+          <motion.p variants={fadeUp} className="text-text-secondary">
             Configure your profile, theme, notifications, and privacy preferences.
           </motion.p>
-        </div>
+        </motion.div>
 
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Profile Section */}
+        <form onSubmit={handleSave} className="space-y-5">
+
+          {/* Profile */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <GlassCard padding="lg">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 rounded-xl bg-blue-400/20 text-blue-400 flex items-center justify-center">
-                  <User className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base">Profile</h3>
-                  <p className="text-text-tertiary text-xs">Your display name and account email</p>
-                </div>
-              </div>
-
+            <SettingsCard icon={User} iconColor="text-blue-400" iconBg="bg-blue-400/10 border-blue-400/20" title="Profile" desc="Your display name and account email">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Full Name</label>
+                  <label className="block text-sm font-semibold text-text-primary mb-1.5">Full Name</label>
                   <input
                     type="text"
                     value={profileName}
                     onChange={e => setProfileName(e.target.value)}
-                    className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                    className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 block">Email Address</label>
+                  <label className="block text-sm font-semibold text-text-primary mb-1.5">Email Address</label>
                   <input
                     type="email"
                     value={user?.email || 'name@example.com'}
                     disabled
-                    className="w-full bg-surface/50 border border-border rounded-xl px-4 py-3 text-sm cursor-not-allowed opacity-50"
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm text-text-tertiary cursor-not-allowed opacity-50"
                   />
                 </div>
               </div>
-            </GlassCard>
+            </SettingsCard>
           </motion.div>
 
-          {/* Theme Section */}
+          {/* Appearance */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <GlassCard padding="lg">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 rounded-xl bg-purple-400/20 text-purple-400 flex items-center justify-center">
-                  <Palette className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base">Appearance</h3>
-                  <p className="text-text-tertiary text-xs">Switch between dark and light themes</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-surface rounded-xl border border-border">
+            <SettingsCard icon={Palette} iconColor="text-purple-400" iconBg="bg-purple-400/10 border-purple-400/20" title="Appearance" desc="Switch between dark and light themes">
+              <div className="flex items-center justify-between p-4 bg-surface-elevated rounded-xl border border-border">
                 <div className="flex items-center gap-3">
-                  {theme === 'dark' ? (
-                    <Moon className="w-5 h-5 text-accent" />
-                  ) : (
-                    <Sun className="w-5 h-5 text-amber-400" />
-                  )}
+                  {theme === 'dark'
+                    ? <Moon className="w-4.5 h-4.5 text-accent" />
+                    : <Sun className="w-4.5 h-4.5 text-amber-400" />
+                  }
                   <div>
-                    <p className="font-semibold text-sm">
-                      {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                    </p>
+                    <p className="font-semibold text-sm text-text-primary">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
                     <p className="text-text-tertiary text-xs">Currently active</p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="relative w-14 h-7 rounded-full bg-background border border-border transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <motion.div
-                    layout
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-accent shadow-lg shadow-accent/40 ${theme === 'dark' ? 'left-8' : 'left-1'}`}
-                  />
-                </button>
+                <Toggle value={theme === 'dark'} onChange={toggleTheme} />
               </div>
-            </GlassCard>
+            </SettingsCard>
           </motion.div>
 
-          {/* Notifications Section */}
+          {/* Notifications */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-            <GlassCard padding="lg">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center">
-                  <Bell className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base">Notifications</h3>
-                  <p className="text-text-tertiary text-xs">Manage how you receive updates</p>
-                </div>
-              </div>
-
+            <SettingsCard icon={Bell} iconColor="text-amber-400" iconBg="bg-amber-400/10 border-amber-400/20" title="Notifications" desc="Manage how you receive updates">
               <div className="space-y-3">
                 {[
                   { label: 'Email notifications', desc: 'Booking confirmations and tournament updates', value: emailNotifs, set: setEmailNotifs },
                   { label: 'Push notifications', desc: 'Real-time alerts for live bracket updates', value: pushNotifs, set: setPushNotifs },
                 ].map(({ label, desc, value, set }) => (
-                  <div key={label} className="flex items-center justify-between p-4 bg-surface rounded-xl border border-border">
+                  <div key={label} className="flex items-center justify-between p-4 bg-surface-elevated rounded-xl border border-border">
                     <div>
-                      <p className="font-semibold text-sm">{label}</p>
+                      <p className="font-semibold text-sm text-text-primary">{label}</p>
                       <p className="text-text-tertiary text-xs">{desc}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => set(!value)}
-                      className="relative w-14 h-7 rounded-full bg-background border border-border transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      <motion.div
-                        layout
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className={`absolute top-1 h-5 w-5 rounded-full shadow-lg ${value ? 'bg-accent shadow-accent/40 left-8' : 'bg-text-tertiary/60 left-1'}`}
-                      />
-                    </button>
+                    <Toggle value={value} onChange={() => set(!value)} />
                   </div>
                 ))}
               </div>
-            </GlassCard>
+            </SettingsCard>
           </motion.div>
 
-          {/* Privacy Section */}
+          {/* Privacy */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <GlassCard padding="lg">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 rounded-xl bg-green-400/20 text-green-400 flex items-center justify-center">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base">Privacy</h3>
-                  <p className="text-text-tertiary text-xs">Control your profile visibility</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-surface rounded-xl border border-border">
+            <SettingsCard icon={Shield} iconColor="text-green-400" iconBg="bg-green-400/10 border-green-400/20" title="Privacy" desc="Control your profile visibility">
+              <div className="flex items-center justify-between p-4 bg-surface-elevated rounded-xl border border-border">
                 <div className="flex items-center gap-3">
-                  <Eye className="w-5 h-5 text-text-tertiary" />
+                  <Eye className="w-4.5 h-4.5 text-text-tertiary" />
                   <div>
-                    <p className="font-semibold text-sm">Public profile</p>
+                    <p className="font-semibold text-sm text-text-primary">Public profile</p>
                     <p className="text-text-tertiary text-xs">Allow others to search and view your profile</p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAllowPublic(!allowPublic)}
-                  className="relative w-14 h-7 rounded-full bg-background border border-border transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <motion.div
-                    layout
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className={`absolute top-1 h-5 w-5 rounded-full shadow-lg ${allowPublic ? 'bg-accent shadow-accent/40 left-8' : 'bg-text-tertiary/60 left-1'}`}
-                  />
-                </button>
+                <Toggle value={allowPublic} onChange={() => setAllowPublic(!allowPublic)} />
               </div>
-            </GlassCard>
+            </SettingsCard>
           </motion.div>
 
           {/* Save */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-            <MagneticButton type="submit" variant="premium" className="w-full justify-center">
-              <Save className="w-4 h-4 mr-2" /> Save All Settings
-            </MagneticButton>
+            <motion.button
+              type="submit"
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className={cn(
+                'w-full inline-flex items-center justify-center gap-2.5 py-3.5 rounded-full font-bold text-sm transition-all duration-300 cursor-pointer',
+                saved
+                  ? 'bg-success text-white shadow-lg shadow-success/25'
+                  : 'bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40'
+              )}
+            >
+              <Save className="w-4 h-4" />
+              {saved ? 'Settings Saved!' : 'Save All Settings'}
+            </motion.button>
           </motion.div>
         </form>
       </main>

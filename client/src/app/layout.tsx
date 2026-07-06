@@ -6,6 +6,7 @@ import SocketProvider from '../context/SocketContext';
 import ThemeProvider from '../components/shared/ThemeProvider';
 import SmoothScrollProvider from '../components/shared/SmoothScrollProvider';
 import PageTransitionProvider from '../components/shared/PageTransitionProvider';
+import { ToastContainer } from '../components/ui/Toast';
 import { cn } from '../lib/utils';
 
 const inter = Inter({
@@ -47,6 +48,7 @@ export default function RootLayout({
                 <PageTransitionProvider>
                   {children}
                 </PageTransitionProvider>
+                <ToastContainer />
               </SmoothScrollProvider>
             </ThemeProvider>
           </SocketProvider>

@@ -15,12 +15,12 @@ export interface NotificationItem {
 
 export interface BookingUpdate {
   type: 'new_booking' | 'status_changed';
-  booking: Record<string, any>;
+  booking: Record<string, unknown>;
 }
 
 export interface NewPost {
   _id: string;
-  authorId: Record<string, any>;
+  authorId: Record<string, unknown>;
   content: string;
   mediaUrl?: string;
   mediaType?: string;

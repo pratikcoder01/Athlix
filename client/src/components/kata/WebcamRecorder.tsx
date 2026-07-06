@@ -34,7 +34,7 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
         if (videoRef.current) {
           videoRef.current.srcObject = userStream;
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error accessing camera:', err);
         setCameraError(
           'Could not access your webcam. Please check browser permissions and try again.'

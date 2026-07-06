@@ -51,7 +51,7 @@ export const AnimatedText: React.FC<AnimatedTextProps> = ({
     },
   };
 
-  const MotionComponent = motion(Component as any);
+  const MotionComponent = motion(Component as React.ComponentType<React.HTMLAttributes<HTMLElement>>);
 
   return (
     <MotionComponent

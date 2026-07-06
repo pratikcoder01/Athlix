@@ -36,7 +36,7 @@ export default function BookingsPage() {
     if (bookingUpdates && bookingUpdates.length > 0) {
       const latest = bookingUpdates[0];
       if (latest.type === 'status_changed') {
-        setBookingStatus(latest.booking.status);
+        setBookingStatus(latest.booking.status as string);
       }
       clearBookingUpdates();
     }

@@ -329,7 +329,7 @@ function TrainingPlanGenerator() {
           {/* Notes */}
           {plan.notes && (
             <div className="bg-surface border border-border/60 p-4 rounded-sm">
-              <h4 className="text-xs font-mono font-bold tracking-widest text-text-secondary uppercase mb-2">COACH'S CORNER NOTES</h4>
+              <h4 className="text-xs font-mono font-bold tracking-widest text-text-secondary uppercase mb-2">{"COACH'S CORNER NOTES"}</h4>
               <p className="text-text-secondary text-xs leading-relaxed font-sans">{plan.notes}</p>
             </div>
           )}

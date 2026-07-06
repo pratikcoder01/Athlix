@@ -20,7 +20,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   as = 'button',
   ...restProps
 }) => {
-  const { type, onClick, id, title, style } = restProps as any;
+  const { type, onClick, id, title, style } = restProps;
   const props = { type, onClick, id, title, style };
   const ref = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });

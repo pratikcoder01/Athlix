@@ -1,0 +1,32 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "Waitlist",
+    "waitlist",
+    "Pratik",
+    "Thiago",
+    "Valente",
+    "Somchai",
+    "IBJJF",
+    "ATHLIX",
+    "Athlix",
+    "BJJ",
+    "Muay",
+    "armbar",
+    "Kru",
+    "lasso",
+    "zustand",
+    "framer",
+    "lucide",
+    "nextjs",
+    "zod",
+    "tailwindcss"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "dist/**",
+    "*.lock"
+  ]
+}

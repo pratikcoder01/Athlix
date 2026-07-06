@@ -13,7 +13,7 @@ interface FrameData {
   frame_index: number;
   timestamp: number;
   landmarks: Landmark[] | null;
-  world_landmarks: any[] | null;
+  world_landmarks: unknown[] | null;
   metrics: {
     angles: {
       left_elbow: number;

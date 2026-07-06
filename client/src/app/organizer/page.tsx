@@ -58,9 +58,9 @@ export default function OrganizerAnalyticsPage() {
       } else {
         throw new Error(json.message || 'Analytics fetch failed');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Failed to fetch analytics from the server.');
+      setError(err instanceof Error ? err.message : 'Failed to fetch analytics from the server.');
     } finally {
       setLoading(false);
     }
