@@ -21,7 +21,6 @@ const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters long'),
-  role: z.enum(['athlete', 'coach', 'academy_owner', 'tournament_organizer']),
 });
 
 type SignupFields = z.infer<typeof signupSchema>;
@@ -48,15 +47,10 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<SignupFields>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { role: 'athlete' },
   });
-
-  const selectedRole = watch('role');
 
   const handleGoogleSignIn = async () => {
     setAuthError(null);
@@ -67,7 +61,7 @@ export default function SignupPage() {
       const res = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, role: selectedRole }),
+        body: JSON.stringify({ idToken }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Google Registration failed');
@@ -89,7 +83,7 @@ export default function SignupPage() {
       const res = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: 'Anonymous Athlete', role: selectedRole }),
+        body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Anonymous Registration failed');
@@ -110,7 +104,7 @@ export default function SignupPage() {
       const res = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: data.name, role: data.role }),
+        body: JSON.stringify({ idToken, name: data.name }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Registration failed');
@@ -164,7 +158,7 @@ export default function SignupPage() {
             &ldquo;Suffer the pain of discipline or suffer the pain of regret.&rdquo;
           </motion.blockquote>
           <motion.p variants={fadeIn} className="text-text-secondary text-sm leading-relaxed mb-10">
-            Join thousands of athletes, coaches, and academy owners building their legacy on Athlix.
+            Build your training profile and connect with the combat-sports community on Athlix.
           </motion.p>
 
           <motion.div variants={stagger} className="grid grid-cols-2 gap-3">
@@ -193,7 +187,7 @@ export default function SignupPage() {
               ))}
             </div>
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">50,000+ athletes</span> already on Athlix
+              <span className="font-semibold text-text-primary">Start with an athlete profile.</span> Professional access requires approval.
             </p>
           </motion.div>
         </motion.div>
@@ -228,29 +222,13 @@ export default function SignupPage() {
           </motion.div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Role Selection */}
+            {/* Professional roles are provisioned by a trusted operator. */}
             <motion.div variants={fadeIn}>
-              <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-widest mb-2.5">
-                I am a…
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {roles.map(({ id, label, icon: Icon, desc }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setValue('role', id as SignupFields['role'])}
-                    className={cn(
-                      'p-3.5 rounded-xl text-left border transition-all duration-200',
-                      selectedRole === id
-                        ? 'border-accent bg-accent/8 ring-1 ring-accent/30 shadow-sm'
-                        : 'border-border bg-surface hover:border-accent/30 hover:bg-surface-hover'
-                    )}
-                  >
-                    <Icon className={cn('w-4 h-4 mb-1.5', selectedRole === id ? 'text-accent' : 'text-text-tertiary')} />
-                    <p className={cn('text-sm font-bold', selectedRole === id ? 'text-accent' : 'text-text-primary')}>{label}</p>
-                    <p className="text-[10px] text-text-tertiary mt-0.5">{desc}</p>
-                  </button>
-                ))}
+              <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm">
+                <p className="font-semibold text-text-primary">Athlete account</p>
+                <p className="mt-1 text-text-secondary">
+                  Coach, academy owner, and organizer access requires review. Create your account first, then contact the Athlix team to request professional access.
+                </p>
               </div>
             </motion.div>
 

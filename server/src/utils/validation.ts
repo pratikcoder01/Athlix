@@ -3,17 +3,25 @@ import { z } from 'zod';
 
 // Registration Payload Validator
 export const registerSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
-  role: z.enum(['athlete', 'coach', 'academy_owner', 'tournament_organizer', 'admin']).default('athlete'),
-  discipline: z.string().optional().default('BJJ'),
-  beltRank: z.string().optional().default('White'),
+  name: z.string().trim().min(1, 'Name is required').max(100),
+  email: z.string().trim().email('Invalid email address').toLowerCase(),
+  password: z.string().min(6, 'Password must be at least 6 characters long').max(128),
+  // Public signup never grants operating or administrative privileges.
+  role: z.literal('athlete', { errorMap: () => ({ message: 'Privileged roles require operator approval' }) }).default('athlete'),
+  discipline: z.string().trim().min(1).max(80).optional().default('BJJ'),
+  beltRank: z.string().trim().min(1).max(80).optional().default('White'),
+});
+
+export const firebaseLoginSchema = z.object({
+  idToken: z.string().min(1, 'Firebase idToken is required').max(16384),
+  name: z.string().trim().min(1).max(100).optional(),
+  role: z.literal('athlete', { errorMap: () => ({ message: 'Privileged roles require operator approval' }) }).optional(),
+  discipline: z.string().trim().min(1).max(80).optional(),
 });
 
 // Login Payload Validator
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().trim().email('Invalid email address').toLowerCase(),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -45,19 +53,20 @@ export const tournamentSchema = z.object({
 
 // Express validation helper middleware
 export const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error: any) {
+  const result = schema.safeParse(req.body);
+  if (!result.success) {
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: error.errors.map((err: any) => ({
+      errors: result.error.issues.map((err) => ({
         field: err.path.join('.'),
         message: err.message,
       })),
     });
   }
+  // Use parsed defaults/transforms and discard unknown client-controlled fields.
+  req.body = result.data;
+  next();
 };
 
 // AI Seeding Payload Validator

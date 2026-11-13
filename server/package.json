@@ -6,6 +6,9 @@
   "scripts": {
     "build": "tsc",
     "build:render": "tsc -p tsconfig.render.json",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.cjs",
+    "role:provision": "npm run build && node dist/scripts/provisionRole.js",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
