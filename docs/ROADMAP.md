@@ -39,3 +39,16 @@ Updated 2026-11-13. Work proceeds on `codex/athlix-market-ready`; no merge or pr
 - Added dry-run-first operator role provisioning with an audit record in the same transaction and inactive initial coach profiles. No provisioning was executed.
 - Verification: server build PASS; 44/44 auth/operator tests PASS using real HTTP handlers and mocked provider/database; client typecheck and targeted signup/realtime lint PASS.
 - NOT RUN: live Firebase email/provider integration and actual Mongo transaction rollback. Existing privileged-account provenance, profile-creation recovery, 30-day browser-local JWT sessions and global revocation remain release work.
+
+### Realtime confidentiality
+
+- Commit `3a52c47` pushed after auth commit `6edee73`. Auth now has 44 passing regressions; realtime has 10 passing real Socket.IO loopback regressions.
+- Private rooms derive from a validated current account, connections expire, subscriptions validate real event IDs and origin policy fails closed in production.
+- PR: https://github.com/pratikcoder01/Athlix/pull/2 (draft). The connector refused PR creation; authenticated Git credentials successfully created the draft through the GitHub API.
+
+### Tournament integrity
+
+- Replaced fabricated tournament UI/results with API-backed listing, creation, registration, deterministic bracket generation, owner result recording, lifecycle controls and reconnecting subscriptions.
+- Closed manual and AI-compatibility ownership bypasses. Added bounded literal search, strict tree/ID validation, read-only completion and compare-and-set version checks.
+- Atomic registration deduplicates enrollment and serializes against bracket publication. Published registration-order seeds are locked; entry fees are explicitly unpaid informational amounts.
+- Server build and 29/29 tournament policy/controller tests PASS; client typecheck and targeted tournament lint PASS. Controller DB operations are mocked; database races remain NOT RUN due Windows Application Control blocking MongoDB. Divisions/withdrawals/legacy bracket migration remain unfinished.

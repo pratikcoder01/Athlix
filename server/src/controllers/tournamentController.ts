@@ -1,191 +1,132 @@
 import { Response, NextFunction } from 'express';
 import { Tournament } from '../models/Tournament';
 import { AuthenticatedRequest } from '../types';
-import { Types } from 'mongoose';
+import {
+  objectIdSchema, tournamentQuerySchema, tournamentCreateSchema, bracketUpdateSchema,
+  versionSchema, ownsTournament, canTransitionTournament, bracketProblem,
+  generateSingleElimination, escapeSearch, SafeBracket,
+} from '../utils/tournamentPolicy';
 
-// @desc    Get all tournaments
-// @route   GET /api/tournaments
-// @access  Private
+const badRequest = (res: Response, message: string) => res.status(400).json({ success: false, message });
+const invalidId = (id: unknown) => !objectIdSchema.safeParse(id).success;
+const emitUpdate = (req: AuthenticatedRequest, tournament: { _id: unknown; brackets?: unknown; status: string }) => {
+  req.app.get('io')?.to(`tournament_${tournament._id}`).emit('bracket_update', {
+    tournamentId: tournament._id, brackets: tournament.brackets, status: tournament.status,
+  });
+};
+
 export const getTournaments = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { discipline, status, search } = req.query;
-
-    const query: any = {};
-    if (discipline) query.disciplines = discipline;
-    if (status) query.status = status;
-    if (search) {
-      query.title = { $regex: search, $options: 'i' };
-    }
-
-    const tournaments = await Tournament.find(query)
-      .populate('organizerId', 'name email')
-      .sort({ date: 1 })
-      .exec();
-
-    res.status(200).json({
-      success: true,
-      count: tournaments.length,
-      tournaments,
-    });
-  } catch (error) {
-    next(error);
-  }
+    const parsed = tournamentQuerySchema.safeParse(req.query);
+    if (!parsed.success) return badRequest(res, 'Invalid tournament filters or pagination');
+    const { discipline, status, search, page, limit } = parsed.data;
+    const query = {
+      ...(discipline ? { disciplines: discipline } : {}),
+      ...(status ? { status } : {}),
+      ...(search ? { title: { $regex: escapeSearch(search), $options: 'i' } } : {}),
+    };
+    const tournaments = await Tournament.find(query).populate('organizerId', 'name')
+      .sort({ date: 1, _id: 1 }).skip((page - 1) * limit).limit(limit).exec();
+    return res.status(200).json({ success: true, count: tournaments.length, page, limit, tournaments });
+  } catch (error) { next(error); }
 };
 
-// @desc    Get tournament details by ID
-// @route   GET /api/tournaments/:id
-// @access  Private
 export const getTournamentById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    if (invalidId(req.params.id)) return badRequest(res, 'Invalid tournament ID');
     const tournament = await Tournament.findById(req.params.id)
-      .populate('organizerId', 'name email')
-      .populate('registrations', 'name email');
-
-    if (!tournament) {
-      return res.status(404).json({ success: false, message: 'Tournament not found' });
-    }
-
-    res.status(200).json({
-      success: true,
-      tournament,
-    });
-  } catch (error) {
-    next(error);
-  }
+      .populate('organizerId', 'name').populate('registrations', 'name');
+    if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found' });
+    return res.status(200).json({ success: true, tournament });
+  } catch (error) { next(error); }
 };
 
-// @desc    Create a tournament event
-// @route   POST /api/tournaments
-// @access  Private (Tournament Organizer / Admin only)
 export const createTournament = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.user || (req.user.role !== 'tournament_organizer' && req.user.role !== 'admin')) {
-      return res.status(403).json({ success: false, message: 'Only tournament organizers or admins can set up events' });
+    if (!req.user || !['tournament_organizer', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Approved organizer access is required' });
     }
-
-    const { title, description, date, registrationDeadline, location, entryFee, disciplines, brackets } = req.body;
-
-    const tournament = await Tournament.create({
-      title,
-      description,
-      date: new Date(date),
-      registrationDeadline: new Date(registrationDeadline),
-      location,
-      entryFee: Number(entryFee),
-      disciplines: disciplines || [],
-      organizerId: req.user._id,
-      brackets: brackets ? (typeof brackets === 'string' ? JSON.parse(brackets) : brackets) : undefined,
-      status: 'upcoming',
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Tournament event created successfully',
-      tournament,
-    });
-  } catch (error) {
-    next(error);
-  }
+    const parsed = tournamentCreateSchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, 'Invalid tournament details; check dates, disciplines and fees');
+    const tournament = await Tournament.create({ ...parsed.data, organizerId: req.user._id, status: 'upcoming' });
+    return res.status(201).json({ success: true, message: 'Tournament created', tournament });
+  } catch (error) { next(error); }
 };
 
-// @desc    Register current user (athlete) for a tournament
-// @route   POST /api/tournaments/:id/register
-// @access  Private (Athlete only)
 export const registerForTournament = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
-    }
-
-    const tournament = await Tournament.findById(req.params.id);
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authorized' });
+    if (req.user.role !== 'athlete') return res.status(403).json({ success: false, message: 'Athlete access is required' });
+    if (invalidId(req.params.id)) return badRequest(res, 'Invalid tournament ID');
+    // A single write deduplicates enrollment and serializes it against bracket publication.
+    const tournament = await Tournament.findOneAndUpdate({
+      _id: req.params.id, status: 'upcoming', registrationDeadline: { $gte: new Date() },
+      registrations: { $ne: req.user._id }, 'brackets.rounds.0': { $exists: false },
+      $expr: { $lt: [{ $size: { $ifNull: ['$registrations', []] } }, 256] },
+    }, { $addToSet: { registrations: req.user._id }, $inc: { __v: 1 } }, { new: true, runValidators: true });
     if (!tournament) {
-      return res.status(404).json({ success: false, message: 'Tournament not found' });
+      if (!await Tournament.exists({ _id: req.params.id })) return res.status(404).json({ success: false, message: 'Tournament not found' });
+      return res.status(409).json({ success: false, message: 'Already registered, registration closed, bracket locked or 256-athlete capacity reached' });
     }
-
-    // Check deadline
-    if (new Date() > new Date(tournament.registrationDeadline)) {
-      return res.status(400).json({ success: false, message: 'Registration deadline has passed' });
-    }
-
-    // Check if already registered
-    const userId = req.user._id as Types.ObjectId;
-    const isRegistered = tournament.registrations?.some(regId => regId.toString() === userId.toString());
-
-    if (isRegistered) {
-      return res.status(400).json({ success: false, message: 'You are already registered for this tournament' });
-    }
-
-    tournament.registrations = tournament.registrations || [];
-    tournament.registrations.push(userId);
-    await tournament.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Successfully registered for tournament',
-      tournament,
-    });
-  } catch (error) {
-    next(error);
-  }
+    return res.status(200).json({ success: true, message: 'Registration saved. Entry fees are not collected by ATHLIX.', tournament });
+  } catch (error) { next(error); }
 };
 
-// @desc    Update tournament brackets or match progress
-// @route   PUT /api/tournaments/:id/brackets
-// @access  Private (Organizer / Admin only)
+export const generateTournamentBrackets = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authorized' });
+    if (invalidId(req.params.id)) return badRequest(res, 'Invalid tournament ID');
+    const parsed = versionSchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, 'The current tournament version is required');
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found' });
+    if (!ownsTournament(req.user, tournament)) return res.status(403).json({ success: false, message: 'Only this event’s organizer or an admin can generate brackets' });
+    if (tournament.status !== 'upcoming' || tournament.brackets?.rounds?.length) {
+      return res.status(409).json({ success: false, message: 'Brackets have already been generated or the event has started' });
+    }
+    const ids = (tournament.registrations || []).map(id => id.toString());
+    if (ids.length < 2 || ids.length > 256) return badRequest(res, 'Register 2–256 athletes before generating a bracket');
+    const brackets = generateSingleElimination(ids);
+    const updated = await Tournament.findOneAndUpdate({ _id: tournament._id,
+      organizerId: tournament.organizerId, __v: parsed.data.version, status: 'upcoming',
+      'brackets.rounds.0': { $exists: false },
+    }, { $set: { brackets }, $inc: { __v: 1 } }, { new: true, runValidators: true });
+    if (!updated) return res.status(409).json({ success: false, message: 'Tournament changed. Reload before generating brackets.' });
+    emitUpdate(req, updated);
+    return res.status(200).json({ success: true, message: 'Deterministic bracket generated from registration order', tournament: updated });
+  } catch (error) { next(error); }
+};
+
 export const updateTournamentBrackets = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.user || (req.user.role !== 'tournament_organizer' && req.user.role !== 'admin')) {
-      return res.status(403).json({ success: false, message: 'Only tournament organizers or admins can manage brackets' });
-    }
-
-    const { brackets, status } = req.body;
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authorized' });
+    if (invalidId(req.params.id)) return badRequest(res, 'Invalid tournament ID');
+    const parsed = bracketUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, 'Invalid bracket update; include the current tournament version');
     const tournament = await Tournament.findById(req.params.id);
-
-    if (!tournament) {
-      return res.status(404).json({ success: false, message: 'Tournament not found' });
+    if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found' });
+    if (!ownsTournament(req.user, tournament)) return res.status(403).json({ success: false, message: 'Only this event’s organizer or an admin can manage brackets' });
+    if (Number(tournament.get('__v') || 0) !== parsed.data.version) return res.status(409).json({ success: false, message: 'Tournament changed. Reload before editing.' });
+    if (tournament.status === 'completed') return res.status(409).json({ success: false, message: 'Completed events are read-only' });
+    const status = parsed.data.status || tournament.status;
+    if (!canTransitionTournament(tournament.status, status)) return badRequest(res, 'Invalid tournament status transition');
+    const existing = tournament.brackets;
+    if (!existing?.rounds?.length) return badRequest(res, 'Generate the tournament bracket first');
+    const brackets = parsed.data.brackets || JSON.parse(JSON.stringify(existing)) as SafeBracket;
+    const problem = bracketProblem(brackets, (tournament.registrations || []).map(id => id.toString()));
+    if (problem) return badRequest(res, problem);
+    const seedKey = (seeds: Array<{ fighterId: { toString(): string }; seed: number }>) =>
+      seeds.map(seed => `${seed.seed}:${seed.fighterId.toString()}`).sort().join('|');
+    if (seedKey(brackets.seeds) !== seedKey(existing.seeds)) return badRequest(res, 'Published seeds cannot be replaced');
+    if (status === 'upcoming' && brackets.rounds.some(r => r.matches.some(m => m.winner && m.p1 !== 'BYE' && m.p2 !== 'BYE'))) {
+      return badRequest(res, 'Start the tournament before recording results');
     }
-
-    if (brackets !== undefined) {
-      let parsedBrackets: any = brackets;
-      if (typeof brackets === 'string') {
-        try {
-          parsedBrackets = JSON.parse(brackets);
-        } catch {
-          // ignore parsing error
-        }
-      }
-
-      if (parsedBrackets && (parsedBrackets.rounds || parsedBrackets.seeds)) {
-        tournament.brackets = parsedBrackets;
-      } else if (Array.isArray(parsedBrackets)) {
-        tournament.brackets = {
-          seeds: tournament.brackets?.seeds || [],
-          rounds: parsedBrackets,
-        };
-      } else {
-        tournament.brackets = parsedBrackets;
-      }
-    }
-    if (status !== undefined) tournament.status = status;
-
-    await tournament.save();
-
-    // Emit real-time bracket update to all users viewing this tournament's room
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`tournament_${tournament._id}`).emit('bracket_update', {
-        tournamentId: tournament._id,
-        brackets: tournament.brackets,
-        status: tournament.status,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Brackets updated successfully',
-      tournament,
-    });
-  } catch (error) {
-    next(error);
-  }
+    if (status === 'completed' && !brackets.rounds.at(-1)?.matches[0]?.winner) return badRequest(res, 'Record the final winner before completing the event');
+    const updated = await Tournament.findOneAndUpdate({ _id: tournament._id,
+      organizerId: tournament.organizerId, __v: parsed.data.version, status: tournament.status,
+    }, { $set: { brackets, status }, $inc: { __v: 1 } }, { new: true, runValidators: true });
+    if (!updated) return res.status(409).json({ success: false, message: 'Tournament changed. Reload before editing.' });
+    emitUpdate(req, updated);
+    return res.status(200).json({ success: true, message: 'Tournament updated', tournament: updated });
+  } catch (error) { next(error); }
 };

@@ -71,7 +71,8 @@ export const validateBody = (schema: z.ZodSchema) => (req: Request, res: Respons
 
 // AI Seeding Payload Validator
 export const seedBracketSchema = z.object({
-  tournamentId: z.string().min(1, 'tournamentId is required'),
+  tournamentId: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid tournament ID'),
+  version: z.number().int().nonnegative(),
 });
 
 // AI Training Plan Payload Validator
