@@ -122,3 +122,24 @@ test('bracket generation uses deterministic roster and refuses stale/published s
   const [filter,update]=write.mock.calls[0].arguments;assert.equal(filter.__v,2);assert.deepEqual(filter['brackets.rounds.0'],{$exists:false});
   assert.deepEqual(update.$set.brackets,policy.generateSingleElimination(ids.slice(0,3)));
 });
+
+test('future client version cannot publish a stale fetched roster after concurrent registration', async () => {
+  mock.method(Tournament,'findById',async()=>event({brackets:{seeds:[],rounds:[]}}));
+  const write=mock.method(Tournament,'findOneAndUpdate',async()=>{throw Error('No stale-roster write');});
+  const result=await invoke(controller.generateTournamentBrackets,{version:3});
+  assert.equal(result.res.code,409);assert.equal(write.mock.callCount(),0);
+});
+
+test('correction to an earlier winner cannot retain a downstream completed result', async () => {
+  const old=policy.generateSingleElimination(ids.slice(0,4));
+  old.rounds[0].matches[0].winner=old.rounds[0].matches[0].p1;
+  old.rounds[0].matches[1].winner=old.rounds[0].matches[1].p1;
+  policy.advanceWinners(old);old.rounds[1].matches[0].winner=old.rounds[1].matches[0].p2;
+  const changed=JSON.parse(JSON.stringify(old));
+  changed.rounds[0].matches[0].winner=changed.rounds[0].matches[0].p2;
+  policy.advanceWinners(changed);
+  mock.method(Tournament,'findById',async()=>event({status:'ongoing',registrations:ids.slice(0,4),brackets:old}));
+  const write=mock.method(Tournament,'findOneAndUpdate',async()=>{throw Error('Must clear stale final');});
+  const result=await invoke(controller.updateTournamentBrackets,{version:2,brackets:changed});
+  assert.equal(result.res.code,400);assert.match(result.res.body.message,/dependent/);assert.equal(write.mock.callCount(),0);
+});

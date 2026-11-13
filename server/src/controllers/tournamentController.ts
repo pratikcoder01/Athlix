@@ -81,6 +81,7 @@ export const generateTournamentBrackets = async (req: AuthenticatedRequest, res:
     const tournament = await Tournament.findById(req.params.id);
     if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found' });
     if (!ownsTournament(req.user, tournament)) return res.status(403).json({ success: false, message: 'Only this event’s organizer or an admin can generate brackets' });
+    if (Number(tournament.get('__v') || 0) !== parsed.data.version) return res.status(409).json({ success: false, message: 'Tournament changed. Reload before generating brackets.' });
     if (tournament.status !== 'upcoming' || tournament.brackets?.rounds?.length) {
       return res.status(409).json({ success: false, message: 'Brackets have already been generated or the event has started' });
     }
@@ -118,6 +119,15 @@ export const updateTournamentBrackets = async (req: AuthenticatedRequest, res: R
     const seedKey = (seeds: Array<{ fighterId: { toString(): string }; seed: number }>) =>
       seeds.map(seed => `${seed.seed}:${seed.fighterId.toString()}`).sort().join('|');
     if (seedKey(brackets.seeds) !== seedKey(existing.seeds)) return badRequest(res, 'Published seeds cannot be replaced');
+    for (let r = 1; r < brackets.rounds.length; r++) {
+      for (let m = 0; m < brackets.rounds[r].matches.length; m++) {
+        const previous = existing.rounds[r]?.matches[m];
+        const current = brackets.rounds[r].matches[m];
+        if (previous?.winner && current.winner && (previous.p1 !== current.p1 || previous.p2 !== current.p2)) {
+          return badRequest(res, 'Clear dependent results after changing an earlier winner');
+        }
+      }
+    }
     if (status === 'upcoming' && brackets.rounds.some(r => r.matches.some(m => m.winner && m.p1 !== 'BYE' && m.p2 !== 'BYE'))) {
       return badRequest(res, 'Start the tournament before recording results');
     }
