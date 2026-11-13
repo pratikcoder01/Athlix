@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import loggingMiddleware from './middleware/loggingMiddleware';
 import rateLimitMiddleware from './middleware/rateLimitMiddleware';
 import errorMiddleware from './middleware/errorMiddleware';
+import { createOriginPolicy } from './config/cors';
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -19,17 +20,11 @@ const app = express();
 // Security and Logging Configuration
 app.use(helmet());
 
-const allowedOrigins = process.env.ALLOWED_ORIGIN
-  ? process.env.ALLOWED_ORIGIN.split(',').map(origin => origin.trim())
-  : '*';
-
-if (allowedOrigins === '*') {
-  console.warn('WARNING: ALLOWED_ORIGIN environment variable is not set. CORS fallback to "*" is active.');
-}
+const originPolicy = createOriginPolicy();
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: originPolicy.origin,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })

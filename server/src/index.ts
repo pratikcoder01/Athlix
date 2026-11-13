@@ -5,9 +5,9 @@ dotenv.config();
 import './config/firebase';
 
 import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
 import app from './app';
 import connectDB from './config/db';
+import { createRealtimeServer } from './socket';
 
 
 const PORT = process.env.PORT || 5000;
@@ -16,32 +16,10 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
 // Initialize Socket.io
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: '*', // Set to target client domains in production
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  },
-});
+const io = createRealtimeServer(server);
 
 // Store socket IO instance in Express app context
 app.set('io', io);
-
-// Socket.io connection handlers
-io.on('connection', (socket) => {
-  console.log(`🔌 Client connected: ${socket.id}`);
-
-  // User joins a personal room based on their userId
-  socket.on('join_user_room', (userId: string) => {
-    if (userId) {
-      socket.join(userId);
-      console.log(`👤 User joined room: ${userId}`);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`🔌 Client disconnected: ${socket.id}`);
-  });
-});
 
 // Start Database & Web Server
 const startServer = async () => {
