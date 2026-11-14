@@ -25,7 +25,7 @@ class PoseAnalyzer:
         ensure_model_exists()
         
         # Confidence thresholds are policy choices, not a validated accuracy claim.
-        base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
+        base_options = python.BaseOptions(model_asset_path=MODEL_PATH, delegate=python.BaseOptions.Delegate.CPU)
         options = vision.PoseLandmarkerOptions(
             base_options=base_options,
             running_mode=vision.RunningMode.VIDEO,
