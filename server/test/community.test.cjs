@@ -5,6 +5,7 @@ const { Post } = require('../dist/models/Post.js');
 const { Comment } = require('../dist/models/Comment.js');
 const controller = require('../dist/controllers/postController.js');
 const policy = require('../dist/utils/communityPolicy.js');
+const transaction = require('../dist/utils/communityTransaction.js');
 const userId = new Types.ObjectId('507f1f77bcf86cd799439011');
 const postId = '507f1f77bcf86cd799439012';
 const commentId = '507f1f77bcf86cd799439013';
@@ -95,16 +96,16 @@ test('empty feed has an honest empty result and performs no comment aggregation'
 });
 for(const liked of [true,false]) {
   test(`like desired state ${liked} uses a single actor-derived atomic operation`, async () => {
-    const update=mock.method(Post,'findByIdAndUpdate',()=>({select:async()=>({likes:liked?[userId]:[]})}));
+    const update=mock.method(Post,'findOneAndUpdate',()=>({select:async()=>({likes:liked?[userId]:[]})}));
     const result=await invoke(controller.toggleLikePost,{body:{liked}});
     assert.equal(result.res.code,200);assert.equal(result.res.body.liked,liked);assert.equal(result.res.body.likesCount,liked?1:0);
     const [id,operation,options]=update.mock.calls[0].arguments;
-    assert.equal(id,postId);assert.deepEqual(operation,liked?{$addToSet:{likes:userId}}:{$pull:{likes:userId}});
+    assert.deepEqual(id,{_id:postId,...policy.communityVisible});assert.deepEqual(operation,liked?{$addToSet:{likes:userId}}:{$pull:{likes:userId}});
     assert.deepEqual(options,{new:true,runValidators:true});
   });
 }
 test('malformed or actor-injected likes and invalid ids fail without persistence', async () => {
-  const update=mock.method(Post,'findByIdAndUpdate',()=>{throw Error('No write');});
+  const update=mock.method(Post,'findOneAndUpdate',()=>{throw Error('No write');});
   for(const body of [{},{liked:'true'},{liked:true,userId:postId},{liked:{$ne:false}}]) {
     const response=await invoke(controller.toggleLikePost,{body});assert.equal(response.res.code,400);
   }
@@ -112,20 +113,22 @@ test('malformed or actor-injected likes and invalid ids fail without persistence
   assert.equal(update.mock.callCount(),0);
 });
 test('a missing post cannot receive a like', async () => {
-  mock.method(Post,'findByIdAndUpdate',()=>({select:async()=>null}));
+  mock.method(Post,'findOneAndUpdate',()=>({select:async()=>null}));
   const result=await invoke(controller.toggleLikePost,{body:{liked:true}});assert.equal(result.res.code,404);
 });
 test('duplicate legacy like entries never inflate the reported member count', async () => {
-  mock.method(Post,'findByIdAndUpdate',()=>({select:async()=>({likes:[userId,userId]})}));
+  mock.method(Post,'findOneAndUpdate',()=>({select:async()=>({likes:[userId,userId]})}));
   const result=await invoke(controller.toggleLikePost,{body:{liked:true}});
   assert.equal(result.res.body.liked,true);assert.equal(result.res.body.likesCount,1);
 });
 test('comment author and target are server-derived and no mutable post counter is written', async () => {
   mock.method(Post,'exists',async()=>true);
-  const create=mock.method(Comment,'create',async fields=>({_id:commentId,...fields,get:()=>date}));
+  mock.method(transaction,'withCommunityPostWrite',async(_id,work)=>work({fixture:true}));
+  const create=mock.method(Comment,'create',async fields=>fields.map(value=>({_id:commentId,...value,get:()=>date})));
   const postUpdate=mock.method(Post,'findByIdAndUpdate',()=>{throw Error('No count race');});
   const result=await invoke(controller.commentPost,{body:{content:'  Useful feedback  '}});
-  assert.equal(result.res.code,201);assert.deepEqual(create.mock.calls[0].arguments[0],{authorId:userId,postId,content:'Useful feedback'});
+  assert.equal(result.res.code,201);assert.deepEqual(create.mock.calls[0].arguments[0],[{authorId:userId,postId,content:'Useful feedback'}]);
+  assert.ok(create.mock.calls[0].arguments[1].session);
   assert.equal(result.res.body.comment.authorId.email,undefined);assert.equal(postUpdate.mock.callCount(),0);
 });
 test('comment validation rejects excessive, blank and identity-injected content before reads', async () => {
@@ -143,7 +146,7 @@ test('comment reads validate target and paginate with safe authors', async () =>
   mock.method(Post,'exists',async()=>true);const records=[{_id:commentId,content:'First'},{_id:postId,content:'More'}];const result=queryResult(records);
   const find=mock.method(Comment,'find',()=>result.chain);
   const response=await invoke(controller.getCommentsByPostId,{query:{page:'3',limit:'1'}});
-  assert.deepEqual(find.mock.calls[0].arguments[0],{postId});assert.deepEqual(result.calls.skip,[2]);assert.deepEqual(result.calls.limit,[2]);
+  assert.deepEqual(find.mock.calls[0].arguments[0],{postId,...policy.communityVisible});assert.deepEqual(result.calls.skip,[2]);assert.deepEqual(result.calls.limit,[2]);
   assert.deepEqual(result.calls.populate,['authorId','name role']);assert.equal(response.res.body.comments.length,1);assert.equal(response.res.body.hasMore,true);
 });
 test('invalid comments query or missing post never returns a pretend empty success', async () => {

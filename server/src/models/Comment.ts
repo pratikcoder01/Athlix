@@ -23,6 +23,10 @@ const CommentSchema = new Schema<ICommentDocument>(
       trim: true,
       maxlength: 2000,
     },
+    visibility: { type: String, enum: ['visible', 'hidden', 'deleted'], default: 'visible' },
+    version: { type: Number, default: 0, min: 0 },
+    hiddenAt: { type: Date },
+    hiddenBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   {
     timestamps: true,

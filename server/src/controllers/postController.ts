@@ -3,7 +3,8 @@ import { Types } from 'mongoose';
 import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { AuthenticatedRequest } from '../types';
-import { communityIdSchema, communityPostSchema, communityCommentSchema, communityLikeSchema, communityQuerySchema } from '../utils/communityPolicy';
+import { communityIdSchema, communityPostSchema, communityCommentSchema, communityLikeSchema, communityQuerySchema, communityVisible } from '../utils/communityPolicy';
+import { withCommunityPostWrite } from '../utils/communityTransaction';
 
 const invalid = (res: Response, message: string) => res.status(400).json({ success: false, message });
 const authorized = (req: AuthenticatedRequest, res: Response) => {
@@ -18,19 +19,19 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response, next: N
     const parsed = communityQuerySchema.safeParse(req.query);
     if (!parsed.success) return invalid(res, 'Invalid community pagination');
     const { page, limit } = parsed.data;
-    const records = await Post.find().select('authorId content likes createdAt')
+    const records = await Post.find(communityVisible).select('authorId content likes createdAt version')
       .populate('authorId', 'name role').sort({ createdAt: -1, _id: -1 })
       .skip((page - 1) * limit).limit(limit + 1).lean();
     const selected = records.slice(0, limit);
     // Persisted comments are the source of truth. A separate mutable counter can
     // drift on failed writes and concurrent comments; never present it as fact.
     const counts = selected.length ? await Comment.aggregate<{ _id: Types.ObjectId; count: number }>([
-      { $match: { postId: { $in: selected.map(post => post._id) } } },
+      { $match: { postId: { $in: selected.map(post => post._id) }, ...communityVisible } },
       { $group: { _id: '$postId', count: { $sum: 1 } } },
     ]) : [];
     const totals = new Map(counts.map(count => [String(count._id), count.count]));
     const posts = selected.map(post => ({
-      _id: post._id, authorId: post.authorId, content: post.content, createdAt: post.createdAt,
+      _id: post._id, authorId: post.authorId, content: post.content, createdAt: post.createdAt, version: post.version || 0,
       likesCount: new Set((post.likes || []).map(String)).size,
       likedByMe: !!post.likes?.some(id => String(id) === String(req.user!._id)),
       commentsCount: totals.get(String(post._id)) || 0,
@@ -46,7 +47,7 @@ export const createPost = async (req: AuthenticatedRequest, res: Response, next:
     if (!parsed.success) return invalid(res, 'Post must contain 1–5000 characters of text only');
     const saved = await Post.create({ authorId: req.user!._id, content: parsed.data.content, mediaUrl: '', mediaType: 'none' });
     const post = { _id: saved._id, authorId: { _id: req.user!._id, name: req.user!.name, role: req.user!.role },
-      content: saved.content, createdAt: saved.get('createdAt'), likesCount: 0, likedByMe: false, commentsCount: 0 };
+      content: saved.content, createdAt: saved.get('createdAt'), version: saved.version || 0, likesCount: 0, likedByMe: false, commentsCount: 0 };
     try {
       req.app.get('io')?.emit('new_post', post);
     } catch {
@@ -67,7 +68,7 @@ export const toggleLikePost = async (req: AuthenticatedRequest, res: Response, n
     const parsed = communityLikeSchema.safeParse(req.body);
     if (!parsed.success) return invalid(res, 'Choose liked: true or false');
     const operation = parsed.data.liked ? { $addToSet: { likes: req.user!._id } } : { $pull: { likes: req.user!._id } };
-    const post = await Post.findByIdAndUpdate(req.params.id, operation, { new: true, runValidators: true }).select('likes');
+    const post = await Post.findOneAndUpdate({ _id: req.params.id, ...communityVisible }, operation, { new: true, runValidators: true }).select('likes');
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
     return res.status(200).json({ success: true, liked: !!post.likes?.some(id => String(id) === String(req.user!._id)), likesCount: new Set((post.likes || []).map(String)).size });
   } catch (error) { next(error); }
@@ -79,10 +80,13 @@ export const commentPost = async (req: AuthenticatedRequest, res: Response, next
     if (!communityIdSchema.safeParse(req.params.id).success) return invalid(res, 'Invalid post ID');
     const parsed = communityCommentSchema.safeParse(req.body);
     if (!parsed.success) return invalid(res, 'Comment must contain 1–2000 characters of text');
-    if (!await Post.exists({ _id: req.params.id })) return res.status(404).json({ success: false, message: 'Post not found' });
-    const saved = await Comment.create({ authorId: req.user!._id, postId: req.params.id, content: parsed.data.content });
+    if (!await Post.exists({ _id: req.params.id, ...communityVisible })) return res.status(404).json({ success: false, message: 'Post not found' });
+    const saved = await withCommunityPostWrite(req.params.id, async session => {
+      const records = await Comment.create([{ authorId: req.user!._id, postId: req.params.id, content: parsed.data.content }], { session });
+      return records[0];
+    });
     const comment = { _id: saved._id, authorId: { _id: req.user!._id, name: req.user!.name, role: req.user!.role },
-      content: saved.content, createdAt: saved.get('createdAt') };
+      content: saved.content, createdAt: saved.get('createdAt'), version: saved.version || 0 };
     return res.status(201).json({ success: true, message: 'Comment published', comment });
   } catch (error) { next(error); }
 };
@@ -93,9 +97,9 @@ export const getCommentsByPostId = async (req: AuthenticatedRequest, res: Respon
     if (!communityIdSchema.safeParse(req.params.id).success) return invalid(res, 'Invalid post ID');
     const parsed = communityQuerySchema.safeParse(req.query);
     if (!parsed.success) return invalid(res, 'Invalid comment pagination');
-    if (!await Post.exists({ _id: req.params.id })) return res.status(404).json({ success: false, message: 'Post not found' });
+    if (!await Post.exists({ _id: req.params.id, ...communityVisible })) return res.status(404).json({ success: false, message: 'Post not found' });
     const { page, limit } = parsed.data;
-    const records = await Comment.find({ postId: req.params.id }).select('authorId content createdAt')
+    const records = await Comment.find({ postId: req.params.id, ...communityVisible }).select('authorId content createdAt version')
       .populate('authorId', 'name role').sort({ createdAt: 1, _id: 1 })
       .skip((page - 1) * limit).limit(limit + 1).lean();
     return res.status(200).json({ success: true, comments: records.slice(0, limit), page, limit, hasMore: records.length > limit });

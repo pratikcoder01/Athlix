@@ -37,6 +37,11 @@ const PostSchema = new Schema<IPostDocument>(
       default: 0,
       min: 0,
     },
+    visibility: { type: String, enum: ['visible', 'hidden', 'deleted'], default: 'visible' },
+    version: { type: Number, default: 0, min: 0 },
+    interactionRevision: { type: Number, default: 0, min: 0 },
+    hiddenAt: { type: Date },
+    hiddenBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   {
     timestamps: true,

@@ -4,10 +4,11 @@ import { workspaceRequest } from './workspaceApi';
 const author = z.object({ _id: z.string(), name: z.string(), role: z.string() }).nullable();
 export const feedPostSchema = z.object({
   _id: z.string(), authorId: author, content: z.string(), createdAt: z.string(),
+  version: z.number().int().nonnegative().default(0),
   likesCount: z.number().int().nonnegative(), likedByMe: z.boolean(), commentsCount: z.number().int().nonnegative(),
 });
 export type FeedPost = z.infer<typeof feedPostSchema>;
-export const commentSchema = z.object({ _id: z.string(), authorId: author, content: z.string(), createdAt: z.string() });
+export const commentSchema = z.object({ _id: z.string(), authorId: author, content: z.string(), createdAt: z.string(), version: z.number().int().nonnegative().default(0) });
 export type FeedComment = z.infer<typeof commentSchema>;
 const pageShape = { success: z.literal(true), page: z.number(), hasMore: z.boolean() };
 export const loadFeed = (token: string, page: number, signal?: AbortSignal) => workspaceRequest(token, `/posts?page=${page}&limit=12`,
@@ -20,3 +21,12 @@ export const loadComments = (token: string, id: string, page: number, signal?: A
   z.object({ ...pageShape, comments: z.array(commentSchema) }), { signal });
 export const publishComment = (token: string, id: string, content: string) => workspaceRequest(token, `/posts/${encodeURIComponent(id)}/comments`,
   z.object({ success: z.literal(true), comment: commentSchema }), { method: 'POST', body: JSON.stringify({ content }) });
+
+const contentPath = (postId: string, commentId?: string) => `/posts/${encodeURIComponent(postId)}${commentId ? `/comments/${encodeURIComponent(commentId)}` : ''}`;
+const saved = z.object({ success: z.literal(true), message: z.string(), version: z.number().int() });
+export const editCommunityContent = (token: string, postId: string, expectedVersion: number, content: string, commentId?: string) => workspaceRequest(token,
+  contentPath(postId, commentId), saved, { method: 'PATCH', body: JSON.stringify({ expectedVersion, content }) });
+export const removeCommunityContent = (token: string, postId: string, expectedVersion: number, commentId?: string) => workspaceRequest(token,
+  contentPath(postId, commentId), saved, { method: 'DELETE', body: JSON.stringify({ expectedVersion }) });
+export const reportCommunityContent = (token: string, postId: string, reason: string, details: string, commentId?: string) => workspaceRequest(token,
+  `${contentPath(postId, commentId)}/report`, z.object({ success: z.literal(true), message: z.string() }), { method: 'POST', body: JSON.stringify({ reason, details }) });
