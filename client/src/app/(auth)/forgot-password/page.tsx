@@ -94,9 +94,9 @@ export default function ForgotPasswordPage() {
               </div>
               <h2 className="text-2xl font-extrabold font-display text-text-primary mb-2">Check your inbox</h2>
               <p className="text-sm text-text-secondary leading-relaxed mb-6">
-                A password reset link was sent to{' '}
-                <span className="font-semibold text-text-primary">{sentEmail}</span>.
-                Check your spam folder if it doesn&apos;t arrive within a minute.
+                If a Firebase password account exists for{' '}
+                <span className="font-semibold text-text-primary">{sentEmail}</span>, a recovery link will arrive shortly. Check your spam folder.
+                Legacy ATHLIX password accounts must first link a verified Firebase identity; this form cannot reset a legacy bcrypt password.
               </p>
               <Link
                 href="/login"
