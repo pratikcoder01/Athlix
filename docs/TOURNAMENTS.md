@@ -72,4 +72,3 @@ cross-division duplicates, seed integrity, withdrawal, cancellation and lifecycl
 an isolated test database is supplied. `tournament-divisions-e2e.cjs` is a browser
 transport fixture for configuration, registration/withdrawal, cancellation,
 conflict recovery and results; it is not a live federation acceptance test.
-
