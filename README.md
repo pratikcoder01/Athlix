@@ -1,7 +1,9 @@
 # ATHLIX 🥋
-> Premium Next-Gen Sports-Tech Platform for Combat Sports Athletes, Coaches, Academies, and Tournament Organizers.
+> A development project for combat-sports clubs, local events, and experimental 2D kata feedback.
 
-ATHLIX is a production-grade, startup-ready MERN platform connecting martial artists and combat sports enthusiasts in one unified workspace. The platform blends professional coaching bookings, real-time social feeds, geospatial academy discovery, and digital tournament bracket registries.
+ATHLIX combines a Next.js client, Express/MongoDB API, authenticated realtime channels, and a Python pose-analysis service. It is **not yet production-ready**. Some screens contain sample content, several workflows remain incomplete, and configured infrastructure is required to exercise real account and event flows. Paid checkout, subscriptions, and settlement reporting are not implemented.
+
+The proposed first pilot is karate academies and local tournament organizers; demand and geography remain hypotheses. Review the [product audit](docs/PRODUCT_AUDIT.md), [roadmap](docs/ROADMAP.md), and [investor-readiness disclosure](docs/pitch/INVESTOR_READINESS.md) before presenting the build. No user counts, customer reviews, partnerships, security certifications, revenue, or independently measured model accuracy are claimed.
 
 ---
 

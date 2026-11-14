@@ -193,7 +193,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">50,000+</span> athletes training smarter
+              <span className="font-semibold text-text-primary">Build your profile</span> and follow your training journey
             </p>
           </motion.div>
         </motion.div>

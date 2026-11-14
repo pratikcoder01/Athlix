@@ -22,14 +22,14 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Athlix | Premium Combat Sports Platform',
-  description: 'World-class scheduling, tracking, and analytics for elite combat sports athletes and academies.',
+  title: 'ATHLIX | Combat Sports Development Pilot',
+  description: 'A development project for combat-sports clubs, local tournaments, and experimental 2D kata feedback. Review product status and pilot limits.',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://athlix-client.vercel.app',
-    title: 'Athlix | Premium Combat Sports Platform',
-    description: 'World-class scheduling, tracking, and analytics for elite combat sports athletes and academies.',
+    title: 'ATHLIX | Combat Sports Development Pilot',
+    description: 'A development project for combat-sports clubs, local tournaments, and experimental 2D kata feedback. Review product status and pilot limits.',
   },
 };
 

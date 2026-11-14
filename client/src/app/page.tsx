@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
-  ArrowRight, Users, Trophy, Brain, TrendingUp, Shield, Star,
+  ArrowRight, Users, Trophy, Brain, TrendingUp, Shield,
   Activity, Zap, Target, MessageSquare, CheckCircle, Play,
   ChevronDown, Flame, Globe, Lock, BarChart3, Sparkles,
-  CircleCheckBig, ChevronRight
+  ChevronRight
 } from 'lucide-react';
 import Navbar from '../components/shared/Navbar';
 import Footer from '../components/shared/Footer';
@@ -23,44 +23,6 @@ const stagger = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.1 } },
 };
-
-// ─── Animated Counter ─────────────────────────────────────────────────────────
-function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const duration = 1800;
-          const increment = target / (duration / 16);
-          let current = 0;
-          const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-              setCount(target);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(current));
-            }
-          }, 16);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [target]);
-
-  return (
-    <span ref={ref} className="tabular-nums">
-      {count.toLocaleString()}{suffix}
-    </span>
-  );
-}
 
 // ─── Floating Orb ─────────────────────────────────────────────────────────────
 function FloatingOrb({
@@ -92,124 +54,40 @@ function SectionLabel({ icon: Icon, label }: { icon?: React.FC<React.SVGProps<SV
   );
 }
 
-// ─── Feature Data ─────────────────────────────────────────────────────────────
+// Product scope is explicit: these are development areas, not traction claims.
 const features = [
-  {
-    icon: Brain,
-    title: 'AI Intelligence',
-    description: 'Deep learning algorithms analyze performance in real-time, delivering world-class coaching insights to every athlete.',
-    color: 'from-orange-500/20 to-red-500/10',
-    iconColor: 'text-orange-400',
-  },
-  {
-    icon: Trophy,
-    title: 'Tournament Engine',
-    description: 'Run professional tournaments with automated brackets, live scoring, and real-time participant management at any scale.',
-    color: 'from-yellow-500/20 to-amber-500/10',
-    iconColor: 'text-yellow-400',
-  },
-  {
-    icon: Users,
-    title: 'Academy CRM',
-    description: 'Manage your entire academy from student onboarding to curriculum tracking, billing, and progress monitoring.',
-    color: 'from-blue-500/20 to-indigo-500/10',
-    iconColor: 'text-blue-400',
-  },
-  {
-    icon: BarChart3,
-    title: 'Performance Analytics',
-    description: 'Track progress over time with detailed metrics, advanced charts, and AI-powered comparative analysis.',
-    color: 'from-green-500/20 to-emerald-500/10',
-    iconColor: 'text-green-400',
-  },
-  {
-    icon: Target,
-    title: 'Recruitment Hub',
-    description: 'Connect with scouts and top organizations. Showcase your verified achievements and get discovered faster.',
-    color: 'from-purple-500/20 to-violet-500/10',
-    iconColor: 'text-purple-400',
-  },
-  {
-    icon: Shield,
-    title: 'Verified Network',
-    description: 'Join a trusted ecosystem of verified athletes, coaches, academies, and sports organizations worldwide.',
-    color: 'from-cyan-500/20 to-teal-500/10',
-    iconColor: 'text-cyan-400',
-  },
+  { icon: Brain, title: 'Kata analysis · experimental', description: '2D pose estimates and rule-based movement feedback. Camera angle and landmark confidence affect results; scores are not a validated measure of skill.', color: 'from-orange-500/20 to-red-500/10', iconColor: 'text-orange-400' },
+  { icon: Trophy, title: 'Tournaments · pilot scope', description: 'Authenticated event registration and organizer-managed brackets. Real events require an approved organizer and configured backend.', color: 'from-yellow-500/20 to-amber-500/10', iconColor: 'text-yellow-400' },
+  { icon: Users, title: 'Academies · in development', description: 'Academy listing APIs exist. Member records, attendance, and day-to-day school operations still need a complete workflow.', color: 'from-blue-500/20 to-indigo-500/10', iconColor: 'text-blue-400' },
+  { icon: BarChart3, title: 'Progress · in development', description: 'Profile and analysis data are a starting point. Some dashboards are sample screens; they do not represent measured customer activity.', color: 'from-green-500/20 to-emerald-500/10', iconColor: 'text-green-400' },
+  { icon: Target, title: 'Coaching · in development', description: 'Booking and coach-profile APIs are under review. Directory examples do not establish coach availability or credential verification.', color: 'from-purple-500/20 to-violet-500/10', iconColor: 'text-purple-400' },
+  { icon: Shield, title: 'Professional access · reviewed', description: 'New public accounts start as athletes. Coach, academy owner, organizer, and administrator privileges require a trusted approval process.', color: 'from-cyan-500/20 to-teal-500/10', iconColor: 'text-cyan-400' },
 ];
 
-// ─── Workflow Steps ────────────────────────────────────────────────────────────
 const steps = [
-  { n: '01', title: 'Create Profile', desc: 'Build your professional sports identity in minutes' },
-  { n: '02', title: 'AI Analysis', desc: 'Our AI maps your performance, goals, and potential' },
-  { n: '03', title: 'Get Coaching', desc: 'Receive personalised training plans and feedback' },
-  { n: '04', title: 'Compete', desc: 'Join verified tournaments matched to your level' },
-  { n: '05', title: 'Get Discovered', desc: 'Scouts and organisations find you through your profile' },
-  { n: '06', title: 'Grow', desc: 'Track career growth and unlock new opportunities' },
+  { n: '01', title: 'Start with an account', desc: 'Create an athlete account when the authentication services are configured.' },
+  { n: '02', title: 'Know the product status', desc: 'Check which workflows are implemented, experimental, or still being developed.' },
+  { n: '03', title: 'Set up a club pilot', desc: 'Discuss your karate club or local event needs with the project team.' },
+  { n: '04', title: 'Review access', desc: 'Professional accounts need approval before managing athletes or events.' },
+  { n: '05', title: 'Use real event data', desc: 'An approved organizer can create an event and receive athlete registrations.' },
+  { n: '06', title: 'Share feedback', desc: 'Help test the workflow before it is offered for wider use.' },
 ];
 
-// ─── Testimonials ──────────────────────────────────────────────────────────────
-const testimonials = [
-  {
-    name: 'Sarah Chen',
-    role: 'Professional MMA Fighter',
-    text: 'Athlix transformed my training. The AI feedback is like having a world-class corner in my pocket 24/7.',
-    rating: 5,
-    avatar: 'SC',
-    gradient: 'from-orange-500 to-red-600',
-  },
-  {
-    name: 'Marcus Rodriguez',
-    role: 'BJJ Academy Owner',
-    text: 'Managing my 200-student academy has never been simpler. The CRM and tournament tools are absolutely game-changing.',
-    rating: 5,
-    avatar: 'MR',
-    gradient: 'from-blue-500 to-indigo-600',
-  },
-  {
-    name: 'Dr. Emily Watson',
-    role: 'Sports Scientist, Team USA',
-    text: 'The data depth Athlix provides rivals what elite Olympic programmes have used for decades. Extraordinary.',
-    rating: 5,
-    avatar: 'EW',
-    gradient: 'from-green-500 to-emerald-600',
-  },
-];
-
-// ─── FAQ ───────────────────────────────────────────────────────────────────────
 const faqs = [
-  {
-    q: 'What makes Athlix different from other sports platforms?',
-    a: 'Athlix is the only platform that connects athletes, coaches, academies, recruiters, and tournament organizers through a single AI-powered ecosystem — the operating system for sports.',
-  },
-  {
-    q: 'How does the AI coaching work?',
-    a: 'Our AI analyzes performance data, video footage, and training history to provide personalized recommendations, technique corrections, and tailored training plans updated in real time.',
-  },
-  {
-    q: 'Is my data safe and secure?',
-    a: 'Absolutely. Enterprise-grade encryption and zero-data-sale policies protect everything. Your data is yours — always.',
-  },
-  {
-    q: 'Can I try Athlix for free?',
-    a: 'Yes! Full-access free trial, no credit card required. Upgrade when you\'re ready.',
-  },
-  {
-    q: 'What sports does Athlix support?',
-    a: 'Athlix is sport-agnostic. It works for MMA, BJJ, boxing, wrestling, football, basketball, athletics, and any other discipline — solo or team.',
-  },
+  { q: 'Who is ATHLIX being built for?', a: 'Our proposed first pilot is karate academies and local tournament organizers. The initial geography and customer demand still need validation; broader combat-sports support is a roadmap direction.' },
+  { q: 'Is every screen ready for real customers?', a: 'No. This is a development build. Some directories, dashboards, and community screens contain sample content. Review the product status page before relying on a workflow.' },
+  { q: 'What does the Kata Analyzer measure?', a: 'It estimates 2D body landmarks and calculates movement heuristics. It cannot measure physical force, diagnose injuries, or certify performance. No independently validated accuracy figure is available.' },
+  { q: 'Are subscriptions or payments available?', a: 'No. Paid plans, checkout, and automated billing are not available. Pilot scope and commercial terms must be discussed with the team.' },
+  { q: 'What should I know before sharing data?', a: 'Privacy and service terms are pending legal review. Avoid uploading sensitive or third-party information. Use only videos you have permission to share, and review the analyzer consent notice.' },
 ];
 
-// ─── Stats ─────────────────────────────────────────────────────────────────────
-const stats = [
-  { value: 50000, suffix: '+', label: 'Active Athletes', icon: Users },
-  { value: 1200, suffix: '+', label: 'Tournaments Hosted', icon: Trophy },
-  { value: 250000, suffix: '+', label: 'AI Reports Generated', icon: Brain },
-  { value: 350, suffix: '+', label: 'Partner Academies', icon: Globe },
+const focusAreas = [
+  { value: 'Karate', label: 'Proposed first discipline', icon: Target },
+  { value: 'Clubs', label: 'Proposed pilot customers', icon: Users },
+  { value: 'Events', label: 'First workflow to validate', icon: Trophy },
+  { value: 'Feedback', label: 'Learning before scale', icon: MessageSquare },
 ];
-
-// ─── Logos ──────────────────────────────────────────────────────────────────────
-const partnerLogos = ['UFC', 'Bellator', 'ONE FC', 'Glory', 'PFL', 'ADCC'];
+const disciplines = ['Karate', 'BJJ', 'Judo', 'Taekwondo', 'Boxing', 'Muay Thai'];
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function Home() {
@@ -260,7 +138,7 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
               </span>
-              AI 2.0 Now Live — Smarter. Faster. More Accurate.
+              Development build · Karate pilot in preparation
               <ChevronRight className="w-3.5 h-3.5 text-accent" />
             </div>
           </motion.div>
@@ -270,10 +148,10 @@ export default function Home() {
             variants={fadeUp}
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold font-display tracking-tight leading-[1.05] text-text-primary"
           >
-            The Operating
+            More time
             <br />
             <span className="relative inline-block">
-              <span className="text-gradient-accent">System for Sports</span>
+              <span className="text-gradient-accent">on the mat</span>
               <motion.span
                 className="absolute -bottom-2 left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-accent via-accent-light to-accent-gold"
                 initial={{ scaleX: 0 }}
@@ -288,8 +166,8 @@ export default function Home() {
             variants={fadeUp}
             className="text-lg sm:text-xl md:text-2xl text-text-secondary max-w-2xl leading-relaxed font-light"
           >
-            One intelligent platform for athletes, coaches, academies, recruiters,
-            and tournament organisers — with AI at its core.
+            Athlete accounts, local tournaments, and experimental kata feedback.
+            Built around the needs of a focused club pilot, with product limits made clear.
           </motion.p>
 
           {/* CTAs */}
@@ -304,7 +182,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
               >
                 <Sparkles className="w-5 h-5" />
-                Start for Free
+                Create Athlete Account
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </Link>
@@ -320,25 +198,9 @@ export default function Home() {
             </Link>
           </motion.div>
 
-          {/* Trust signals */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 pt-6">
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              ))}
-              <span className="ml-2 text-sm text-text-secondary font-medium">
-                4.9/5 from 2,400+ reviews
-              </span>
-            </div>
-            <div className="flex items-center gap-6">
-              {['No credit card', 'Free 14-day trial', 'Cancel anytime'].map((t, i) => (
-                <span key={i} className="flex items-center gap-1.5 text-xs text-text-tertiary font-medium">
-                  <CircleCheckBig className="w-3.5 h-3.5 text-success shrink-0" />
-                  {t}
-                </span>
-              ))}
-            </div>
-          </motion.div>
+          <motion.p variants={fadeUp} className="max-w-xl text-sm text-text-secondary pt-4">
+            Early development. Some screens contain sample data. No paid subscriptions or measured traction are claimed.
+          </motion.p>
         </motion.div>
 
         {/* Scroll hint */}
@@ -358,15 +220,15 @@ export default function Home() {
         </motion.div>
       </motion.section>
 
-      {/* ── PARTNER LOGOS ─────────────────────────────────────────────────── */}
+      {/* ── DISCIPLINES ─────────────────────────────────────────────────── */}
       <section className="relative py-10 border-y border-border overflow-hidden">
         <div className="absolute inset-0 bg-surface/40" />
         <div className="relative max-w-7xl mx-auto px-4">
           <p className="text-center text-xs tracking-widest text-text-tertiary uppercase font-semibold mb-6">
-            Trusted by athletes and organisations across
+            Combat-sports direction · availability varies by workflow
           </p>
           <div className="flex items-center justify-center gap-8 md:gap-16 flex-wrap">
-            {partnerLogos.map((logo, i) => (
+            {disciplines.map((logo, i) => (
               <motion.span
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
@@ -386,7 +248,7 @@ export default function Home() {
       <section className="py-24 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, i) => (
+            {focusAreas.map((stat, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 24 }}
@@ -401,7 +263,7 @@ export default function Home() {
                     <stat.icon className="w-5 h-5 text-accent" />
                   </div>
                   <p className="text-3xl md:text-4xl font-extrabold font-display text-text-primary">
-                    <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                    {stat.value}
                   </p>
                   <p className="mt-1 text-sm text-text-secondary font-medium">{stat.label}</p>
                 </div>
@@ -424,12 +286,12 @@ export default function Home() {
           >
             <SectionLabel icon={Zap} label="Platform Overview" />
             <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-text-primary">
-              Everything your sports
+              A focused foundation for
               <br className="hidden md:block" />
-              ecosystem needs
+              clubs and local events
             </h2>
             <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-              Six powerful modules. One unified platform. Built for athletes at every level.
+              Implemented APIs, experimental analysis, and work in progress. Explore the status of each area before using it.
             </p>
           </motion.div>
 
@@ -475,9 +337,9 @@ export default function Home() {
           >
             <SectionLabel icon={Activity} label="The Workflow" />
             <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-text-primary">
-              From athlete to champion
+              From first look to
               <br className="hidden md:block" />
-              in six steps
+              a useful pilot
             </h2>
           </motion.div>
 
@@ -502,60 +364,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ──────────────────────────────────────────────────── */}
-      <section className="py-24 md:py-32 px-4 relative">
-        <div className="absolute inset-0 bg-surface/30 -z-10" />
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <SectionLabel icon={Star} label="Testimonials" />
-            <h2 className="mt-6 text-4xl md:text-5xl font-extrabold font-display tracking-tight text-text-primary">
-              What athletes are saying
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.12 }}
-                whileHover={{ y: -5 }}
-                className="rounded-2xl border border-border bg-surface p-8 hover:border-accent/30 transition-all duration-300 hover:shadow-lg flex flex-col gap-6"
-              >
-                {/* Stars */}
-                <div className="flex gap-1">
-                  {[...Array(t.rating)].map((_, j) => (
-                    <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                {/* Quote */}
-                <p className="text-text-primary leading-relaxed flex-1">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                {/* Author */}
-                <div className="flex items-center gap-3 pt-2 border-t border-border/60">
-                  <div className={cn('w-10 h-10 rounded-full bg-gradient-to-br flex items-center justify-center text-white text-xs font-black shrink-0', t.gradient)}>
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-text-primary">{t.name}</p>
-                    <p className="text-xs text-text-secondary">{t.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── FEATURE HIGHLIGHT BENTO ───────────────────────────────────────── */}
       <section className="py-24 md:py-32 px-4">
         <div className="max-w-7xl mx-auto">
@@ -568,20 +376,20 @@ export default function Home() {
           >
             <SectionLabel icon={Flame} label="Why Athlix" />
             <h2 className="mt-6 text-4xl md:text-5xl font-extrabold font-display tracking-tight text-text-primary">
-              Built for champions,
+              Built around the mat,
               <br className="hidden md:block" />
-              <span className="text-gradient-accent">by champions</span>
+              <span className="text-gradient-accent">improved through feedback</span>
             </h2>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { icon: Lock, title: 'Enterprise Security', desc: 'SOC2 compliant. Zero data sale policy. Your data, your control.', badge: 'Security' },
-              { icon: Zap, title: 'Real-time Everything', desc: 'Live scores, instant AI feedback, push notifications — zero lag.', badge: 'Performance' },
-              { icon: Globe, title: 'Global Community', desc: '50,000+ athletes across 80+ countries. The world\'s largest sports network.', badge: 'Network' },
-              { icon: TrendingUp, title: 'Data-Driven Coaching', desc: 'Every session tracked. Every metric analysed. Progress you can measure.', badge: 'Analytics' },
-              { icon: CheckCircle, title: 'Verified Profiles', desc: 'Every athlete, coach, and academy is identity-verified. No fakes.', badge: 'Trust' },
-              { icon: Sparkles, title: 'AI-Powered Matching', desc: 'Smart algorithms match athletes to coaches, tournaments, and opportunities.', badge: 'AI' },
+              { icon: Lock, title: 'Access controls', desc: 'Authentication and ownership checks are being hardened with regression tests. No security certification is claimed.', badge: 'Engineering' },
+              { icon: Zap, title: 'Event updates', desc: 'Authenticated realtime channels support event updates when the backend is configured.', badge: 'Pilot' },
+              { icon: Globe, title: 'A narrow first market', desc: 'Karate clubs and local organizers are the proposed starting point. Demand still needs to be tested.', badge: 'Focus' },
+              { icon: TrendingUp, title: 'Evidence before numbers', desc: 'Customer counts, retention, and revenue will be reported only after they have been measured.', badge: 'Evidence' },
+              { icon: CheckCircle, title: 'Reviewed privileges', desc: 'Professional access needs approval. A platform role is not proof of sporting qualifications.', badge: 'Trust' },
+              { icon: Sparkles, title: 'Explainable feedback', desc: 'Kata scores describe pose-based heuristics, with limits that a coach should review.', badge: 'Experimental' },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -634,6 +442,7 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: i * 0.07 }}
               >
                 <button
+                  aria-expanded={openFaq === i}
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left rounded-2xl border border-border bg-surface px-6 py-5 hover:border-accent/30 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                 >
@@ -698,13 +507,13 @@ export default function Home() {
                 Ready to begin?
               </div>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-text-primary mb-5">
-                Transform your sports career
+                Help shape a better
                 <br className="hidden md:block" />
-                <span className="text-gradient-accent">starting today.</span>
+                <span className="text-gradient-accent">club workflow.</span>
               </h2>
               <p className="text-lg text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-                Join 50,000+ athletes, coaches, and academies already using Athlix
-                to redefine what&apos;s possible.
+                Bring a real club workflow, try the development build, and help us understand
+                what athletes and organizers need next.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -715,7 +524,7 @@ export default function Home() {
                     className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
                   >
                     <Sparkles className="w-5 h-5" />
-                    Get Started Free
+                    Create Athlete Account
                     <ArrowRight className="w-5 h-5" />
                   </motion.button>
                 </Link>
@@ -725,13 +534,13 @@ export default function Home() {
                     whileTap={{ scale: 0.98 }}
                     className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-semibold text-base border border-border bg-surface/60 backdrop-blur-sm text-text-primary hover:border-accent/40 hover:bg-surface transition-all duration-300 cursor-pointer"
                   >
-                    Book a Demo
+                    View Product Status
                   </motion.button>
                 </Link>
               </div>
 
               <p className="mt-6 text-xs text-text-tertiary">
-                No credit card required · 14-day free trial · Cancel anytime
+                Development access · No checkout or automatic billing
               </p>
             </motion.div>
           </motion.div>
