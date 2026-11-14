@@ -1,210 +1,103 @@
 import { Response, NextFunction } from 'express';
+import { Types } from 'mongoose';
 import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
-import { Notification } from '../models/Notification';
 import { AuthenticatedRequest } from '../types';
-import { Types } from 'mongoose';
+import { communityIdSchema, communityPostSchema, communityCommentSchema, communityLikeSchema, communityQuerySchema } from '../utils/communityPolicy';
 
-// @desc    Get all community feed posts
-// @route   GET /api/posts
-// @access  Private
+const invalid = (res: Response, message: string) => res.status(400).json({ success: false, message });
+const authorized = (req: AuthenticatedRequest, res: Response) => {
+  if (req.user) return true;
+  res.status(401).json({ success: false, message: 'Not authorized' });
+  return false;
+};
+
 export const getPosts = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const posts = await Post.find()
-      .populate('authorId', 'name email role')
-      .sort({ createdAt: -1 })
-      .exec();
-
-    res.status(200).json({
-      success: true,
-      count: posts.length,
-      posts,
-    });
-  } catch (error) {
-    next(error);
-  }
+    if (!authorized(req, res)) return;
+    const parsed = communityQuerySchema.safeParse(req.query);
+    if (!parsed.success) return invalid(res, 'Invalid community pagination');
+    const { page, limit } = parsed.data;
+    const records = await Post.find().select('authorId content likes createdAt')
+      .populate('authorId', 'name role').sort({ createdAt: -1, _id: -1 })
+      .skip((page - 1) * limit).limit(limit + 1).lean();
+    const selected = records.slice(0, limit);
+    // Persisted comments are the source of truth. A separate mutable counter can
+    // drift on failed writes and concurrent comments; never present it as fact.
+    const counts = selected.length ? await Comment.aggregate<{ _id: Types.ObjectId; count: number }>([
+      { $match: { postId: { $in: selected.map(post => post._id) } } },
+      { $group: { _id: '$postId', count: { $sum: 1 } } },
+    ]) : [];
+    const totals = new Map(counts.map(count => [String(count._id), count.count]));
+    const posts = selected.map(post => ({
+      _id: post._id, authorId: post.authorId, content: post.content, createdAt: post.createdAt,
+      likesCount: new Set((post.likes || []).map(String)).size,
+      likedByMe: !!post.likes?.some(id => String(id) === String(req.user!._id)),
+      commentsCount: totals.get(String(post._id)) || 0,
+    }));
+    return res.status(200).json({ success: true, posts, page, limit, hasMore: records.length > limit });
+  } catch (error) { next(error); }
 };
 
-// @desc    Create a new post
-// @route   POST /api/posts
-// @access  Private
 export const createPost = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
+    if (!authorized(req, res)) return;
+    const parsed = communityPostSchema.safeParse(req.body);
+    if (!parsed.success) return invalid(res, 'Post must contain 1–5000 characters of text only');
+    const saved = await Post.create({ authorId: req.user!._id, content: parsed.data.content, mediaUrl: '', mediaType: 'none' });
+    const post = { _id: saved._id, authorId: { _id: req.user!._id, name: req.user!.name, role: req.user!.role },
+      content: saved.content, createdAt: saved.get('createdAt'), likesCount: 0, likedByMe: false, commentsCount: 0 };
+    try {
+      req.app.get('io')?.emit('new_post', post);
+    } catch {
+      // Publication is already persisted. A transient realtime failure must not
+      // invite a duplicate retry or expose transport details to the client.
+      console.warn(JSON.stringify({ event: 'community_realtime_delivery_failed', postId: String(saved._id) }));
     }
-
-    const { content, mediaUrl, mediaType } = req.body;
-
-    const post = await Post.create({
-      authorId: req.user._id,
-      content,
-      mediaUrl: mediaUrl || '',
-      mediaType: mediaType || 'none',
-    });
-
-    const populatedPost = await Post.findById(post._id).populate('authorId', 'name email role');
-
-    // Emit real-time update to all active users
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('new_post', populatedPost);
-    }
-
-    res.status(201).json({
-      success: true,
-      message: 'Post created successfully',
-      post: populatedPost,
-    });
-  } catch (error) {
-    next(error);
-  }
+    return res.status(201).json({ success: true, message: 'Post published', post });
+  } catch (error) { next(error); }
 };
 
-// @desc    Toggle user like on post
-// @route   POST /api/posts/:id/like
-// @access  Private
+// Compatibility route name retained; clients now request an idempotent desired
+// state. $addToSet/$pull avoid duplicate actors and lost updates across processes.
 export const toggleLikePost = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
-    }
-
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ success: false, message: 'Post not found' });
-    }
-
-    const userId = req.user._id as Types.ObjectId;
-    const likeIndex = post.likes?.findIndex((id: any) => id.toString() === userId.toString());
-
-    let liked = false;
-    post.likes = post.likes || [];
-
-    if (likeIndex === -1 || likeIndex === undefined) {
-      // Like the post
-      post.likes.push(userId);
-      liked = true;
-
-      // Trigger notification for the author if they are not the liker
-      if (post.authorId.toString() !== userId.toString()) {
-        const notificationMessage = `${req.user.name} liked your post`;
-        const notification = await Notification.create({
-          recipientId: post.authorId,
-          senderId: userId,
-          type: 'social',
-          message: notificationMessage,
-          read: false,
-          link: '/feed',
-        });
-
-        // Socket notify
-        const io = req.app.get('io');
-        if (io) {
-          io.to(post.authorId.toString()).emit('notification', {
-            id: notification._id,
-            type: 'social',
-            message: notificationMessage,
-            createdAt: notification.createdAt,
-          });
-        }
-      }
-    } else {
-      // Unlike the post
-      post.likes.splice(likeIndex, 1);
-    }
-
-    await post.save();
-
-    res.status(200).json({
-      success: true,
-      liked,
-      likesCount: post.likes.length,
-    });
-  } catch (error) {
-    next(error);
-  }
+    if (!authorized(req, res)) return;
+    if (!communityIdSchema.safeParse(req.params.id).success) return invalid(res, 'Invalid post ID');
+    const parsed = communityLikeSchema.safeParse(req.body);
+    if (!parsed.success) return invalid(res, 'Choose liked: true or false');
+    const operation = parsed.data.liked ? { $addToSet: { likes: req.user!._id } } : { $pull: { likes: req.user!._id } };
+    const post = await Post.findByIdAndUpdate(req.params.id, operation, { new: true, runValidators: true }).select('likes');
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    return res.status(200).json({ success: true, liked: !!post.likes?.some(id => String(id) === String(req.user!._id)), likesCount: new Set((post.likes || []).map(String)).size });
+  } catch (error) { next(error); }
 };
 
-// @desc    Comment on post
-// @route   POST /api/posts/:id/comments
-// @access  Private
 export const commentPost = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
-    }
-
-    const { content } = req.body;
-    if (!content) {
-      return res.status(400).json({ success: false, message: 'Comment content is required' });
-    }
-
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ success: false, message: 'Post not found' });
-    }
-
-    const comment = await Comment.create({
-      authorId: req.user._id,
-      postId: post._id,
-      content,
-    });
-
-    post.commentsCount = (post.commentsCount || 0) + 1;
-    await post.save();
-
-    const populatedComment = await Comment.findById(comment._id).populate('authorId', 'name email role');
-
-    // Notify post author if not the commenter
-    if (post.authorId.toString() !== req.user._id.toString()) {
-      const notificationMessage = `${req.user.name} commented on your post: "${content.substring(0, 20)}..."`;
-      const notification = await Notification.create({
-        recipientId: post.authorId,
-        senderId: req.user._id,
-        type: 'social',
-        message: notificationMessage,
-        read: false,
-        link: '/feed',
-      });
-
-      // Socket notify
-      const io = req.app.get('io');
-      if (io) {
-        io.to(post.authorId.toString()).emit('notification', {
-          id: notification._id,
-          type: 'social',
-          message: notificationMessage,
-          createdAt: notification.createdAt,
-        });
-      }
-    }
-
-    res.status(201).json({
-      success: true,
-      message: 'Comment added successfully',
-      comment: populatedComment,
-    });
-  } catch (error) {
-    next(error);
-  }
+    if (!authorized(req, res)) return;
+    if (!communityIdSchema.safeParse(req.params.id).success) return invalid(res, 'Invalid post ID');
+    const parsed = communityCommentSchema.safeParse(req.body);
+    if (!parsed.success) return invalid(res, 'Comment must contain 1–2000 characters of text');
+    if (!await Post.exists({ _id: req.params.id })) return res.status(404).json({ success: false, message: 'Post not found' });
+    const saved = await Comment.create({ authorId: req.user!._id, postId: req.params.id, content: parsed.data.content });
+    const comment = { _id: saved._id, authorId: { _id: req.user!._id, name: req.user!.name, role: req.user!.role },
+      content: saved.content, createdAt: saved.get('createdAt') };
+    return res.status(201).json({ success: true, message: 'Comment published', comment });
+  } catch (error) { next(error); }
 };
 
-// @desc    Get comments for a specific post
-// @route   GET /api/posts/:id/comments
-// @access  Private
 export const getCommentsByPostId = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const comments = await Comment.find({ postId: req.params.id })
-      .populate('authorId', 'name email role')
-      .sort({ createdAt: 1 })
-      .exec();
-
-    res.status(200).json({
-      success: true,
-      comments,
-    });
-  } catch (error) {
-    next(error);
-  }
+    if (!authorized(req, res)) return;
+    if (!communityIdSchema.safeParse(req.params.id).success) return invalid(res, 'Invalid post ID');
+    const parsed = communityQuerySchema.safeParse(req.query);
+    if (!parsed.success) return invalid(res, 'Invalid comment pagination');
+    if (!await Post.exists({ _id: req.params.id })) return res.status(404).json({ success: false, message: 'Post not found' });
+    const { page, limit } = parsed.data;
+    const records = await Comment.find({ postId: req.params.id }).select('authorId content createdAt')
+      .populate('authorId', 'name role').sort({ createdAt: 1, _id: 1 })
+      .skip((page - 1) * limit).limit(limit + 1).lean();
+    return res.status(200).json({ success: true, comments: records.slice(0, limit), page, limit, hasMore: records.length > limit });
+  } catch (error) { next(error); }
 };
