@@ -121,7 +121,7 @@ jobs:
     timeout-minutes: 25
     env:
       CV_SERVICE_API_KEY: athlix-ci-only-0123456789abcdef-not-a-production-credential
-      CV_MODEL_HOST_PATH: ${{ runner.temp }}/pose_landmarker_heavy.task
+      CV_MODEL_HOST_PATH: /tmp/athlix-pose-landmarker-heavy.task
     defaults:
       run:
         working-directory: cv-service
@@ -152,7 +152,7 @@ jobs:
           python provision_model.py --output "$CV_MODEL_PATH"
           python native_smoke.py
         env:
-          CV_MODEL_PATH: ${{ runner.temp }}/pose_landmarker_heavy.task
+          CV_MODEL_PATH: /tmp/athlix-pose-landmarker-heavy.task
       - name: Build and start isolated resource-limited video container
         timeout-minutes: 10
         run: docker compose -p athlix-cv-ci -f compose.yaml up --build --detach
