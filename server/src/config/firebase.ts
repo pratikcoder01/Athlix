@@ -49,8 +49,8 @@ if (appsList.length === 0) {
       if (serviceAccount && typeof serviceAccount.private_key === 'string') {
         serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
       }
-    } catch (err: any) {
-      console.error('❌ Failed parsing FIREBASE_SERVICE_ACCOUNT_JSON:', err.message);
+    } catch {
+      console.error('Failed parsing FIREBASE_SERVICE_ACCOUNT_JSON; credential details are not logged.');
       throw new Error(
         '❌ FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON. Check that you pasted the entire, raw contents of your Firebase service account key JSON file directly into the Render env var value field (without any wrapping quotes or backslashes). Alternatively, base64-encode it and set it.'
       );
