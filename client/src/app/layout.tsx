@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn(inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn('dark', inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans text-text-primary antialiased selection:bg-accent selection:text-black" suppressHydrationWarning>
         <QueryProvider>
           <SocketProvider>

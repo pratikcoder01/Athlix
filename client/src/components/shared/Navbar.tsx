@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sun, Moon, Menu, X, Shield, LogOut, User, Bell } from 'lucide-react';
+import { Sun, Moon, Menu, X, LogOut, Bell } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -45,7 +45,7 @@ const NavLink = ({
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const { user, logout, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated } = useAuthStore();
   const { notifications, unreadCount, markAllRead } = useSocket();
   const { theme, toggleTheme } = useThemeStore();
   const [isOpen, setIsOpen] = useState(false);
@@ -146,6 +146,8 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="relative" ref={notifRef}>
                   <button
+                    aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
+                    aria-expanded={notifOpen}
                     onClick={() => { setNotifOpen((v) => !v); if (!notifOpen) markAllRead(); }}
                     className="p-2 text-text-secondary hover:text-text-primary transition-colors rounded-full hover:bg-surface relative"
                   >

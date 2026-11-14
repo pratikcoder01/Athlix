@@ -40,7 +40,7 @@
   
   --color-text-primary: #0a0a0a;
   --color-text-secondary: #525252;
-  --color-text-tertiary: #a3a3a3;
+  --color-text-tertiary: #626262;
   --color-text-inverse: #ffffff;
   
   --color-border: rgba(0, 0, 0, 0.08);
@@ -90,7 +90,7 @@
   
   --color-text-primary: #ffffff;
   --color-text-secondary: #a3a3a3;
-  --color-text-tertiary: #525252;
+  --color-text-tertiary: #a3a3a3;
   --color-text-inverse: #0a0a0a;
   
   --color-border: rgba(255, 255, 255, 0.08);
