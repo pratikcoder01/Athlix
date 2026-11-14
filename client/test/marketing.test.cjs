@@ -7,8 +7,8 @@ const { buildContactMailto, getContactEmail } = require('../src/lib/contact.ts')
 const source = (file) => fs.readFileSync(path.join(__dirname, '../src', file), 'utf8');
 
 test('published marketing cannot regress to unsupported traction, endorsements, billing, or certifications', () => {
-  const pages = ['app/page.tsx', 'app/pricing/page.tsx', 'app/features/page.tsx', 'app/about/page.tsx', 'app/contact/page.tsx', 'app/blog/page.tsx', 'components/shared/Footer.tsx', 'components/shared/StatsBar.tsx'];
-  const unsupported = /50,?000|2,?400\+|4\.9\/5|SOC\s?2 compliant|Stripe-powered|powered by Stripe|14-day (free )?trial|UFC|Bellator|Team USA|MOST POPULAR|All systems operational|forever free|within 24 hours/i;
+  const pages = ['app/page.tsx', 'app/pricing/page.tsx', 'app/features/page.tsx', 'app/about/page.tsx', 'app/contact/page.tsx', 'app/blog/page.tsx', 'app/(auth)/login/page.tsx', 'app/(auth)/signup/page.tsx', 'components/shared/Footer.tsx', 'components/shared/StatsBar.tsx'];
+  const unsupported = /50,?000|50k\+|Identity-verified athletes|2,?400\+|4\.9\/5|SOC\s?2 compliant|Stripe-powered|powered by Stripe|14-day (free )?trial|UFC|Bellator|Team USA|MOST POPULAR|All systems operational|forever free|within 24 hours/i;
   for (const file of pages) assert.doesNotMatch(source(file), unsupported, file);
   assert.match(source('app/pricing/page.tsx'), /checkout, and automatic billing are not available/);
   assert.match(source('app/features/page.tsx'), /Illustrative mockup · sample content/);

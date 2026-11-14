@@ -99,11 +99,15 @@ async function videoTests() {
   console.log('PASS video consent gate, authenticated upload and honest service error');await context.close();
 }
 async function responsiveTests() {
-  const {context,page}=await pageFor();const pageErrors=[];page.on('pageerror',error=>pageErrors.push(error.message));
+  const {context,page}=await pageFor();const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push({message:error.message,url:page.url(),width:page.viewportSize()?.width}));
   for(const width of [360,768,1440]) {
     await page.setViewportSize({width,height:900});
     for(const route of ['/','/signup','/login','/pricing','/tournaments','/kata','/academies']) {
       await page.goto(base+route,{waitUntil:'domcontentloaded'});await page.locator('h1,h2').first().waitFor();
+      // SSR headings alone do not establish that the interactive tree hydrated.
+      await page.waitForFunction(()=>['dark','light'].includes(document.documentElement.style.colorScheme));
+      await page.waitForLoadState('networkidle');
       const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,view:window.innerWidth}));
       assert.ok(dimensions.scroll<=dimensions.view+1,`${route} overflows at ${width}: ${JSON.stringify(dimensions)}`);
       if((route==='/'&&width!==768)||(route==='/tournaments'&&width===360))await page.screenshot({path:path.join(output,`${route==='/'?'home':'tournaments'}-${width}.png`)});
