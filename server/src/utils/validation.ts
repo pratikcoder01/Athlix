@@ -7,7 +7,7 @@ export const registerSchema = z.object({
   email: z.string().trim().email('Invalid email address').toLowerCase(),
   password: z.string().min(6, 'Password must be at least 6 characters long').max(128),
   // Public signup never grants operating or administrative privileges.
-  role: z.literal('athlete', { errorMap: () => ({ message: 'Privileged roles require operator approval' }) }).default('athlete'),
+  role: z.literal('athlete', { error: 'Privileged roles require operator approval' }).default('athlete'),
   discipline: z.string().trim().min(1).max(80).optional().default('BJJ'),
   beltRank: z.string().trim().min(1).max(80).optional().default('White'),
 });
@@ -15,7 +15,7 @@ export const registerSchema = z.object({
 export const firebaseLoginSchema = z.object({
   idToken: z.string().min(1, 'Firebase idToken is required').max(16384),
   name: z.string().trim().min(1).max(100).optional(),
-  role: z.literal('athlete', { errorMap: () => ({ message: 'Privileged roles require operator approval' }) }).optional(),
+  role: z.literal('athlete', { error: 'Privileged roles require operator approval' }).optional(),
   discipline: z.string().trim().min(1).max(80).optional(),
 });
 
