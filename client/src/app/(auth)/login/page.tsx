@@ -30,10 +30,10 @@ const loginSchema = z.object({
 type LoginFields = z.infer<typeof loginSchema>;
 
 const featureList = [
-  { icon: Trophy, label: 'Tournament Engine', desc: 'Automated brackets & live scoring' },
-  { icon: Brain, label: 'AI Coaching', desc: 'Personalised real-time feedback' },
-  { icon: Shield, label: 'Verified Network', desc: 'Identity-verified athletes & coaches' },
-  { icon: Users, label: '50k+ Athletes', desc: 'A global community awaits you' },
+  { icon: Trophy, label: 'Tournament Events', desc: 'Organizer-recorded brackets & results' },
+  { icon: Brain, label: 'Experimental Kata Feedback', desc: 'Observed 2D pose metrics and limitations' },
+  { icon: Shield, label: 'Professional Access', desc: 'Privileges require operator approval' },
+  { icon: Users, label: 'Member Community', desc: 'Profiles and persisted text posts' },
 ];
 
 const fadeIn = {
@@ -193,7 +193,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">50,000+</span> athletes training smarter
+              <span className="font-semibold text-text-primary">Build your profile</span> and follow your training journey
             </p>
           </motion.div>
         </motion.div>

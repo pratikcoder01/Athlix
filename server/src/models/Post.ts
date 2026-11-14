@@ -1,7 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 import { IPost } from '../types';
 
-export interface IPostDocument extends IPost, Document {}
+export interface IPostDocument extends IPost, Document { createdAt: Date; updatedAt: Date; }
 
 const PostSchema = new Schema<IPostDocument>(
   {
@@ -15,6 +15,7 @@ const PostSchema = new Schema<IPostDocument>(
       type: String,
       required: [true, 'Post content is required'],
       trim: true,
+      maxlength: 5000,
     },
     mediaUrl: {
       type: String,
@@ -41,5 +42,6 @@ const PostSchema = new Schema<IPostDocument>(
     timestamps: true,
   }
 );
+PostSchema.index({ createdAt: -1, _id: -1 });
 
 export const Post = model<IPostDocument>('Post', PostSchema);

@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
+import { auth } from '../../../lib/firebase';
+import { passwordResetError, resetActionCode } from '../../../lib/passwordReset';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +23,25 @@ const resetPasswordSchema = z.object({
 type ResetPasswordFields = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
+  const [code, setCode] = useState('');
+  const [email, setEmail] = useState('');
+  const [checking, setChecking] = useState(true);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const actionCode = resetActionCode(window.location.search);
+    if (!actionCode) {
+      setError('This password reset link is invalid. Request a new link to continue.');
+      setChecking(false);
+      return;
+    }
+    verifyPasswordResetCode(auth, actionCode).then(address => {
+      if (active) { setCode(actionCode); setEmail(address); }
+    }).catch(cause => { if (active) setError(passwordResetError(cause)); })
+      .finally(() => { if (active) setChecking(false); });
+    return () => { active = false; };
+  }, []);
   const {
     register,
     handleSubmit,
@@ -31,8 +51,15 @@ export default function ResetPasswordPage() {
   });
 
   const onSubmit = async (data: ResetPasswordFields) => {
-    alert('Password updated successfully!');
-    router.push('/login');
+    setError('');
+    if (!code || done || checking) return;
+    try {
+      await confirmPasswordReset(auth, code, data.password);
+      setDone(true);
+      setCode('');
+      // Remove the one-time recovery credential from browser history.
+      window.history.replaceState(null, '', '/reset-password');
+    } catch (cause) { setError(passwordResetError(cause)); }
   };
 
   return (
@@ -59,20 +86,27 @@ export default function ResetPasswordPage() {
             ENTER NEW PASSWORD
           </h2>
           <p className="text-text-secondary text-xs mt-2">
-            Establish new password credentials for your platform user.
+            {email ? `Choose a new password for ${email}.` : 'Open the recovery link from your Firebase password reset email.'}
           </p>
         </div>
 
         <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm shadow-xl">
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+          {checking ? <p role="status">Checking your recovery link…</p> : done ? <div role="status">
+            <h3 className="font-bold text-success">Your password has been updated.</h3>
+            <Link href="/login" className="mt-4 inline-block text-accent underline">Sign in with your new password</Link>
+          </div> : <>
+          {error && <div role="alert" className="mb-5 text-sm text-danger">{error} <Link href="/forgot-password" className="underline">Request a new recovery link</Link></div>}
+          {code && <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
             
             {/* Password */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">New Password</label>
+              <label htmlFor="new-password" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">New Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5.5 w-5.5 text-text-secondary" />
                 <input
                   type="password"
+                  id="new-password"
+                  autoComplete="new-password"
                   {...register('password')}
                   className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                   placeholder="••••••••"
@@ -85,11 +119,13 @@ export default function ResetPasswordPage() {
 
             {/* Confirm Password */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Confirm New Password</label>
+              <label htmlFor="confirm-password" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">Confirm New Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5.5 w-5.5 text-text-secondary" />
                 <input
                   type="password"
+                  id="confirm-password"
+                  autoComplete="new-password"
                   {...register('confirmPassword')}
                   className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                   placeholder="••••••••"
@@ -102,11 +138,13 @@ export default function ResetPasswordPage() {
 
             <MagneticButton
               type="submit"
+              disabled={isSubmitting}
               className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
             >
               {isSubmitting ? 'SAVING...' : 'UPDATE PASSWORD'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
             </MagneticButton>
-          </form>
+          </form>}
+          </>}
         </SpotlightCard>
       </div>
     </div>

@@ -3,27 +3,21 @@ import mediapipe as mp
 import numpy as np
 import os
 import math
-import urllib.request
+from video_safety import (has_confident_pose, validate_video, validate_metadata, VideoValidationError, MAX_FRAMES, MAX_ANALYSIS_FRAMES, MAX_PIXELS, MAX_DIMENSION)
 from typing import Dict, List, Any, Callable
 
 # Modern MediaPipe Tasks API Imports
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# Use the most accurate MediaPipe Pose Landmarker model (Heavy)
-MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task"
-MODEL_PATH = "pose_landmarker_heavy.task"
+# Provision this model explicitly; never download mutable assets during requests.
+MODEL_PATH = os.environ.get("CV_MODEL_PATH", "pose_landmarker_heavy.task")
+
 
 def ensure_model_exists():
-    """Download the Pose Landmarker task model file if it does not exist locally."""
-    if not os.path.exists(MODEL_PATH):
-        print(f"Downloading pose landmarker model from Google storage: {MODEL_URL}...")
-        try:
-            # Create a simple download progress callback
-            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-            print(f"Model saved successfully to {MODEL_PATH}")
-        except Exception as e:
-            raise IOError(f"Failed to download MediaPipe model: {str(e)}")
+    if not os.path.isfile(MODEL_PATH):
+        raise ValueError("Pose model is not configured. Please contact the operator.")
+
 
 def calculate_angle_3d(a: List[float], b: List[float], c: List[float]) -> float:
     """Calculate the 3D angle (in degrees) at joint 'b' between points 'a' and 'c'."""
@@ -55,29 +49,34 @@ class PoseAnalyzer:
         )
         self.landmarker = vision.PoseLandmarker.create_from_options(options)
 
+    def close(self):
+        self.landmarker.close()
+
     def analyze_video(self, video_path: str, progress_callback: Callable[[float, str], None] = None) -> Dict[str, Any]:
         if not os.path.exists(video_path):
             raise FileNotFoundError(f"Video file not found: {video_path}")
             
+        metadata = validate_video(video_path)
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise ValueError(f"Could not open video file: {video_path}")
             
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        try:
+            return self._analyze_capture(cap, progress_callback, metadata)
+        finally:
+            cap.release()
+
+    def _analyze_capture(self, cap, progress_callback, metadata):
+        fps = metadata["fps"]
+        total_frames = metadata["total_frames"]
+        width = metadata["width"]
+        height = metadata["height"]
         
-        if fps <= 0 or total_frames <= 0:
-            fps = 30.0
-            total_frames = 100
-            
-        duration = total_frames / fps
+        metadata = validate_metadata(fps, total_frames, width, height)
+        duration = metadata["duration"]
         
-        # Decide frame step to limit rate to ~30fps max
-        frame_step = 1
-        if fps > 35:
-            frame_step = int(round(fps / 30.0))
+        # Bound inference and retained landmark data to at most ten samples/second.
+        frame_step = max(1, math.ceil(fps / 10.0))
             
         frames_data = []
         frame_index = 0
@@ -93,10 +92,19 @@ class PoseAnalyzer:
             if not ret:
                 break
                 
+            if frame_index >= MAX_FRAMES or frame_index / fps >= 60:
+                raise VideoValidationError("Decoded video exceeds the 60-second frame budget.")
+            if frame.shape[0] > MAX_DIMENSION or frame.shape[1] > MAX_DIMENSION or frame.shape[0] * frame.shape[1] > MAX_PIXELS:
+                raise VideoValidationError("Decoded video resolution exceeds 1080p.")
             if frame_index % frame_step != 0:
                 frame_index += 1
                 continue
                 
+            if processed_frames_count >= MAX_ANALYSIS_FRAMES:
+                raise VideoValidationError("Video exceeds the analysis frame budget.")
+            if max(frame.shape[:2]) > 640:
+                scale = 640 / max(frame.shape[:2])
+                frame = cv2.resize(frame, (int(frame.shape[1] * scale), int(frame.shape[0] * scale)))
             timestamp = frame_index / fps
             timestamp_ms = int(timestamp * 1000)
             
@@ -116,7 +124,10 @@ class PoseAnalyzer:
             }
             
             # Check if person was detected
-            if detection_result.pose_landmarks and len(detection_result.pose_landmarks) > 0:
+            visible = False
+            if detection_result.pose_landmarks and detection_result.pose_world_landmarks:
+                visible = has_confident_pose(detection_result.pose_landmarks[0], detection_result.pose_world_landmarks[0])
+            if visible:
                 pose_lms = detection_result.pose_landmarks[0]
                 world_pose_lms = detection_result.pose_world_landmarks[0]
                 
@@ -127,7 +138,7 @@ class PoseAnalyzer:
                         "x": round(lm.x, 4),
                         "y": round(lm.y, 4),
                         "z": round(lm.z, 4),
-                        "visibility": round(lm.visibility, 4)
+                        "visibility": round(lm.visibility or 0.0, 4)
                     })
                 frame_entry["landmarks"] = norm_lms
                 
@@ -138,7 +149,7 @@ class PoseAnalyzer:
                         "x": round(lm.x, 4),
                         "y": round(lm.y, 4),
                         "z": round(lm.z, 4),
-                        "visibility": round(lm.visibility, 4)
+                        "visibility": round(lm.visibility or 0.0, 4)
                     })
                 frame_entry["world_landmarks"] = world_lms
                 
@@ -218,6 +229,8 @@ class PoseAnalyzer:
                     "velocities": velocities
                 }
                 
+            if not visible:
+                prev_world_landmarks = None
             frames_data.append(frame_entry)
             frame_index += 1
             processed_frames_count += 1
@@ -227,10 +240,13 @@ class PoseAnalyzer:
                 progress_callback(pct, f"Estimating body poses: frame {frame_index}/{total_frames} ({int(pct)}%)...")
                 
         cap.release()
+        # Container counts can be inaccurate; report the frames actually decoded.
+        total_frames = frame_index
+        duration = frame_index / fps
         
         valid_frames = [f for f in frames_data if f["landmarks"] is not None]
-        if len(valid_frames) == 0:
-            raise ValueError("No human person detected in the video. Please make sure the whole body is visible and well-lit.")
+        if len(valid_frames) < 5 or len(valid_frames) / max(1, len(frames_data)) < 0.3:
+            raise ValueError("Too few confident full-body poses. Use a well-lit clip with your whole body visible for at least one second.")
             
         return {
             "fps": fps,
@@ -238,5 +254,11 @@ class PoseAnalyzer:
             "height": height,
             "duration": round(duration, 2),
             "total_frames": total_frames,
+            "quality": {
+                "visible_frame_fraction": round(len(valid_frames) / len(frames_data), 3),
+                "analyzed_frames": len(frames_data),
+                "sample_fps": round(fps / frame_step, 3),
+                "minimum_landmark_visibility": 0.6,
+            },
             "frames": frames_data
         }

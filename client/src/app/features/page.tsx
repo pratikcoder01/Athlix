@@ -3,13 +3,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  Layers, Zap, Trophy, MapPin, Shield, Code2,
-  Sparkles, ChevronRight, Check, Clock, Users, Star
+  Layers, Trophy, MapPin, Shield, Code2,
+  Sparkles, ChevronRight, Check, Clock
 } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import MagneticButton from '../../components/shared/MagneticButton';
-import SpotlightCard from '../../components/shared/SpotlightCard';
 import Link from 'next/link';
 import { fadeUp, EASE_OUT_EXPO } from '../../lib/motion';
 
@@ -35,8 +34,8 @@ const features = [
     label: 'Career Timelines',
     icon: Layers,
     heading: 'FIGHTER PROFILE & BELT TRACKING',
-    body: 'Log weekly weights, archive rolling clips, and track progress toward your next stripe or belt. Instructors verify promotions directly from their console — no spreadsheets, no lost records.',
-    bullets: ['Weekly training logs', 'Belt & stripe history', 'Instructor-verified promotions'],
+    body: 'Profile APIs store basic athlete details. Training history, weight logs, and instructor-verified promotions still need a complete workflow. The adjacent timeline is an illustrative mockup.',
+    bullets: ['Basic profile foundation', 'Training history planned', 'No credential-verification claim'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
@@ -70,13 +69,13 @@ const features = [
     label: 'Private Instruction',
     icon: Clock,
     heading: 'CALENDAR AVAILABILITY & SLOT BOOKINGS',
-    body: 'Coaches set their available hours and rates. Students pick a slot, confirm payment, and schedule private sessions — no phone tag, no double-bookings.',
-    bullets: ['Real-time slot availability', 'Direct payment confirmation', 'Automated session reminders'],
+    body: 'Coach-profile and booking APIs are being tested. Some directory screens show examples. Confirm availability with the coach before relying on a reservation; payment collection is not implemented.',
+    bullets: ['Booking API foundation', 'Example directory screens', 'No payment collection'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
           <span>COACH AVAILABILITY GRID</span>
-          <span className="text-success font-bold">LIVE</span>
+          <span className="text-success font-bold">EXAMPLE</span>
         </div>
         <div className="flex flex-col gap-3">
           {[
@@ -103,8 +102,8 @@ const features = [
     label: 'Tournament Systems',
     icon: Trophy,
     heading: 'REAL-TIME MATCH BRACKETS',
-    body: 'Generate single or double-elimination draws in seconds. Competitors track match status on their phones. Brackets update live as results come in — no manual score entry.',
-    bullets: ['Single & double elimination', 'Live result updates', 'Mobile-ready competitor view'],
+    body: 'Approved organizers can manage events and bracket updates through authenticated APIs. A single-elimination pilot is the initial target. Advanced formats and competition-rule validation remain roadmap work.',
+    bullets: ['Athlete event registration', 'Organizer-owned updates', 'Advanced formats planned'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
@@ -136,8 +135,8 @@ const features = [
     label: 'Clubs & Security',
     icon: Shield,
     heading: 'ACADEMY FINDER & STABLE APIS',
-    body: 'Search gyms by location, discipline, and schedule. Student data, session ratings, and admin permissions are protected by JWT sessions and strict server-side validation.',
-    bullets: ['Map-based academy search', 'JWT session management', 'Role-scoped admin controls'],
+    body: 'Academy APIs support listings and location queries. Some discovery pages remain sample directories. Authentication and ownership checks are being hardened; no certification or complete verification program is claimed.',
+    bullets: ['Listing API foundation', 'Explicit sample directories', 'Reviewed professional access'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
@@ -149,7 +148,7 @@ const features = [
   "athlete": "Lucas Vianna",
   "belt": "Purple",
   "stripes": 3,
-  "verified": true,
+  "sample": true,
   "academy": "Apex Grappling Lab",
   "role": "athlete"
 }`}
@@ -164,18 +163,18 @@ const features = [
     label: 'Intelligent Systems',
     icon: Sparkles,
     heading: 'AI-DRIVEN TRAINING & SEEDING',
-    body: 'Leverage our integrated machine intelligence layer to match with top coaching instructors, draft structured training routines tailored to your belt rank, and auto-seed tournament brackets based on fighter statistics.',
-    bullets: ['Personalized drill plan generation', 'Contextual coach compatibility matching', 'Objective bracket seed scheduling'],
+    body: 'Experimental AI helpers require a configured provider and human review. Kata feedback uses 2D pose estimates and rules, with camera and confidence limits. No independent model-accuracy result is available.',
+    bullets: ['Pose-based movement heuristics', 'Provider-dependent text suggestions', 'Coach review required'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
-          <span>AI ENGINE METRICS</span>
-          <span className="text-accent-gold font-bold">READY</span>
+          <span>ILLUSTRATIVE AI OUTPUT</span>
+          <span className="text-accent-gold font-bold">EXAMPLE</span>
         </div>
         <div className="flex flex-col gap-3">
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
             <span className="text-[9px] text-text-secondary block">COACH MATCH COMPATIBILITY</span>
-            <span className="font-bold text-text-primary block mt-0.5">Thiago Valente: 94% Match Fit</span>
+            <span className="font-bold text-text-primary block mt-0.5">Thiago Valente: Sample suggestion</span>
             <span className="text-[8px] text-text-tertiary block mt-0.5 font-bold">Fits availability, 77kg weight class, BJJ focus</span>
           </div>
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
@@ -228,7 +227,7 @@ export default function FeaturesPage() {
               animate="visible"
               className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-lg"
             >
-              Every feature was designed around the actual workflows of martial arts schools — scheduling, belt tracking, tournament logistics, and coach payments. Nothing generic.
+              This development build combines implemented APIs, experimental analysis, and unfinished screens. The examples below illustrate the product direction; they do not represent customer data or a promise that every journey is complete.
             </motion.p>
 
             <motion.div
@@ -246,7 +245,7 @@ export default function FeaturesPage() {
                 href="/signup"
                 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-text-secondary hover:text-text-primary transition-colors uppercase font-mono"
               >
-                Start free <ChevronRight className="h-3.5 w-3.5" />
+                Create account <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </motion.div>
           </div>
@@ -278,7 +277,7 @@ export default function FeaturesPage() {
       {/* ── Alternating feature showcases ── */}
       <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8 border-t border-border/60">
         <div className="flex flex-col gap-28 pt-20">
-          {features.map(({ id, num, label, icon: Icon, heading, body, bullets, visual, flip }, i) => (
+          {features.map(({ id, num, label, icon: Icon, heading, body, bullets, visual, flip }) => (
             <motion.div
               key={id}
               id={id}
@@ -314,6 +313,7 @@ export default function FeaturesPage() {
 
               {/* Visual block */}
               <div className={`lg:col-span-6 ${flip ? 'order-2 lg:order-1' : ''}`}>
+                <p className="text-xs font-semibold text-accent mb-3">Illustrative mockup · sample content</p>
                 {visual}
               </div>
             </motion.div>
@@ -333,20 +333,20 @@ export default function FeaturesPage() {
           >
             <div className="lg:col-span-8">
               <span className="text-[9px] font-bold tracking-widest text-primary uppercase font-mono">
-                Ready to run your gym on ATHLIX?
+                Help validate a focused pilot
               </span>
               <h2 className="mt-2 text-3xl sm:text-4xl font-display font-black uppercase text-text-primary tracking-tight">
-                YOUR FIRST BRACKET IS<br />
-                <span className="text-primary">FREE TO GENERATE</span>
+                A CLEARER WORKFLOW<br />
+                <span className="text-primary">STARTS WITH YOUR CLUB</span>
               </h2>
               <p className="mt-4 text-sm text-text-secondary max-w-xl">
-                Create an account, add your athletes, and run a full tournament bracket in under five minutes. No credit card required.
+                Explore the development build, review the current limits, and discuss your event needs with the project team. Professional access requires approval.
               </p>
             </div>
             <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end">
               <Link href="/signup">
                 <MagneticButton as="span" variant="primary" className="w-full text-xs font-bold py-3 px-6 rounded-sm tracking-wider uppercase font-mono">
-                  Get started free
+                  Create athlete account
                 </MagneticButton>
               </Link>
               <Link

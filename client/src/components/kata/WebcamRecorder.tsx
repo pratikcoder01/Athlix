@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Video, Circle, Square, RefreshCw, X } from 'lucide-react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { Camera, Video, Square, X } from 'lucide-react';
 import { GlassCard } from '../shared/GlassCard';
 
 interface WebcamRecorderProps {
@@ -15,28 +15,35 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recording, setRecording] = useState<boolean>(false);
-  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const [countdown, setCountdown] = useState<number>(-1);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Initialize camera stream
   useEffect(() => {
+    let activeStream: MediaStream | null = null;
+    let disposed = false;
     async function startCamera() {
       try {
         const userStream = await navigator.mediaDevices.getUserMedia({
           video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
           audio: false // No audio needed for pose tracking
         });
+        activeStream = userStream;
+        if (disposed) {
+          userStream.getTracks().forEach(track => track.stop());
+          return;
+        }
         setStream(userStream);
         if (videoRef.current) {
           videoRef.current.srcObject = userStream;
         }
       } catch (err) {
         console.error('Error accessing camera:', err);
-        setCameraError(
+        if (!disposed) setCameraError(
           'Could not access your webcam. Please check browser permissions and try again.'
         );
       }
@@ -45,30 +52,22 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
     startCamera();
 
     return () => {
-      // Clean up stream on unmount
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      disposed = true;
+      if (recordingTimer.current) clearTimeout(recordingTimer.current);
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== 'inactive') {
+        recorder.onstop = null;
+        recorder.stop();
       }
+      activeStream?.getTracks().forEach(track => track.stop());
     };
   }, []);
 
-  // Countdown handler
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0) {
-      setCountdown(-1);
-      startRecording();
-    }
-  }, [countdown]);
-
   const triggerCountdown = () => {
-    setRecordedChunks([]);
     setCountdown(3); // Start 3 seconds countdown
   };
 
-  const startRecording = () => {
+  const startRecording = useCallback(() => {
     if (!stream) return;
     
     // Choose format
@@ -85,27 +84,58 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
       mediaRecorderRef.current = recorder;
       
       const chunks: Blob[] = [];
+      let bytes = 0;
+      let tooLarge = false;
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
+          bytes += e.data.size;
+          if (bytes > 25 * 1024 * 1024) {
+            tooLarge = true;
+            chunks.length = 0;
+            if (recorder.state !== 'inactive') recorder.stop();
+            return;
+          }
           chunks.push(e.data);
         }
       };
 
       recorder.onstop = () => {
+        if (recordingTimer.current) clearTimeout(recordingTimer.current);
+        setRecording(false);
+        if (tooLarge) {
+          setCameraError('Recording exceeded 25 MB. Please record a shorter clip.');
+          return;
+        }
         const completeBlob = new Blob(chunks, { type: chunks[0]?.type || 'video/webm' });
         onRecordComplete(completeBlob);
       };
 
       recorder.start(100); // chunk every 100ms
       setRecording(true);
+      // Leave a small margin below the server's strict 60-second limit.
+      recordingTimer.current = setTimeout(() => {
+        if (recorder.state !== 'inactive') recorder.stop();
+      }, 55_000);
     } catch (err) {
       console.error('MediaRecorder initialization failed:', err);
       setCameraError('Recording failed to initialize. Browser codec unsupported.');
     }
-  };
+  }, [stream, onRecordComplete]);
+
+  // Countdown handler
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCountdown(-1);
+      startRecording();
+    }
+  }, [countdown, startRecording]);
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && recording) {
+      if (recordingTimer.current) clearTimeout(recordingTimer.current);
       mediaRecorderRef.current.stop();
       setRecording(false);
     }
@@ -123,10 +153,11 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
           <Camera className="w-5 h-5 text-accent" />
           Record Kata Session
         </h3>
+        <p className="text-xs text-text-secondary mb-4">Recording stops after 55 seconds or 25 MB. Closing this window turns off the camera.</p>
 
         {cameraError ? (
           <div className="bg-danger/10 border border-danger/20 rounded-xl p-6 text-center">

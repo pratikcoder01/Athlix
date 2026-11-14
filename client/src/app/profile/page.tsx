@@ -1,264 +1,77 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Award, Eye, Heart, Share2, MapPin, Edit3, Trophy,
-  Flame, Shield, CheckCircle, Calendar, Star
-} from 'lucide-react';
-import Navbar from '../../components/shared/Navbar';
-import Footer from '../../components/shared/Footer';
+import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Award, MapPin, Save, UserRound } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { cn } from '../../lib/utils';
+import { AthleteProfile, disciplines, loadProfile, saveProfile } from '../../lib/workspaceApi';
+import WorkspaceShell, { SignInPrompt, workspaceButton, workspaceControl, workspacePanel } from '../../components/shared/WorkspaceShell';
 
-const achievements = [
-  { title: 'Gold Medal', subtitle: 'Las Vegas Sub Open 2026', icon: '🏆', color: 'from-amber-500/20 to-yellow-500/10', border: 'border-amber-500/20' },
-  { title: 'Iron Lungs', subtitle: '50 logged sparring hours', icon: '⚡', color: 'from-cyan-500/20 to-blue-500/10', border: 'border-cyan-500/20' },
-  { title: 'Fast Submission', subtitle: 'Tap under 30 seconds', icon: '🥋', color: 'from-purple-500/20 to-violet-500/10', border: 'border-purple-500/20' },
-  { title: 'Bracket Climber', subtitle: '5 tournament wins', icon: '🎯', color: 'from-red-500/20 to-orange-500/10', border: 'border-red-500/20' },
-  { title: 'Gi Master', subtitle: 'Complete Gi syllabus', icon: '🔵', color: 'from-blue-500/20 to-indigo-500/10', border: 'border-blue-500/20' },
-  { title: 'Street Ready', subtitle: '200+ live rolling reps', icon: '💪', color: 'from-green-500/20 to-emerald-500/10', border: 'border-green-500/20' },
-];
-
-const galleryItems = [
-  { type: 'video', views: '1.2K', likes: '142', label: 'Gi Guard Passing Drills' },
-  { type: 'image', views: '840', likes: '96', label: 'Vegas Open Podium Photo' },
-  { type: 'video', views: '2.4K', likes: '310', label: 'Armbar Finish from Spar' },
-];
-
-const timelineLogs = [
-  { title: 'Promoted to Purple Belt (3 Stripes)', date: 'June 10, 2026', desc: 'Promoted by Prof. Thiago Valente after successful submission matches at open mat.', icon: '🎖️' },
-  { title: 'Gold Medal at Vegas Grappling Open', date: 'May 15, 2026', desc: 'Finished 3 opponents by armbar inside the light-heavyweight division.', icon: '🥇' },
-  { title: 'Completed 50 Sparring Hours Milestone', date: 'April 2, 2026', desc: 'Logged 50 cumulative hours of live sparring across 3 academies, earning the IRON LUNGS badge.', icon: '⚡' },
-  { title: 'Enrolled: Advanced Guard Retention', date: 'March 1, 2026', desc: 'Started 8-week intensive module with Coach Kru Somchai focusing on closed guard and lasso systems.', icon: '📚' },
-];
-
-const profileStats = [
-  { label: 'Sparring Hrs', value: '42.5', icon: Flame, color: 'text-orange-400' },
-  { label: 'Wins', value: '31', icon: Trophy, color: 'text-amber-400' },
-  { label: 'Submissions', value: '184', icon: Shield, color: 'text-purple-400' },
-  { label: 'Rating', value: '4.9', icon: Star, color: 'text-yellow-400' },
-];
-
-const fadeIn = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
-};
+const emptyProfile: AthleteProfile = { bio: '', discipline: 'Other', beltRank: '', achievements: [], location: '', profileImage: '' };
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'timeline' | 'gallery'>('timeline');
+  const { token, user } = useAuthStore();
+  const [profile, setProfile] = useState<AthleteProfile | null>(null);
+  const [draft, setDraft] = useState(emptyProfile);
+  const [achievements, setAchievements] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [reload, setReload] = useState(0);
 
-  const displayName = user?.name || 'Athlix Fighter';
-  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+  useEffect(() => {
+    setProfile(null); setNotice(''); setError('');
+    if (!token || !user?.id) return;
+    const controller = new AbortController();
+    setLoading(true);
+    loadProfile(token, user.id, controller.signal).then(data => {
+      const saved = data.profile || emptyProfile;
+      setName(data.user.name); setProfile(saved); setDraft(saved); setAchievements(saved.achievements.join('\n'));
+    }).catch(error => { if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Could not load your profile.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [token, user?.id, reload]);
 
-  return (
-    <div className="min-h-screen bg-background text-text-primary">
-      <Navbar />
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!token || !profile) return;
+    const entries = achievements.split('\n').map(value => value.trim()).filter(Boolean);
+    if (entries.length > 30 || entries.some(value => value.length > 200)) { setError('Use up to 30 achievements, each 200 characters or less.'); return; }
+    setSaving(true); setError(''); setNotice('');
+    try {
+      const response = await saveProfile(token, { bio: draft.bio, discipline: draft.discipline, beltRank: draft.beltRank, location: draft.location, achievements: entries });
+      setProfile(response.profile); setDraft(response.profile); setAchievements(response.profile.achievements.join('\n')); setNotice(response.message);
+    } catch (error) { setError(error instanceof Error ? error.message : 'Your profile could not be saved.'); }
+    finally { setSaving(false); }
+  };
 
-      {/* ── Cover Banner ── */}
-      <div className="relative h-64 md:h-80 w-full overflow-hidden">
-        {/* Gradient cover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/30 via-purple-500/20 to-blue-500/20" />
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(var(--color-text-primary) 1px, transparent 1px), linear-gradient(90deg, var(--color-text-primary) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-          opacity: 0.04
-        }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
-
-        {/* Floating orbs */}
-        <div className="absolute top-[-20%] right-[10%] w-72 h-72 bg-accent/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-[20%] w-48 h-48 bg-purple-500/15 rounded-full blur-3xl" />
-
-        {/* Actions */}
-        <div className="absolute top-6 right-6 flex gap-2 z-10">
-          <motion.button
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border border-border bg-background/60 backdrop-blur-sm text-text-primary hover:border-accent/40 transition-all"
-          >
-            <Edit3 className="w-3.5 h-3.5" /> Edit Profile
-          </motion.button>
-          <motion.button
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            className="w-8 h-8 rounded-full border border-border bg-background/60 backdrop-blur-sm flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-          </motion.button>
-        </div>
-      </div>
-
-      {/* ── Profile Info ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
-        <div className="flex flex-col md:flex-row items-end gap-6 mb-8">
-          {/* Avatar */}
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="w-28 h-28 md:w-32 md:h-32 rounded-2xl border-4 border-background shadow-2xl shadow-black/30 shrink-0 bg-gradient-to-br from-accent to-accent-light flex items-center justify-center"
-          >
-            <span className="text-white font-extrabold text-3xl">{initials}</span>
-          </motion.div>
-
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="visible"
-            className="flex-1 pb-2"
-          >
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-3xl md:text-4xl font-extrabold font-display tracking-tight">{displayName}</h1>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-success/15 text-success border border-success/25">
-                <CheckCircle className="w-3 h-3" /> Verified
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-text-secondary text-sm mb-4">
-              <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-purple-400" />Purple Belt · BJJ</span>
-              <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-accent" />San Francisco, CA</span>
-              <span className="flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-amber-400" />IBJJF Competitor</span>
-              <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-blue-400" />Member since 2024</span>
-            </div>
-            <div className="flex flex-wrap gap-5">
-              {profileStats.map(({ label, value, icon: Icon, color }) => (
-                <div key={label} className="flex items-center gap-2">
-                  <Icon className={cn('w-4 h-4', color)} />
-                  <span className="font-extrabold text-text-primary">{value}</span>
-                  <span className="text-text-tertiary text-sm">{label}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-            <motion.button
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm bg-gradient-to-r from-accent to-accent-light text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300"
-            >
-              Book Private Session
-            </motion.button>
-          </motion.div>
-        </div>
-
-        {/* ── Main Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-16">
-
-          {/* Achievements */}
-          <div className="lg:col-span-1">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <div className="rounded-2xl border border-border bg-surface p-6">
-                <h3 className="font-bold text-base mb-5 flex items-center gap-2 text-text-primary">
-                  <Trophy className="w-4.5 h-4.5 text-amber-400" /> Achievements
-                </h3>
-                <div className="space-y-2.5">
-                  {achievements.map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.06 + 0.3 }}
-                      className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl border bg-gradient-to-br transition-all duration-200 hover:scale-[1.02] cursor-default',
-                        item.color, item.border
-                      )}
-                    >
-                      <span className="text-xl shrink-0">{item.icon}</span>
-                      <div>
-                        <p className="font-semibold text-sm text-text-primary">{item.title}</p>
-                        <p className="text-xs text-text-secondary">{item.subtitle}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Timeline & Gallery */}
-          <div className="lg:col-span-2">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-              {/* Tabs */}
-              <div className="flex bg-surface border border-border rounded-2xl p-1 mb-5 w-fit">
-                {[
-                  { id: 'timeline', label: 'Timeline' },
-                  { id: 'gallery', label: 'Sparring Gallery' },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as 'timeline' | 'gallery')}
-                    className={cn(
-                      'px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200',
-                      activeTab === tab.id
-                        ? 'bg-accent text-white shadow-md shadow-accent/30'
-                        : 'text-text-secondary hover:text-text-primary'
-                    )}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <AnimatePresence mode="wait">
-                {activeTab === 'timeline' ? (
-                  <motion.div
-                    key="timeline"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-3"
-                  >
-                    {timelineLogs.map((log, i) => (
-                      <div key={i} className="relative flex gap-4 p-5 rounded-2xl border border-border bg-surface hover:border-accent/30 transition-all duration-200">
-                        <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-xl shrink-0">
-                          {log.icon}
-                        </div>
-                        {i < timelineLogs.length - 1 && (
-                          <div className="absolute left-[2.375rem] top-[4.25rem] bottom-[-0.75rem] w-px bg-border" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start gap-3 mb-1.5">
-                            <h4 className="font-bold text-sm text-text-primary leading-tight">{log.title}</h4>
-                            <span className="text-xs text-text-tertiary shrink-0">{log.date}</span>
-                          </div>
-                          <p className="text-text-secondary text-xs leading-relaxed">{log.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="gallery"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                    className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-                  >
-                    {galleryItems.map((item, i) => (
-                      <div key={i} className="group cursor-pointer rounded-2xl border border-border bg-surface p-4 hover:border-accent/30 transition-all duration-200 hover:shadow-md">
-                        <div className="h-28 bg-surface-elevated rounded-xl mb-3 flex items-center justify-center border border-border group-hover:border-accent/20 transition-colors overflow-hidden">
-                          <span className="text-3xl">{item.type === 'video' ? '▶️' : '📸'}</span>
-                        </div>
-                        <p className="font-semibold text-sm text-text-primary mb-3 group-hover:text-accent transition-colors leading-tight">{item.label}</p>
-                        <div className="flex justify-between text-xs text-text-tertiary border-t border-border pt-2.5">
-                          <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{item.views}</span>
-                          <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{item.likes}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-    </div>
-  );
+  return <WorkspaceShell eyebrow="Your athlete record" title="Make your progress yours." description="Keep your discipline, belt, location and achievements current. These details are supplied by you and are visible to signed-in members.">
+    {!token || !user ? <SignInPrompt purpose="view your profile" /> : <>
+      {loading && <p role="status" className="py-12 text-center text-text-secondary">Loading your saved profile…</p>}
+      {error && <div role="alert" className="mb-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4"><p>{error}</p>{!profile && <button onClick={() => setReload(value => value + 1)} className="mt-3 underline focus-visible:outline focus-visible:outline-2">Try again</button>}</div>}
+      {notice && <p role="status" className="mb-6 rounded-xl border border-success/30 bg-success/10 p-4">{notice}</p>}
+      {!loading && profile && <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+        <section className={`${workspacePanel} h-fit`}>
+          <div aria-hidden className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-accent/15 text-3xl font-bold text-accent">{name.slice(0, 1).toUpperCase()}</div>
+          <h2 className="break-words text-2xl font-bold">{name}</h2><p className="mt-1 text-sm capitalize text-accent">{user.role.replaceAll('_', ' ')}</p>
+          <dl className="mt-6 space-y-4 text-sm"><div><dt className="text-text-tertiary">Discipline and belt · self-reported</dt><dd className="mt-1">{profile.discipline || 'Not added'}{profile.beltRank ? ` · ${profile.beltRank}` : ''}</dd></div><div><dt className="flex items-center gap-1.5 text-text-tertiary"><MapPin className="h-4 w-4" /> Location</dt><dd className="mt-1">{profile.location || 'Not added'}</dd></div></dl>
+          <p className="mt-6 whitespace-pre-wrap break-words text-sm leading-relaxed text-text-secondary">{profile.bio || 'Add a short introduction about your training.'}</p>
+          <h3 className="mb-3 mt-8 flex items-center gap-2 font-bold"><Award className="h-4 w-4 text-accent" /> Your achievements</h3>
+          {profile.achievements.length ? <ul className="space-y-3 text-sm text-text-secondary">{profile.achievements.map((value, index) => <li className="break-words rounded-lg border border-border p-3" key={index}>{value}</li>)}</ul> : <p className="text-sm text-text-secondary">No achievements added yet.</p>}
+          <p className="mt-4 text-xs leading-relaxed text-text-tertiary">Achievements are personal entries. ATHLIX has not independently verified them.</p>
+          {user.role === 'coach' && <Link href="/coach-settings" className={`${workspaceButton} mt-6`}>Edit coaching rate & availability</Link>}
+        </section>
+        <form onSubmit={submit} className={workspacePanel}>
+          <h2 className="mb-6 flex items-center gap-2 text-xl font-bold"><UserRound className="h-5 w-5 text-accent" /> Edit profile</h2>
+          <div className="grid gap-5 sm:grid-cols-2"><label className="text-sm font-medium">Discipline<select required value={draft.discipline} onChange={event => setDraft(value => ({ ...value, discipline: event.target.value }))} className={`${workspaceControl} mt-2`}>{disciplines.map(value => <option key={value}>{value}</option>)}</select></label><label className="text-sm font-medium">Belt or rank<input maxLength={80} value={draft.beltRank} onChange={event => setDraft(value => ({ ...value, beltRank: event.target.value }))} className={`${workspaceControl} mt-2`} placeholder="Your current rank, if applicable" /></label></div>
+          <label className="mt-5 block text-sm font-medium">City or region<input maxLength={200} value={draft.location} onChange={event => setDraft(value => ({ ...value, location: event.target.value }))} className={`${workspaceControl} mt-2`} placeholder="Share only the location you want members to see" /></label>
+          <label className="mt-5 block text-sm font-medium">About your training<textarea maxLength={2000} rows={5} value={draft.bio} onChange={event => setDraft(value => ({ ...value, bio: event.target.value }))} className={`${workspaceControl} mt-2 resize-y`} /></label>
+          <label className="mt-5 block text-sm font-medium">Achievements · one per line<textarea maxLength={6030} rows={6} value={achievements} onChange={event => setAchievements(event.target.value)} className={`${workspaceControl} mt-2 resize-y`} aria-describedby="achievement-help" /></label><p id="achievement-help" className="mt-2 text-xs text-text-tertiary">Up to 30 personal entries, 200 characters per entry. Include context such as an event and year.</p>
+          <button disabled={saving} className={`${workspaceButton} mt-6`} type="submit"><Save className="h-4 w-4" />{saving ? 'Saving…' : 'Save profile'}</button>
+        </form>
+      </div>}
+    </>}
+  </WorkspaceShell>;
 }

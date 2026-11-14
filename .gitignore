@@ -16,6 +16,14 @@ client/.env
 dist/
 build/
 client/dist/
+.next/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+playwright-report/
+test-results/
 
 # Debug logs
 npm-debug.log*

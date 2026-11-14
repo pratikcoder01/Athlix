@@ -38,6 +38,8 @@ export interface ICoachProfile {
   certifications?: string[];
   experienceYears?: number;
   pricingPerHour?: number;
+  currency?: 'INR' | 'USD';
+  availabilityTimezone?: 'UTC';
   availability?: Array<{
     dayOfWeek: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday' | string;
     startTime: string; // e.g. "09:00"
@@ -123,7 +125,8 @@ export interface IBooking {
   scheduledTime: Date;
   durationMinutes: number;
   price: number;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  currency?: 'INR' | 'USD';
+  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 }
 
 export interface INotification {

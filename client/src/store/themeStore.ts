@@ -17,6 +17,8 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'athlix-theme-storage',
       storage: createJSONStorage(() => localStorage),
+      // Apply persisted preferences after hydration so server/client markup agrees.
+      skipHydration: true,
     }
   )
 );

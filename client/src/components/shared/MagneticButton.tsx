@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -24,7 +24,12 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   const props = { type, onClick, id, title, style };
   const ref = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const shouldReduce = useReducedMotion();
+  const reducedMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  // The server has no media-query result. Use the same initial animation props
+  // for hydration, then honor the browser preference before interaction.
+  const shouldReduce = mounted && reducedMotion;
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!ref.current || shouldReduce || disabled) return;

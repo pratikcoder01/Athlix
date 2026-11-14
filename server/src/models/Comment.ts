@@ -1,7 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 import { IComment } from '../types';
 
-export interface ICommentDocument extends IComment, Document {}
+export interface ICommentDocument extends IComment, Document { createdAt: Date; updatedAt: Date; }
 
 const CommentSchema = new Schema<ICommentDocument>(
   {
@@ -21,11 +21,13 @@ const CommentSchema = new Schema<ICommentDocument>(
       type: String,
       required: [true, 'Comment content cannot be empty'],
       trim: true,
+      maxlength: 2000,
     },
   },
   {
     timestamps: true,
   }
 );
+CommentSchema.index({ postId: 1, createdAt: 1, _id: 1 });
 
 export const Comment = model<ICommentDocument>('Comment', CommentSchema);

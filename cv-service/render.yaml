@@ -3,5 +3,10 @@ services:
     name: athlix-cv-service
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1 --limit-concurrency 8 --timeout-keep-alive 5
     plan: starter
+    envVars:
+      - key: CV_SERVICE_API_KEY
+        sync: false
+      - key: CV_MODEL_PATH
+        sync: false

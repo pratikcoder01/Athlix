@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight } from 'lucide-react';
 import { AnimatedText } from './AnimatedText';
@@ -21,9 +22,9 @@ const footerLinks = {
     { label: 'Blog', href: '/blog' },
   ],
   Legal: [
-    { label: 'Privacy Policy', href: '/contact' },
-    { label: 'Terms of Service', href: '/contact' },
-    { label: 'Cookie Preferences', href: '/contact' },
+    { label: 'Privacy status', href: '/privacy' },
+    { label: 'Terms status', href: '/terms' },
+    { label: 'Contact the project', href: '/contact' },
   ],
 };
 
@@ -55,7 +56,7 @@ export const Footer: React.FC = () => {
               transition={{ delay: 0.4 }}
               className="text-text-secondary text-lg"
             >
-              Join elite athletes and academies on the premier platform for combat sports.
+              Explore the development build and discuss a focused karate-club pilot.
             </motion.p>
           </div>
           <motion.div
@@ -85,23 +86,14 @@ export const Footer: React.FC = () => {
           >
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
-                <img src="/logo.png" alt="Athlix Logo" className="w-full h-full object-contain" />
+                <Image src="/logo.png" alt="Athlix" width={32} height={32} className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold tracking-tight">Athlix</span>
             </div>
             <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
-              World-class scheduling, tracking, and analytics for elite combat sports athletes and academies.
+              A development project for combat-sports clubs, local events, and experimental kata feedback.
             </p>
-            <div className="flex gap-4 text-text-secondary">
-              <a href="#" className="hover:text-primary transition-colors p-2 -ml-2 rounded-full hover:bg-surface-hover" aria-label="X (formerly Twitter)">
-                <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-              <a href="#" className="hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-hover">
-                <Mail className="h-5 w-5" />
-              </a>
-            </div>
+            <Link href="/contact" className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-accent"><Mail className="h-4 w-4" />Contact the project</Link>
           </motion.div>
 
           {/* Nav Columns */}
@@ -139,11 +131,11 @@ export const Footer: React.FC = () => {
           transition={{ delay: 0.6 }}
           className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-8 border-t border-border text-sm text-text-tertiary"
         >
-          <p>© {new Date().getFullYear()} Athlix Inc. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ATHLIX project.</p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span>All systems operational</span>
+              <div className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>Development build · Service status unverified</span>
             </div>
           </div>
         </motion.div>

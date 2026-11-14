@@ -1,344 +1,101 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Send, Image as ImageIcon, Video, Heart, MessageSquare,
-  Share2, TrendingUp, Sparkles, MoreHorizontal, Award, Users
-} from 'lucide-react';
-import Navbar from '../../components/shared/Navbar';
-import Footer from '../../components/shared/Footer';
+import { FormEvent, useEffect, useState } from 'react';
+import { Heart, MessageSquare, RefreshCw, Send } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSocket } from '../../context/SocketContext';
-import { cn } from '../../lib/utils';
+import { FeedPost, FeedComment, loadFeed, publishPost, setPostLike, loadComments, publishComment } from '../../lib/communityApi';
+import WorkspaceShell, { SignInPrompt, workspaceButton, workspaceControl, workspacePanel } from '../../components/shared/WorkspaceShell';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-const disciplineColors: Record<string, string> = {
-  BJJ: 'bg-purple-400/15 text-purple-400 border-purple-400/25',
-  'Muay Thai': 'bg-red-400/15 text-red-400 border-red-400/25',
-  MMA: 'bg-orange-400/15 text-orange-400 border-orange-400/25',
-};
-
-const avatarColors = [
-  'from-accent to-accent-light',
-  'from-purple-500 to-violet-600',
-  'from-blue-500 to-indigo-600',
-  'from-orange-500 to-red-500',
-  'from-green-500 to-emerald-600',
-];
-
+const failure = (error: unknown) => error instanceof Error ? error.message : 'This community request could not be completed.';
+const stamp = (date: string) => new Date(date).toLocaleString();
 export default function FeedPage() {
-  const { user } = useAuthStore();
-  const [postContent, setPostContent] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'bjj' | 'muay thai' | 'mma'>('all');
+  const { token, user } = useAuthStore();
+  const { socket } = useSocket();
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [draft, setDraft] = useState('');
+  const [reload, setReload] = useState(0);
+  const [fresh, setFresh] = useState(false);
+  const [activePost, setActivePost] = useState<string | null>(null);
+  const [comments, setComments] = useState<FeedComment[]>([]);
+  const [commentPage, setCommentPage] = useState(1);
+  const [commentMore, setCommentMore] = useState(false);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [commentReload, setCommentReload] = useState(0);
 
-  const [posts, setPosts] = useState<{
-    id: string; author: string; role: string; content: string;
-    likes: number; comments: number; liked: boolean; discipline: string; time: string;
-  }[]>([
-    { id: '1', author: 'Prof. Thiago Valente', role: 'BJJ Black Belt', content: 'Just finished filming technical reviews for the upcoming guard passing module. Uploading details soon to the academy portal!', likes: 42, comments: 6, liked: false, discipline: 'BJJ', time: '2h ago' },
-    { id: '2', author: 'Coach Kru Somchai', role: 'Muay Thai Kru', content: 'Morning pad work finished with the amateur fight team. Speed checks and cardio metrics looking sharp on the charts.', likes: 28, comments: 2, liked: false, discipline: 'Muay Thai', time: '5h ago' },
-  ]);
+  useEffect(() => {
+    setPosts([]); setError(''); setFresh(false);
+    if (!token) return;
+    const controller = new AbortController(); setLoading(true);
+    loadFeed(token, page, controller.signal).then(result => { setPosts(result.posts); setHasMore(result.hasMore); })
+      .catch(cause => { if (!controller.signal.aborted) setError(failure(cause)); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [token, page, reload]);
+  useEffect(() => {
+    setActivePost(null); setComments([]); setDraft(''); setNotice('');
+  }, [user?.id]);
+  useEffect(() => {
+    const onNewPost = () => setFresh(true);
+    socket?.on('new_post', onNewPost);
+    return () => { socket?.off('new_post', onNewPost); };
+  }, [socket]);
+  useEffect(() => {
+    setComments([]);
+    if (!token || !activePost) return;
+    const controller = new AbortController(); setCommentLoading(true);
+    loadComments(token, activePost, commentPage, controller.signal).then(result => { setComments(result.comments); setCommentMore(result.hasMore); })
+      .catch(cause => { if (!controller.signal.aborted) setError(failure(cause)); })
+      .finally(() => { if (!controller.signal.aborted) setCommentLoading(false); });
+    return () => controller.abort();
+  }, [token, activePost, commentPage, commentReload]);
 
-  const { newPosts, clearNewPosts } = useSocket();
-
-  React.useEffect(() => {
-    if (newPosts && newPosts.length > 0) {
-      const formatted = newPosts.map((p: { _id?: string; authorId?: { name?: string; role?: string }; content?: string; likes?: unknown[]; commentsCount?: number }, idx: number) => ({
-        id: `socket_${p._id || idx}`,
-        author: p.authorId?.name || 'ATHLIX Fighter',
-        role: p.authorId?.role === 'coach' ? 'Verified Coach' : 'Athlete',
-        content: p.content || '',
-        likes: p.likes?.length || 0,
-        comments: p.commentsCount || 0,
-        liked: false,
-        discipline: 'BJJ',
-        time: 'Just now',
-      }));
-      setPosts(prev => {
-        const filteredPrev = prev.filter(p => !newPosts.some((np: { _id?: string }) => `socket_${np._id}` === p.id));
-        return [...formatted, ...filteredPrev];
-      });
-      clearNewPosts();
-    }
-  }, [newPosts, clearNewPosts]);
-
-  const handleLike = (id: string) => {
-    setPosts(prev => prev.map(p =>
-      p.id === id ? { ...p, likes: p.liked ? p.likes - 1 : p.likes + 1, liked: !p.liked } : p
-    ));
+  const publish = async (event: FormEvent) => {
+    event.preventDefault(); if (!token || !draft.trim()) return;
+    setWriting(true); setError(''); setNotice('');
+    try { await publishPost(token, draft.trim()); setDraft(''); setNotice('Your post was published.'); setPage(1); setReload(value => value + 1); }
+    catch (cause) { setError(failure(cause)); }
+    finally { setWriting(false); }
+  };
+  const like = async (post: FeedPost) => {
+    if (!token) return; setWriting(true); setError('');
+    try { const result = await setPostLike(token, post._id, !post.likedByMe); setPosts(values => values.map(value => value._id === post._id ? { ...value, likedByMe: result.liked, likesCount: result.likesCount } : value)); }
+    catch (cause) { setError(failure(cause)); }
+    finally { setWriting(false); }
+  };
+  const comment = async (event: FormEvent) => {
+    event.preventDefault(); if (!token || !activePost || !commentDraft.trim()) return;
+    setWriting(true); setError(''); setNotice('');
+    try { await publishComment(token, activePost, commentDraft.trim()); setCommentDraft(''); setCommentPage(1); setCommentReload(value => value + 1); setReload(value => value + 1); setNotice('Your comment was published.'); }
+    catch (cause) { setError(failure(cause)); }
+    finally { setWriting(false); }
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!postContent.trim()) return;
-    try {
-      const token = useAuthStore.getState().token;
-      const res = await fetch(`${API_URL}/api/posts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ content: postContent }),
-      });
-      if (res.ok) setPostContent('');
-    } catch (err) {
-      console.error('Failed to create post:', err);
-    }
-  };
-
-  const trendingItems = [
-    { tag: '#SubmissionLeague', count: '1.2K rolls' },
-    { tag: '#MuayThaiPadwork', count: '840 clips' },
-    { tag: '#RoadToBrownBelt', count: '412 timelines' },
-  ];
-
-  const filteredPosts = posts.filter(post =>
-    selectedCategory === 'all' || post.discipline.toLowerCase() === selectedCategory
-  );
-
-  const userInitial = user?.name ? user.name[0].toUpperCase() : 'A';
-
-  const categories = ['all', 'bjj', 'muay thai', 'mma'] as const;
-
-  return (
-    <div className="min-h-screen bg-background text-text-primary">
-      <Navbar />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
-
-        {/* ── Header ── */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 pb-8 border-b border-border">
-          <div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/30 bg-accent/8 text-accent text-xs font-semibold mb-4"
-            >
-              <Sparkles className="w-3 h-3" /> Community Connect
-            </motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-              className="text-4xl md:text-5xl font-extrabold font-display tracking-tight text-text-primary mb-2"
-            >
-              Fighter Activity Feed
-            </motion.h1>
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="text-text-secondary text-sm"
-            >
-              Share updates, track training sessions, and view insights from verified athletes.
-            </motion.p>
-          </div>
-
-          {/* Category Filter */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            className="flex bg-surface border border-border rounded-full p-1"
-          >
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={cn(
-                  'px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200',
-                  selectedCategory === cat
-                    ? 'bg-gradient-to-r from-accent to-accent-light text-white shadow-sm'
-                    : 'text-text-secondary hover:text-text-primary'
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </motion.div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-          {/* ── Left: Profile Card ── */}
-          <div className="lg:col-span-1 hidden lg:block">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-              className="rounded-2xl border border-border bg-surface p-6 text-center"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center font-extrabold text-white text-xl mx-auto mb-4">
-                {userInitial}
-              </div>
-              <h3 className="font-bold text-base text-text-primary">{user?.name || 'ATHLIX FIGHTER'}</h3>
-              <p className="text-xs text-text-tertiary uppercase tracking-widest mt-1 capitalize">{user?.role || 'athlete'}</p>
-
-              <div className="h-px bg-border my-5" />
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <span className="block text-xl font-extrabold text-text-primary">142</span>
-                  <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest">Followers</span>
-                </div>
-                <div className="text-center">
-                  <span className="block text-xl font-extrabold text-text-primary">88</span>
-                  <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest">Spars</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* ── Center: Create Post + Feed ── */}
-          <div className="lg:col-span-2 flex flex-col gap-5">
-
-            {/* Create Post */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="rounded-2xl border border-border bg-surface p-5"
-            >
-              <form onSubmit={handleCreatePost} className="flex flex-col gap-4">
-                <div className="flex gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-accent-light flex items-center justify-center font-extrabold text-white text-sm shrink-0">
-                    {userInitial}
-                  </div>
-                  <textarea
-                    value={postContent}
-                    onChange={(e) => setPostContent(e.target.value)}
-                    placeholder="Share your pad work, roll reviews, or system questions..."
-                    rows={3}
-                    className="w-full bg-surface-elevated border border-border rounded-xl p-3.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all resize-none"
-                  />
-                </div>
-                <div className="flex justify-between items-center pt-3 border-t border-border">
-                  <div className="flex gap-4 text-text-secondary text-xs font-semibold">
-                    <button type="button" className="hover:text-accent transition-colors flex items-center gap-1.5 cursor-pointer">
-                      <ImageIcon className="h-3.5 w-3.5 text-accent" /> Media
-                    </button>
-                    <button type="button" className="hover:text-accent transition-colors flex items-center gap-1.5 cursor-pointer">
-                      <Video className="h-3.5 w-3.5 text-accent" /> Video
-                    </button>
-                  </div>
-                  <motion.button
-                    type="submit"
-                    whileHover={{ y: -1 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-accent to-accent-light text-white text-xs font-bold shadow-md shadow-accent/20 hover:shadow-accent/35 transition-all cursor-pointer"
-                  >
-                    <Send className="h-3 w-3" /> Publish
-                  </motion.button>
-                </div>
-              </form>
-            </motion.div>
-
-            {/* Post Feed */}
-            <AnimatePresence>
-              {filteredPosts.map((post, idx) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ delay: idx * 0.05, duration: 0.4, ease: 'easeOut' }}
-                  className="rounded-2xl border border-border bg-surface p-5 hover:border-accent/20 transition-all duration-200"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center font-extrabold text-white text-sm shrink-0', avatarColors[idx % avatarColors.length])}>
-                        {post.author[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm text-text-primary leading-snug">{post.author}</h4>
-                        <span className="text-[10px] text-text-tertiary">{post.role} · {post.time}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn('text-[10px] font-bold px-2.5 py-0.5 rounded-full border', disciplineColors[post.discipline] || 'bg-surface text-text-secondary border-border')}>
-                        {post.discipline}
-                      </span>
-                      <button className="text-text-tertiary hover:text-text-primary transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="text-text-secondary text-sm leading-relaxed mb-4">{post.content}</p>
-
-                  <div className="h-px bg-border mb-4" />
-
-                  <div className="flex items-center justify-between text-xs text-text-secondary font-medium">
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      className={cn('flex items-center gap-1.5 hover:text-accent transition-colors cursor-pointer', post.liked && 'text-accent')}
-                    >
-                      <Heart className={cn('h-4 w-4', post.liked && 'fill-accent')} />
-                      {post.likes} Likes
-                    </button>
-                    <span className="flex items-center gap-1.5">
-                      <MessageSquare className="h-4 w-4" /> {post.comments} Comments
-                    </span>
-                    <button className="flex items-center gap-1.5 hover:text-accent transition-colors cursor-pointer">
-                      <Share2 className="h-4 w-4" /> Share
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {/* ── Right: Trending + Mat Status ── */}
-          <div className="lg:col-span-1 flex flex-col gap-5">
-
-            {/* Trending */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-              className="rounded-2xl border border-border bg-surface p-5"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="h-4 w-4 text-accent" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">Trending Tags</h3>
-              </div>
-              <div className="space-y-3">
-                {trendingItems.map((item, i) => (
-                  <div key={i} className="flex justify-between items-center text-xs border-b border-border pb-3 last:border-0 last:pb-0">
-                    <span className="text-text-secondary hover:text-accent transition-colors cursor-pointer font-medium">{item.tag}</span>
-                    <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{item.count}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Mat Status */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
-              className="rounded-2xl border border-border bg-surface p-5 relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/8 blur-2xl rounded-full pointer-events-none" />
-              <div className="flex items-center gap-2 mb-4 relative z-10">
-                <Award className="h-4 w-4 text-accent" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">Mat Status</h3>
-              </div>
-              <div className="space-y-3 relative z-10">
-                <div className="bg-surface-elevated rounded-xl p-3.5 border border-border">
-                  <p className="text-[9px] text-text-tertiary uppercase tracking-widest font-medium mb-1">Current Streak</p>
-                  <p className="text-base font-extrabold text-accent">5 Spars This Week</p>
-                </div>
-                <div className="bg-surface-elevated rounded-xl p-3.5 border border-border">
-                  <p className="text-[9px] text-text-tertiary uppercase tracking-widest font-medium mb-1">Verified Level</p>
-                  <p className="text-base font-extrabold text-text-primary">Belt Rank: Purple</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Active Athletes */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-              className="rounded-2xl border border-border bg-surface p-5"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="h-4 w-4 text-green-400" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">Active Now</h3>
-                <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/25">LIVE</span>
-              </div>
-              <div className="flex -space-x-2">
-                {['TV', 'KS', 'MR', 'EW', 'AR'].map((av, i) => (
-                  <div key={i} className={cn('w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-white text-[9px] font-extrabold', avatarColors[i])}>
-                    {av}
-                  </div>
-                ))}
-                <div className="w-8 h-8 rounded-full border-2 border-background bg-surface-elevated flex items-center justify-center text-text-tertiary text-[9px] font-bold">
-                  +24
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-        </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
+  return <WorkspaceShell eyebrow="Training community" title="Share your training journey." description="Text posts and conversations from signed-in ATHLIX members. Posts are member contributions; achievements and advice are not independently verified.">
+    {!token ? <SignInPrompt purpose="join the community" /> : <div className="mx-auto max-w-3xl space-y-6">
+      {error && <div role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 p-4">{error}</div>}
+      {notice && <p role="status" className="rounded-xl border border-success/30 bg-success/10 p-4">{notice}</p>}
+      <form onSubmit={publish} className={workspacePanel}><label htmlFor="community-post" className="font-bold">What are you working on?</label><textarea id="community-post" required maxLength={5000} rows={4} value={draft} onChange={event => setDraft(event.target.value)} className={`${workspaceControl} mt-3 resize-y`} placeholder="Share a training reflection or question. Avoid private information." /><div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-text-tertiary">Text only · {draft.length}/5000 characters</p><button type="submit" disabled={writing || !draft.trim()} className={workspaceButton}><Send className="h-4 w-4" />{writing ? 'Saving…' : 'Publish post'}</button></div></form>
+      <div className="flex items-center justify-between gap-4"><p className="text-sm text-text-secondary">{fresh ? 'New posts are available.' : 'Newest posts first'}</p><button onClick={() => setReload(value => value + 1)} disabled={loading} className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm disabled:opacity-40"><RefreshCw className="h-4 w-4" />Refresh feed</button></div>
+      {loading ? <p role="status" className="py-10 text-center text-text-secondary">Loading community posts…</p> : posts.length === 0 ? <section className={`${workspacePanel} py-12 text-center`}><h2 className="font-bold">No posts on this page yet</h2><p className="mt-3 text-sm text-text-secondary">Start a conversation with a training reflection or return to the previous page.</p></section> : posts.map(post => <article key={post._id} className={workspacePanel}>
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="font-bold">{post.authorId?.name || 'Former member'}</h2><time dateTime={post.createdAt} className="text-xs text-text-tertiary">{stamp(post.createdAt)}</time></header>
+        <p className="whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-relaxed">{post.content}</p>
+        <div className="mt-5 flex flex-wrap gap-3 border-t border-border pt-4"><button type="button" aria-pressed={post.likedByMe} disabled={writing} onClick={() => void like(post)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm disabled:opacity-40 ${post.likedByMe ? 'border-accent text-accent' : 'border-border text-text-secondary'}`}><Heart className="h-4 w-4" />{post.likedByMe ? 'Liked' : 'Like'} · {post.likesCount}</button><button type="button" aria-expanded={activePost === post._id} aria-controls={`comments-${post._id}`} onClick={() => { setActivePost(activePost === post._id ? null : post._id); setCommentPage(1); setCommentDraft(''); setError(''); }} className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm"><MessageSquare className="h-4 w-4" />Comments · {post.commentsCount}</button></div>
+        {activePost === post._id && <section id={`comments-${post._id}`} aria-label="Post comments" className="mt-5 border-t border-border pt-5">
+          {commentLoading ? <p role="status" className="text-sm text-text-secondary">Loading comments…</p> : comments.length ? <ul className="space-y-4">{comments.map(value => <li key={value._id} className="rounded-xl border border-border bg-background p-4"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><span className="text-sm font-bold">{value.authorId?.name || 'Former member'}</span><time dateTime={value.createdAt} className="text-xs text-text-tertiary">{stamp(value.createdAt)}</time></div><p className="whitespace-pre-wrap [overflow-wrap:anywhere] text-sm">{value.content}</p></li>)}</ul> : <p className="text-sm text-text-secondary">No comments on this page yet.</p>}
+          <div className="my-4 flex items-center justify-between text-xs"><button disabled={commentPage === 1 || commentLoading} onClick={() => setCommentPage(value => value - 1)} className="underline disabled:opacity-30">Previous comments</button><span>Page {commentPage}</span><button disabled={!commentMore || commentLoading} onClick={() => setCommentPage(value => value + 1)} className="underline disabled:opacity-30">Next comments</button></div>
+          <form onSubmit={comment}><label htmlFor={`comment-${post._id}`} className="text-sm font-semibold">Add to the conversation</label><textarea id={`comment-${post._id}`} required maxLength={2000} rows={3} value={commentDraft} onChange={event => setCommentDraft(event.target.value)} className={`${workspaceControl} mt-2 resize-y`} /><button type="submit" disabled={writing || !commentDraft.trim()} className={`${workspaceButton} mt-3`}>Publish comment</button></form>
+        </section>}
+      </article>)}
+      <nav aria-label="Community pages" className="flex items-center justify-between text-sm"><button disabled={page === 1 || loading} onClick={() => { setPage(value => value - 1); setActivePost(null); }} className="rounded-full border border-border px-4 py-2 disabled:opacity-40">Previous posts</button><span>Page {page}</span><button disabled={!hasMore || loading} onClick={() => { setPage(value => value + 1); setActivePost(null); }} className="rounded-full border border-border px-4 py-2 disabled:opacity-40">Next posts</button></nav>
+      <p className="text-xs leading-relaxed text-text-tertiary">Media uploads, member following, moderation tools, and social notification delivery are not available in this feed. Do not share sensitive data or content you do not have permission to publish.</p>
+    </div>}
+  </WorkspaceShell>;
 }

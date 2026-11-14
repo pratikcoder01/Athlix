@@ -1,7 +1,15 @@
 # ATHLIX 🥋
-> Premium Next-Gen Sports-Tech Platform for Combat Sports Athletes, Coaches, Academies, and Tournament Organizers.
+> A development project for combat-sports clubs, local events, and experimental 2D kata feedback.
 
-ATHLIX is a production-grade, startup-ready MERN platform connecting martial artists and combat sports enthusiasts in one unified workspace. The platform blends professional coaching bookings, real-time social feeds, geospatial academy discovery, and digital tournament bracket registries.
+ATHLIX combines a Next.js client, Express/MongoDB API, authenticated realtime channels, and a Python pose-analysis service. It is **not yet production-ready**. Some screens contain sample content, several workflows remain incomplete, and configured infrastructure is required to exercise real account and event flows. Paid checkout, subscriptions, and settlement reporting are not implemented.
+
+The proposed first pilot is karate academies and local tournament organizers; demand and geography remain hypotheses. Review the [product audit](docs/PRODUCT_AUDIT.md), [roadmap](docs/ROADMAP.md), and [investor-readiness disclosure](docs/pitch/INVESTOR_READINESS.md) before presenting the build. No user counts, customer reviews, partnerships, security certifications, revenue, or independently measured model accuracy are claimed.
+
+Current implementation and evidence: [feature status](docs/FEATURE_STATUS.md),
+[verification record](docs/VERIFICATION.md), [setup](docs/setup_guide.md), and
+[operations/rollback](docs/OPERATIONS.md). Local test passes are distinguished
+from unverified live-provider and native-inference checks.
+The [architecture overview](docs/ARCHITECTURE.md) explains the trust boundaries.
 
 ---
 
@@ -9,14 +17,14 @@ ATHLIX is a production-grade, startup-ready MERN platform connecting martial art
 
 ```text
 athlix/
-├── .github/                       # Pull Request and Issue templates
+├── .github/                       # CI, Pull Request and Issue templates
 ├── client/                        # Next.js 15 + React 19 + TypeScript Frontend
 ├── server/                        # Express + TypeScript API Backend
+├── cv-service/                    # Internal FastAPI pose-analysis worker
 ├── docs/                          # Architecture design and deployment details
 │   ├── db_design.md               # MongoDB collection structure and ERD
 │   ├── api_map.md                 # Route endpoint map & Socket.io channels
 │   └── setup_guide.md             # Local environment & production deployments
-├── vercel.json                    # Root Vercel zero-config deploy schema
 ├── CONTRIBUTING.md                # Scoped branch workflows & commit style
 └── package.json                   # Root monorepo workspace coordinator
 ```
@@ -65,9 +73,9 @@ npm run dev
 * **Frontend Client (Next.js)**: `http://localhost:3000`
 * **Backend Server (Express)**: `http://localhost:5000`
 
-For full configuration keys and cloud deployment setup guides, refer to the [Setup Guide](file:///docs/setup_guide.md).
-For database design details, see [Database Design](file:///docs/db_design.md).
-For API maps and Socket channels, see [API Route Map](file:///docs/api_map.md).
+For configuration and deployment preparation, refer to the [Setup Guide](docs/setup_guide.md).
+For database design details, see [Database Design](docs/db_design.md).
+For API maps and Socket channels, see [API Route Map](docs/api_map.md).
 
 ---
 

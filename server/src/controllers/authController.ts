@@ -2,8 +2,8 @@ import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { Profile } from '../models/Profile';
-import { CoachProfile } from '../models/CoachProfile';
 import { AuthenticatedRequest } from '../types';
+import { registerSchema } from '../utils/validation';
 
 import { getJwtSecret } from '../config/jwt';
 
@@ -14,12 +14,17 @@ const generateToken = (id: any): string => {
   });
 };
 
-// @desc    Register a new user (athlete, coach, academy_owner, tournament_organizer, admin)
+// @desc    Register a new athlete; privileged roles require trusted provisioning.
 // @route   POST /api/auth/register
 // @access  Public
 export const register = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password, role, discipline, beltRank } = req.body;
+    // Enforce this policy in the handler as well as at the route boundary.
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, message: 'Invalid registration request', errors: parsed.error.issues });
+    }
+    const { name, email, password, discipline, beltRank } = parsed.data;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -33,7 +38,7 @@ export const register = async (req: AuthenticatedRequest, res: Response, next: N
       name,
       email,
       password,
-      role: role || 'athlete',
+      role: 'athlete',
     });
 
     // 2. Create basic athlete/user profile
@@ -42,16 +47,6 @@ export const register = async (req: AuthenticatedRequest, res: Response, next: N
       discipline: discipline || 'BJJ',
       beltRank: beltRank || 'White',
     });
-
-    // 3. Create coach profile if role is coach
-    let coachProfile = null;
-    if (user.role === 'coach') {
-      coachProfile = await CoachProfile.create({
-        userId: user._id,
-        experienceYears: 0,
-        pricingPerHour: 50,
-      });
-    }
 
     res.status(201).json({
       success: true,
@@ -80,7 +75,7 @@ export const login = async (req: AuthenticatedRequest, res: Response, next: Next
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password))) {
+    if (!user || user.isActive !== true || !(await user.matchPassword(password))) {
       const err: any = new Error('Invalid email or password');
       err.statusCode = 401;
       return next(err);
