@@ -111,7 +111,7 @@ async function videoTests() {
   assert.notEqual(requestIds[2],requestIds[1],'Confirmed terminal failure must permit a new analysis operation');
   await page.getByRole('button',{name:'Try Again',exact:true}).click();await visible(page.getByRole('heading',{name:'Analyzing Movement Technique',exact:true}));
   await page.getByRole('button',{name:'Log out',exact:true}).click();await lateReply;
-  await visible(page.locator('#video-upload-input'));assert.equal(await page.getByRole('heading',{name:'Analyzing Movement Technique',exact:true}).count(),0);
+  await page.locator('#video-upload-input').waitFor({state:'attached'});assert.equal(await page.getByRole('heading',{name:'Analyzing Movement Technique',exact:true}).count(),0);
   assert.equal(await page.getByText('fixture.mp4',{exact:true}).count(),0);
   console.log('PASS video consent, stable retry/new-job UUIDs, terminal failures and in-flight logout cleanup');await context.close();
 }

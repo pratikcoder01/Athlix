@@ -9,7 +9,7 @@ import { analyzeVideo, deleteVideoResult, getVideoStatus, MAX_VIDEO_BYTES, requi
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_VIDEO_BYTES, files: 1, fields: 1, fieldSize: 16, parts: 3 },
+  limits: { fileSize: MAX_VIDEO_BYTES, files: 1, fields: 2, fieldSize: 36, parts: 4 },
   fileFilter: (_req, file, callback) => {
     const types: Record<string, string[]> = {
       '.mp4': ['video/mp4'], '.mov': ['video/quicktime'],
@@ -36,7 +36,7 @@ router.post('/analyze', uploadLimiter, (req, res, next) => {
   upload.single('file')(req, res, (error) => {
     if (error) {
       const status = error instanceof multer.MulterError ? (error.code === 'LIMIT_FILE_SIZE' ? 413 : 400) : error.statusCode || 400;
-      return res.status(status).json({ message: error.code === 'LIMIT_FILE_SIZE' ? 'Video exceeds the 25 MB upload limit.' : 'Invalid video upload. Use one supported video and consent field.' });
+      return res.status(status).json({ message: error.code === 'LIMIT_FILE_SIZE' ? 'Video exceeds the 25 MB upload limit.' : 'Invalid video upload. Use one supported video, consent and an optional request identifier.' });
     }
     next();
   });

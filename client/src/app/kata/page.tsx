@@ -25,6 +25,9 @@ import {
 
 export default function KataAnalyzerPage() {
   const token = useAuthStore(state => state.token);
+  const accountId = useAuthStore(state => state.user?.id);
+  const submissionId = useRef<string | null>(null);
+  const uploadRequest = useRef<AbortController | null>(null);
   const [consent, setConsent] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -53,6 +56,15 @@ export default function KataAnalyzerPage() {
     return () => { if (videoUrl) URL.revokeObjectURL(videoUrl); };
   }, [videoUrl]);
 
+  useEffect(() => {
+    // Never retain another signed-in account's video/result workspace.
+    uploadRequest.current?.abort();
+    submissionId.current = null;
+    setSelectedFile(null); setVideoUrl(null); setTaskId(null); setResult(null);
+    setStatus('idle'); setConsent(false); setErrorMsg(null); setShowWebcam(false);
+    return () => uploadRequest.current?.abort();
+  }, [accountId]);
+
   const chooseFile = (file: File) => {
     if (file.size === 0 || file.size > 25 * 1024 * 1024) {
       setErrorMsg('Choose a non-empty video of 25 MB or less.');
@@ -63,6 +75,7 @@ export default function KataAnalyzerPage() {
       return;
     }
     setSelectedFile(file);
+    submissionId.current = crypto.randomUUID();
     setVideoUrl(URL.createObjectURL(file));
     setConsent(false);
     setErrorMsg(null);
@@ -89,6 +102,9 @@ export default function KataAnalyzerPage() {
       return;
     }
     setErrorMsg(null);
+    const submittingAccount = useAuthStore.getState().user?.id;
+    uploadRequest.current?.abort();
+    const controller = new AbortController(); uploadRequest.current = controller;
 
     setStatus('uploading');
     setProgress(5);
@@ -97,13 +113,15 @@ export default function KataAnalyzerPage() {
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('consent', 'true');
+    if (!submissionId.current) submissionId.current = crypto.randomUUID();
+    formData.append('requestId', submissionId.current);
 
     try {
       const response = await fetch(`${BACKEND_URL}/analyze`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
-        signal: AbortSignal.timeout(45_000),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(45_000)]),
       });
 
       if (!response.ok) {
@@ -112,11 +130,14 @@ export default function KataAnalyzerPage() {
       }
 
       const data = await response.json();
+      if (controller.signal.aborted || useAuthStore.getState().user?.id !== submittingAccount) return;
+      if (typeof data.task_id !== 'string' || !/^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(data.task_id)) throw new Error('The analysis service returned an unexpected job identifier. Please retry.');
       setTaskId(data.task_id);
       setStatus('processing');
       setProgress(10);
       setProgressMsg('Video uploaded. Beginning frame extraction...');
     } catch (err: any) {
+      if (controller.signal.aborted || useAuthStore.getState().user?.id !== submittingAccount) return;
       console.error(err);
       setStatus('failed');
       setErrorMsg(err.message || 'The video service is unavailable. Please try again later.');
@@ -146,6 +167,7 @@ export default function KataAnalyzerPage() {
           setStatus('completed');
           setProgress(100);
         } else if (data.status === 'failed') {
+          submissionId.current = null; // An explicit retry starts a fresh job.
           setStatus('failed');
           setErrorMsg(data.error || 'Pose analysis failed.');
         } else {
@@ -237,6 +259,7 @@ export default function KataAnalyzerPage() {
 
   // Reset page state
   const resetAnalyzer = () => {
+    submissionId.current = null;
     if (taskId && token && ['completed', 'failed'].includes(status)) {
       void fetch(`${BACKEND_URL}/status/${taskId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).catch(() => undefined);
     }

@@ -1,5 +1,6 @@
 import { NextFunction, Response } from 'express';
 import { AuthenticatedRequest } from '../types';
+import { randomUUID } from 'crypto';
 
 export const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,13 +25,13 @@ export function requireCvConfigured(req: AuthenticatedRequest, res: Response, ne
   return next();
 }
 
-async function forward(req: AuthenticatedRequest, res: Response, path: string, init: RequestInit = {}) {
+async function forward(req: AuthenticatedRequest, res: Response, path: string, init: RequestInit = {}, requestId?: string) {
   const config = serviceConfig();
   if (!config || !req.user) return res.status(503).json({ message: 'Video analysis is unavailable.' });
   try {
     const response = await fetch(`${config.url}${path}`, {
       ...init,
-      headers: { 'X-Athlix-Service-Key': config.secret, 'X-Athlix-User': String(req.user._id) },
+      headers: { 'X-Athlix-Service-Key': config.secret, 'X-Athlix-User': String(req.user._id), ...(requestId ? { 'X-Athlix-Request-ID': requestId } : {}) },
       signal: AbortSignal.timeout(30_000),
       redirect: 'error',
     });
@@ -49,12 +50,16 @@ async function forward(req: AuthenticatedRequest, res: Response, path: string, i
 }
 
 export async function analyzeVideo(req: AuthenticatedRequest, res: Response) {
+  if (Object.keys(req.body).some(key => key !== 'consent' && key !== 'requestId')) return res.status(400).json({ message: 'Invalid video upload fields.' });
   if (req.body.consent !== 'true') return res.status(400).json({ message: 'Consent to server-side video processing is required.' });
   if (!req.file?.buffer?.length) return res.status(400).json({ message: 'Choose a video file.' });
+  if (req.body.requestId !== undefined && (typeof req.body.requestId !== 'string' || !UUID_PATTERN.test(req.body.requestId))) {
+    return res.status(400).json({ message: 'Invalid analysis request identifier. Select your video again.' });
+  }
   const data = new FormData();
   const bytes = Uint8Array.from(req.file.buffer as Buffer);
   data.append('file', new Blob([bytes], { type: req.file.mimetype }), req.file.originalname);
-  return forward(req, res, '/analyze', { method: 'POST', body: data });
+  return forward(req, res, '/analyze', { method: 'POST', body: data }, req.body.requestId || randomUUID());
 }
 
 export async function getVideoStatus(req: AuthenticatedRequest, res: Response) {

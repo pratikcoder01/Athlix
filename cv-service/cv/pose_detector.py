@@ -5,6 +5,7 @@ import os
 import math
 from video_safety import (has_confident_pose, validate_video, validate_metadata, VideoValidationError, MAX_FRAMES, MAX_ANALYSIS_FRAMES, MAX_PIXELS, MAX_DIMENSION)
 from typing import Dict, List, Any, Callable
+from cv.geometry import calculate_angle_3d
 
 # Modern MediaPipe Tasks API Imports
 from mediapipe.tasks import python
@@ -19,25 +20,11 @@ def ensure_model_exists():
         raise ValueError("Pose model is not configured. Please contact the operator.")
 
 
-def calculate_angle_3d(a: List[float], b: List[float], c: List[float]) -> float:
-    """Calculate the 3D angle (in degrees) at joint 'b' between points 'a' and 'c'."""
-    a = np.array(a)
-    b = np.array(b)
-    c = np.array(c)
-    
-    ba = a - b
-    bc = c - b
-    
-    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-6)
-    angle = np.arccos(np.clip(cosine_angle, -1.0, 1.0))
-    
-    return float(np.degrees(angle))
-
 class PoseAnalyzer:
     def __init__(self):
         ensure_model_exists()
         
-        # Configure modern MediaPipe options for maximum accuracy
+        # Confidence thresholds are policy choices, not a validated accuracy claim.
         base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
         options = vision.PoseLandmarkerOptions(
             base_options=base_options,
