@@ -52,6 +52,21 @@ const TournamentSchema = new Schema<ITournamentDocument>(
         ref: 'User',
       }
     ],
+    divisionCancellations: [{ _id: false, key: { type: String, required: true }, title: { type: String, required: true }, reason: { type: String, required: true, maxlength: 500 }, cancelledAt: { type: Date, required: true }, cancelledBy: { type: Schema.Types.ObjectId, ref: 'User', required: true } }],
+    divisions: [{
+      _id: false,
+      key: { type: String, required: true, maxlength: 40 },
+      title: { type: String, required: true, maxlength: 100 },
+      discipline: { type: String, required: true, maxlength: 30 },
+      eligibilityNotes: { type: String, default: '', maxlength: 1000 },
+      capacity: { type: Number, required: true, min: 2, max: 256 },
+      registrations: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+      brackets: {
+        seeds: [{ fighterId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, seed: { type: Number, required: true }, rationale: { type: String, required: true } }],
+        rounds: [{ round: { type: String, required: true }, matches: [{ p1: { type: String, required: true }, p2: { type: String, required: true }, score: { type: String, default: 'Pending' }, winner: { type: String, default: '' } }] }],
+      },
+      status: { type: String, enum: ['upcoming', 'ongoing', 'completed'], default: 'upcoming' },
+    }],
     brackets: {
       seeds: [
         {

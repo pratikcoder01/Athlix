@@ -9,10 +9,12 @@ import {
 
 const badRequest = (res: Response, message: string) => res.status(400).json({ success: false, message });
 const invalidId = (id: unknown) => !objectIdSchema.safeParse(id).success;
-const emitUpdate = (req: AuthenticatedRequest, tournament: { _id: unknown; brackets?: unknown; status: string }) => {
-  req.app.get('io')?.to(`tournament_${tournament._id}`).emit('bracket_update', {
-    tournamentId: tournament._id, brackets: tournament.brackets, status: tournament.status,
-  });
+export const emitUpdate = (req: AuthenticatedRequest, tournament: { _id: unknown; brackets?: unknown; status: string }) => {
+  try {
+    req.app.get('io')?.to(`tournament_${tournament._id}`).emit('bracket_update', {
+      tournamentId: tournament._id, brackets: tournament.brackets, status: tournament.status,
+    });
+  } catch { console.warn(JSON.stringify({ event: 'tournament_realtime_delivery_failed', tournamentId: String(tournament._id) })); }
 };
 
 export const getTournaments = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -62,6 +64,7 @@ export const registerForTournament = async (req: AuthenticatedRequest, res: Resp
     const tournament = await Tournament.findOneAndUpdate({
       _id: req.params.id, status: 'upcoming', registrationDeadline: { $gte: new Date() },
       registrations: { $ne: req.user._id }, 'brackets.rounds.0': { $exists: false },
+      'divisions.0': { $exists: false },
       $expr: { $lt: [{ $size: { $ifNull: ['$registrations', []] } }, 256] },
     }, { $addToSet: { registrations: req.user._id }, $inc: { __v: 1 } }, { new: true, runValidators: true });
     if (!tournament) {
@@ -82,6 +85,7 @@ export const generateTournamentBrackets = async (req: AuthenticatedRequest, res:
     if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found' });
     if (!ownsTournament(req.user, tournament)) return res.status(403).json({ success: false, message: 'Only this event’s organizer or an admin can generate brackets' });
     if (Number(tournament.get('__v') || 0) !== parsed.data.version) return res.status(409).json({ success: false, message: 'Tournament changed. Reload before generating brackets.' });
+    if (tournament.divisions?.length) return badRequest(res, 'Generate a bracket for each division instead');
     if (tournament.status !== 'upcoming' || tournament.brackets?.rounds?.length) {
       return res.status(409).json({ success: false, message: 'Brackets have already been generated or the event has started' });
     }
@@ -111,6 +115,15 @@ export const updateTournamentBrackets = async (req: AuthenticatedRequest, res: R
     if (tournament.status === 'completed') return res.status(409).json({ success: false, message: 'Completed events are read-only' });
     const status = parsed.data.status || tournament.status;
     if (!canTransitionTournament(tournament.status, status)) return badRequest(res, 'Invalid tournament status transition');
+    if (tournament.divisions?.length) {
+      if (parsed.data.brackets) return badRequest(res, 'Update division brackets separately');
+      if (status === 'ongoing' && tournament.divisions.some(division => !division.brackets?.rounds?.length)) return badRequest(res, 'Generate every division bracket before starting the event');
+      if (status === 'completed' && tournament.divisions.some(division => division.status !== 'completed')) return badRequest(res, 'Complete every division before completing the event');
+      const updated = await Tournament.findOneAndUpdate({ _id: tournament._id, organizerId: tournament.organizerId, __v: parsed.data.version, status: tournament.status }, { $set: { status }, $inc: { __v: 1 } }, { new: true, runValidators: true });
+      if (!updated) return res.status(409).json({ success: false, message: 'Tournament changed. Reload before editing.' });
+      emitUpdate(req, updated);
+      return res.status(200).json({ success: true, message: 'Tournament updated', tournament: updated });
+    }
     const existing = tournament.brackets;
     if (!existing?.rounds?.length) return badRequest(res, 'Generate the tournament bracket first');
     const brackets = parsed.data.brackets || JSON.parse(JSON.stringify(existing)) as SafeBracket;

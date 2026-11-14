@@ -10,15 +10,18 @@ import { useSocket } from '../../context/SocketContext';
 
 interface Match { p1: string; p2: string; score: string; winner?: string; }
 interface Bracket { seeds: { fighterId: string; seed: number; rationale: string }[]; rounds: { round: string; matches: Match[] }[]; }
+interface Division { key: string; title: string; discipline: string; eligibilityNotes: string; capacity: number; registrations: string[]; brackets?: Bracket; status: Tournament['status']; }
 interface Tournament {
   _id: string; __v: number; title: string; description: string; date: string; registrationDeadline: string;
   location: string; entryFee: number; disciplines: string[]; status: 'upcoming' | 'ongoing' | 'completed';
   organizerId: string | { _id: string; name: string };
   registrations: (string | { _id: string; name: string })[]; brackets?: Bracket;
+  divisions?: Division[];
+  divisionCancellations?: { key: string; title: string; reason: string; cancelledAt: string }[];
 }
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const inputClass = 'w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent';
-const buttonClass = 'rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
+const buttonClass = 'rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-black disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
 const idOf = (value: string | { _id: string }) => typeof value === 'string' ? value : value._id;
 
 // Update downstream participants after selecting a winner, clearing dependent results.
@@ -55,13 +58,19 @@ export default function TournamentsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
+  const [divisionKey, setDivisionKey] = useState('');
+  const activeDivision = selected?.divisions?.find(division => division.key === divisionKey) || selected?.divisions?.[0];
+  const activeBracket = activeDivision?.brackets || (!selected?.divisions?.length ? selected?.brackets : undefined);
+  const activeStatus = activeDivision?.status || selected?.status;
+  const registrationLocked = !!selected?.brackets?.rounds?.length || !!selected?.divisions?.some(division => division.brackets?.rounds?.length);
+  const registered = !!user && !!selected?.registrations.some(value => idOf(value) === user.id);
   const isOrganizer = user?.role === 'tournament_organizer' || user?.role === 'admin';
   const ownsSelected = !!selected && (user?.role === 'admin' || (user?.role === 'tournament_organizer' && idOf(selected.organizerId) === user.id));
 
   const request = useCallback(async (path: string, init: RequestInit = {}) => {
     const response = await fetch(`${API_URL}/api/tournaments${path}`, { ...init, headers: {
       'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers,
-    } });
+    }, signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(20_000)]) : AbortSignal.timeout(20_000) });
     const body = await response.json();
     if (!response.ok) throw new Error(body.message || `Request failed (${response.status})`);
     return body;
@@ -96,8 +105,13 @@ export default function TournamentsPage() {
     try {
       const body = await request(path, { method, ...(payload === undefined ? {} : { body: JSON.stringify(payload) }) });
       setNotice(body.message || 'Saved');
-      if (body.tournament) { await loadDetails(body.tournament._id); }
-      await loadEvents(); return true;
+      if (body.tournament) setSelected(body.tournament);
+      await loadEvents();
+      if (body.tournament) {
+        try { await loadDetails(body.tournament._id); }
+        catch { setError('Your change was saved, but the latest details could not be loaded. Refresh the data before editing again.'); }
+      }
+      return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to save. Reload and try again.'); return false; }
     finally { setBusy(false); }
   };
@@ -108,9 +122,14 @@ export default function TournamentsPage() {
       location: fields.get('location'), entryFee: Number(fields.get('fee')), disciplines: [fields.get('discipline')] });
     if (saved) { form.reset(); setShowCreate(false); }
   };
-  const update = (brackets?: Bracket, status?: Tournament['status']) => {
-    if (selected) void mutate(`/${selected._id}/brackets`, 'PUT', { version: selected.__v || 0,
+  const update = (brackets?: Bracket, status?: Tournament['status'], wholeEvent = false) => {
+    if (selected) void mutate(`/${selected._id}${activeDivision && !wholeEvent ? `/divisions/${activeDivision.key}` : ''}/brackets`, 'PUT', { version: selected.__v || 0,
       ...(brackets ? { brackets: cleanBracket(brackets) } : {}), ...(status ? { status } : {}) });
+  };
+  const addDivision = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); if (!selected) return;
+    const form = event.currentTarget; const fields = new FormData(form);
+    if (await mutate(`/${selected._id}/divisions`, 'POST', { version: selected.__v || 0, key: fields.get('key'), title: fields.get('title'), discipline: fields.get('discipline'), eligibilityNotes: fields.get('eligibilityNotes'), capacity: Number(fields.get('capacity')) })) form.reset();
   };
   const participantName = (id: string) => {
     if (id === 'BYE') return 'Bye'; if (id === 'TBD') return 'Awaiting previous result';
@@ -156,14 +175,20 @@ export default function TournamentsPage() {
             {!selected ? <p className="py-10 text-center text-text-secondary">Select an event to see registration and brackets.</p> : <>
               <h2 className="text-2xl font-extrabold">{selected.title}</h2><p className="mt-3 whitespace-pre-wrap text-sm text-text-secondary">{selected.description}</p>
               <p className="mt-4 text-xs text-text-secondary">Registration deadline: {new Date(selected.registrationDeadline).toLocaleString()} · Entry fee: ${selected.entryFee.toFixed(2)} USD, paid outside ATHLIX</p>
-              {user?.role === 'athlete' && <button disabled={busy || selected.status !== 'upcoming' || new Date(selected.registrationDeadline) < new Date() || !!selected.brackets?.rounds?.length || selected.registrations.some(value => idOf(value) === user.id)} onClick={() => void mutate(`/${selected._id}/register`, 'POST')} className={`${buttonClass} mt-5`}>{selected.registrations.some(value => idOf(value) === user.id) ? 'You are registered' : 'Register for event'}</button>}
+              {!!selected.divisions?.length && <div className="mt-5 rounded-xl border border-border p-4"><label className="text-sm font-semibold">Division<select value={activeDivision?.key || ''} onChange={event => setDivisionKey(event.target.value)} className={`${inputClass} mt-2`}>{selected.divisions.map(division => <option key={division.key} value={division.key}>{division.title} · {division.registrations.length}/{division.capacity} · {division.status}</option>)}</select></label><p className="mt-3 whitespace-pre-wrap text-xs text-text-secondary">{activeDivision?.discipline} · Organizer eligibility rules: {activeDivision?.eligibilityNotes || 'Contact the organizer before entering. No automated eligibility verification.'}</p></div>}
+              {!!selected.divisionCancellations?.length && <section className="mt-5 rounded-xl border border-border p-4"><h3 className="font-semibold">Cancelled divisions</h3>{selected.divisionCancellations.map(division => <p key={division.key} className="mt-2 whitespace-pre-wrap text-sm text-text-secondary">{division.title}: {division.reason}</p>)}</section>}
+              {ownsSelected && activeDivision && selected.status === 'upcoming' && !activeDivision.brackets?.rounds?.length && <form className="mt-5 rounded-xl border border-border p-4" onSubmit={async event => { event.preventDefault(); const form = event.currentTarget; const reason = new FormData(form).get('reason'); if (await mutate(`/${selected._id}/divisions/${activeDivision.key}/cancel`, 'POST', { version: selected.__v || 0, reason })) form.reset(); }}><label className="text-sm">Public division cancellation reason<input name="reason" minLength={5} maxLength={500} required className={`${inputClass} mt-2`} /></label><p className="mt-2 text-xs text-text-secondary">Cancels {activeDivision.title} and withdraws its {activeDivision.registrations.length} entrants. Published brackets are preserved. The reason is visible to event members; refunds and direct communication are arranged by the organizer.</p><button disabled={busy} className="mt-3 rounded-full border border-danger px-4 py-2 text-sm text-danger disabled:opacity-40">Cancel selected division and withdraw entrants</button></form>}
+              {user?.role === 'athlete' && <div className="mt-5 flex flex-wrap gap-3"><button disabled={busy || selected.status !== 'upcoming' || new Date(selected.registrationDeadline) < new Date() || registrationLocked || registered} onClick={() => void mutate(`/${selected._id}${activeDivision ? `/divisions/${activeDivision.key}` : ''}/register`, 'POST', activeDivision ? { version: selected.__v || 0 } : undefined)} className={buttonClass}>{registered ? 'You are registered' : activeDivision ? 'Register for division' : 'Register for event'}</button>{registered && <button disabled={busy || selected.status !== 'upcoming' || registrationLocked} onClick={() => void mutate(`/${selected._id}/withdraw`, 'POST', { version: selected.__v || 0 })} className="rounded-full border border-border px-5 py-2.5 text-sm disabled:opacity-40">Withdraw registration</button>}</div>}
+              {ownsSelected && selected.status === 'upcoming' && !selected.registrations.length && !registrationLocked && <form onSubmit={addDivision} className="mt-6 grid gap-3 rounded-xl border border-border p-4 sm:grid-cols-2"><h3 className="font-bold sm:col-span-2">Configure a division</h3><p className="text-xs text-text-secondary sm:col-span-2">Add all divisions before registration begins. One athlete may enter one division per event; the event supports 256 athletes in total. Publishing any bracket locks all registrations and withdrawals.</p><label className="text-xs">Division title<input name="title" required maxLength={100} className={inputClass} /></label><label className="text-xs">Division key<input name="key" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={40} placeholder="adult-beginner" className={inputClass} /></label><label className="text-xs">Division discipline<select name="discipline" className={inputClass}>{selected.disciplines.map(discipline => <option key={discipline}>{discipline}</option>)}</select></label><label className="text-xs">Division capacity<input name="capacity" type="number" min={2} max={256} defaultValue={64} required className={inputClass} /></label><label className="text-xs sm:col-span-2">Eligibility rules<textarea name="eligibilityNotes" maxLength={1000} placeholder="State age, weight, belt and verification requirements. The organizer checks eligibility." className={inputClass} /></label><button className={buttonClass} disabled={busy || (selected.divisions?.length || 0) >= 16}>Add division</button></form>}
               {ownsSelected && <div className="mt-5 flex flex-wrap gap-2">
-                {!selected.brackets?.rounds?.length && <button disabled={busy || selected.registrations.length < 2 || selected.status !== 'upcoming'} className={buttonClass} onClick={() => void mutate(`/${selected._id}/brackets/generate`, 'POST', { version: selected.__v || 0 })}>Generate bracket & close registration</button>}
-                {!!selected.brackets?.rounds?.length && selected.status === 'upcoming' && <button disabled={busy} className={buttonClass} onClick={() => update(undefined, 'ongoing')}>Start tournament</button>}
-                {selected.status === 'ongoing' && <button disabled={busy || !selected.brackets?.rounds.at(-1)?.matches[0]?.winner} className={buttonClass} onClick={() => update(undefined, 'completed')}>Complete tournament</button>}
+                {!activeBracket?.rounds?.length && <button disabled={busy || (activeDivision?.registrations.length ?? selected.registrations.length) < 2 || selected.status !== 'upcoming'} className={buttonClass} onClick={() => void mutate(`/${selected._id}${activeDivision ? `/divisions/${activeDivision.key}` : ''}/brackets/generate`, 'POST', { version: selected.__v || 0 })}>{activeDivision ? 'Generate division bracket' : 'Generate bracket & close registration'}</button>}
+                {selected.status === 'upcoming' && (selected.divisions?.length ? selected.divisions.every(division => division.brackets?.rounds?.length) : !!selected.brackets?.rounds?.length) && <button disabled={busy} className={buttonClass} onClick={() => update(undefined, 'ongoing', true)}>Start tournament</button>}
+                {activeDivision && selected.status === 'ongoing' && activeStatus === 'upcoming' && <button disabled={busy} className={buttonClass} onClick={() => update(undefined, 'ongoing')}>Start division</button>}
+                {activeDivision && selected.status === 'ongoing' && activeStatus === 'ongoing' && <button disabled={busy || !activeBracket?.rounds.at(-1)?.matches[0]?.winner} className={buttonClass} onClick={() => update(undefined, 'completed')}>Complete division</button>}
+                {selected.status === 'ongoing' && <button disabled={busy || (selected.divisions?.length ? !selected.divisions.every(division => division.status === 'completed') : !selected.brackets?.rounds.at(-1)?.matches[0]?.winner)} className={buttonClass} onClick={() => update(undefined, 'completed', true)}>Complete tournament</button>}
               </div>}
               <h3 className="mt-8 font-bold">Single-elimination bracket</h3><p className="mt-2 text-xs text-text-secondary">Seeds follow registration order. Byes advance automatically. Results are recorded by the event owner.</p>
-              {!selected.brackets?.rounds?.length ? <p className="mt-5 text-sm text-text-secondary">The organizer has not generated a bracket yet.</p> : <div className="mt-5 space-y-6">{selected.brackets.rounds.map((round, r) => <div key={r}><h4 className="mb-2 text-sm font-bold text-accent">{round.round}</h4><div className="grid gap-3 sm:grid-cols-2">{round.matches.map((match, m) => <div key={m} className="rounded-xl border border-border p-3">{[match.p1, match.p2].map((id, p) => <div key={p} className="flex items-center justify-between gap-2 py-2 text-sm"><span className={match.winner === id ? 'font-bold text-success' : ''}>{participantName(id)}{match.winner === id ? ' · Winner' : ''}</span>{ownsSelected && selected.status === 'ongoing' && id !== 'TBD' && id !== 'BYE' && !['TBD','BYE'].includes(match.p1) && !['TBD','BYE'].includes(match.p2) && <button disabled={busy || match.winner === id} aria-label={`Record ${participantName(id)} as winner`} onClick={() => update(selectWinner(selected.brackets!, r, m, id))} className="rounded-md border border-accent/40 px-2 py-1 text-xs text-accent disabled:opacity-40">Wins</button>}</div>)}<p className="mt-2 text-xs text-text-tertiary">{match.score}</p></div>)}</div></div>)}</div>}
+              {!activeBracket?.rounds?.length ? <p className="mt-5 text-sm text-text-secondary">The organizer has not generated a bracket yet.</p> : <div className="mt-5 space-y-6">{activeBracket.rounds.map((round, r) => <div key={r}><h4 className="mb-2 text-sm font-bold text-accent">{round.round}</h4><div className="grid gap-3 sm:grid-cols-2">{round.matches.map((match, m) => <div key={m} className="rounded-xl border border-border p-3">{[match.p1, match.p2].map((id, p) => <div key={p} className="flex items-center justify-between gap-2 py-2 text-sm"><span className={match.winner === id ? 'font-bold text-success' : ''}>{participantName(id)}{match.winner === id ? ' · Winner' : ''}</span>{ownsSelected && selected.status === 'ongoing' && activeStatus === 'ongoing' && id !== 'TBD' && id !== 'BYE' && !['TBD','BYE'].includes(match.p1) && !['TBD','BYE'].includes(match.p2) && <button disabled={busy || match.winner === id} aria-label={`Record ${participantName(id)} as winner`} onClick={() => update(selectWinner(activeBracket, r, m, id))} className="rounded-md border border-accent/40 px-2 py-1 text-xs text-accent disabled:opacity-40">Wins</button>}</div>)}<p className="mt-2 text-xs text-text-tertiary">{match.score}</p></div>)}</div></div>)}</div>}
             </>}
           </section>
         </div>

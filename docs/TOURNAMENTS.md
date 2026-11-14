@@ -43,3 +43,33 @@ Older brackets with display-name participants or arbitrary model-generated seeds
 will fail the stricter tree validation. Export and review those events before
 using the new editor; no destructive migration or automatic reseeding is performed.
 Existing events should have MongoDB's normal `__v` field before editing.
+# Divisions and withdrawal increment (2026-11-14)
+
+Events may configure up to 16 named divisions before the first registration.
+The organizer states each division's discipline, capacity and public eligibility
+rules; ATHLIX does not verify age, weight, rank or federation eligibility.
+One athlete may enter one division per event, with 256 entrants across the event.
+
+Division registration, generation, results and cancellation use the parent event
+version. A single conditional document write updates both overall and division
+rosters, preventing stale registration from overwriting published seeds. Any
+published bracket locks enrollment and athlete withdrawal throughout the event.
+Before publication athletes can withdraw and select another division. Entry fees,
+refunds and eligibility checks are handled by the organizer outside ATHLIX.
+
+Each division uses the same validated single-elimination progression. Generate
+all active division brackets before starting the event; complete their results
+before completing the event. The organizer can cancel an unpublished division
+before the event starts, including an empty/underfilled division after another
+bracket was published. Its entrants are withdrawn and a bounded public reason,
+time and acting organizer are stored atomically with the roster change. Other
+published brackets remain unchanged. No notification or refund delivery is
+claimed. Published divisions and completed results cannot be silently removed.
+
+`tournament-divisions.test.cjs` covers ownership, stale/future versions, capacity,
+cross-division duplicates, seed integrity, withdrawal, cancellation and lifecycle.
+`tournament-divisions.integration.test.cjs` exercises actual MongoDB races when
+an isolated test database is supplied. `tournament-divisions-e2e.cjs` is a browser
+transport fixture for configuration, registration/withdrawal, cancellation,
+conflict recovery and results; it is not a live federation acceptance test.
+

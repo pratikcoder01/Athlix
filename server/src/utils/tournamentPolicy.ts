@@ -44,6 +44,15 @@ export const bracketUpdateSchema = z.object({
 }).strict().refine(data => data.brackets !== undefined || data.status !== undefined, 'No changes provided');
 
 export const versionSchema = z.object({ version: z.number().int().nonnegative() }).strict();
+export const divisionKeySchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(40);
+export const divisionCancelSchema = z.object({ version: z.number().int().nonnegative(), reason: z.string().trim().min(5).max(500) }).strict();
+export const divisionCreateSchema = z.object({
+  version: z.number().int().nonnegative(), key: divisionKeySchema,
+  title: z.string().trim().min(1).max(100),
+  discipline: z.enum(['Karate', 'BJJ', 'Judo', 'Muay Thai', 'Taekwondo', 'Boxing', 'MMA', 'Wrestling', 'Other']),
+  eligibilityNotes: z.string().trim().max(1000).default(''),
+  capacity: z.number().int().min(2).max(256).default(64),
+}).strict();
 export const tournamentQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
   discipline: z.enum(['Karate', 'BJJ', 'Judo', 'Muay Thai', 'Taekwondo', 'Boxing', 'MMA', 'Wrestling', 'Other']).optional(),
