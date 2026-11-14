@@ -10,7 +10,8 @@ let browser;
   browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
   const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } });
   await installSession(context, null);
-  const page = await context.newPage(); const errors = [];
+  const page = await context.newPage(); const errors = [], externalFontRequests = [];
+  page.on('request', request => { if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(request.url())) externalFontRequests.push(request.url()); });
   page.on('pageerror', error => errors.push(error.message));
   for (const path of ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/coaches', '/academies', '/tournaments', '/training', '/clients', '/notifications', '/feed', '/settings']) {
     const response = await page.goto(base + path, { waitUntil: 'networkidle', timeout: 60000 });
@@ -34,5 +35,6 @@ let browser;
   await dialog.waitFor({ state: 'hidden' });
   assert.ok(await page.getByRole('button', { name: 'Open menu', exact: true }).evaluate(node => node === document.activeElement), 'Drawer restores keyboard focus');
   assert.deepEqual(errors, []);
+  assert.deepEqual(externalFontRequests, [], 'Fonts should be self-hosted, without browser requests to Google');
   await context.close();
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

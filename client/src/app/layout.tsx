@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono, Space_Grotesk, Sora } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '../context/QueryProvider';
 import AuthSessionProvider from '../context/AuthSessionProvider';
@@ -21,6 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
   display: 'swap',
 });
+const displayFont = Space_Grotesk({ subsets: ['latin'], variable: '--font-athlix-display', display: 'swap' });
+const numberFont = Sora({ subsets: ['latin'], variable: '--font-athlix-numbers', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'ATHLIX | Combat Sports Development Pilot',
@@ -40,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn('dark', inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn('dark', inter.variable, jetbrainsMono.variable, displayFont.variable, numberFont.variable)} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans text-text-primary antialiased selection:bg-accent selection:text-black" suppressHydrationWarning>
         <QueryProvider>
           <AuthSessionProvider>
