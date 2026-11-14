@@ -1,10 +1,11 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { z } from 'zod';
 import { Building2, ExternalLink, MapPin, Plus, Search } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { AcademyListing, academySchema, disciplines, loadAcademies, workspaceRequest } from '../../lib/workspaceApi';
+import { AcademyListing, academySchema, disciplines, entityId, loadAcademies, workspaceRequest } from '../../lib/workspaceApi';
 import WorkspaceShell, { SignInPrompt, workspaceButton, workspaceControl, workspacePanel } from '../../components/shared/WorkspaceShell';
 
 export default function AcademiesPage() {
@@ -84,7 +85,8 @@ export default function AcademiesPage() {
         {selected && <article className={`${workspacePanel} h-fit`}><Building2 className="mb-5 h-8 w-8 text-accent" /><h2 className="break-words text-2xl font-bold">{selected.name}</h2><p className="mt-2 text-sm text-accent">{selected.disciplines.join(' · ')}</p><p className="mt-6 flex items-start gap-2 text-sm text-text-secondary"><MapPin className="h-4 w-4 shrink-0" />{selected.address}</p><p className="mt-6 whitespace-pre-wrap break-words text-sm leading-relaxed text-text-secondary">{selected.description || 'The owner has not added a description.'}</p><h3 className="mb-2 mt-6 font-semibold">Training schedule</h3><p className="whitespace-pre-wrap break-words text-sm text-text-secondary">{selected.schedule || 'No schedule has been provided. Confirm session times directly with the academy.'}</p><p className="mt-6 text-xs text-text-tertiary">Listing owner: {selected.ownerId && typeof selected.ownerId !== 'string' ? selected.ownerId.name : 'Name unavailable'}</p><a href={`https://www.google.com/maps/search/?api=1&query=${selected.location.coordinates[1]},${selected.location.coordinates[0]}`} target="_blank" rel="noopener noreferrer" className={`${workspaceButton} mt-6`}>Open location in maps <ExternalLink className="h-4 w-4" /></a></article>}
       </div>}
       <div className="mt-8 flex items-center justify-center gap-4"><button disabled={page === 1 || loading} onClick={() => setPage(value => value - 1)} className={`${workspaceButton} bg-surface text-text-primary`}>Previous</button><span className="text-sm text-text-secondary">Page {page}</span><button disabled={!hasMore || loading || !!error} onClick={() => setPage(value => value + 1)} className={`${workspaceButton} bg-surface text-text-primary`}>Next</button></div>
-      {canCreate && <p className="mt-8 text-sm text-text-tertiary">This workspace supports directory publication. Academy member records, listing editing, memberships and billing are not available yet.</p>}
+      {selected && canCreate && (user?.role === 'admin' || entityId(selected.ownerId) === user?.id) && <Link href={`/academies/${selected._id}/manage`} className={`${workspaceButton} mt-8`}>Manage listing, members and attendance</Link>}
+      {canCreate && <p className="mt-8 text-sm text-text-tertiary">Select one of your listings to manage its publication, member records and attendance. Enable “My listings” to find archived or unpublished academies. Billing is unavailable.</p>}
     </>}
   </WorkspaceShell>;
 }

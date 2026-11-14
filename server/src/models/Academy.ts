@@ -57,6 +57,10 @@ const AcademySchema = new Schema<IAcademyDocument>(
       default: 0,
       min: 0,
     },
+    isPublished: { type: Boolean, default: true },
+    archivedAt: { type: Date, default: null },
+    version: { type: Number, default: 0, min: 0 },
+    operationsRevision: { type: Number, default: 0, min: 0 },
   },
   {
     timestamps: true,
