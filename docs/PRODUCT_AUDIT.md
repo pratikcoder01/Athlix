@@ -3,6 +3,44 @@
 Audit started 2026-11-13 against GitHub `main` at `870942cbf5378a40e3a3510801182c1c5d22ca5f`.
 Working branch: `codex/athlix-market-ready`. The downloaded ZIP is preserved separately.
 
+## Remediation status — 2026-11-14
+
+The table below preserves the **initial** findings and their initial state. The
+implementation has since advanced through the commits in [the roadmap](ROADMAP.md).
+Use [verification](VERIFICATION.md) for current test evidence and
+[feature status](FEATURE_STATUS.md) for implemented versus unavailable workflows.
+
+- Fixed public role escalation, unsafe Firebase legacy linking, disabled-account
+  access, unauthenticated/private socket room access and production wildcard CORS.
+- Fixed cross-owner tournament/AI-compatibility writes, invalid bracket trees,
+  stale/future versions, retained dependent results, duplicate/closed enrollment,
+  and regex/pagination validation in event/profile/academy directories.
+- Replaced the fake reset success with real Firebase verification/confirmation.
+  Added server-priced UTC coaching, serialized transactional booking operations,
+  owner status transitions and actual profile/academy/community UI data flows.
+- Added authenticated owner-scoped bounded video jobs and consent, cleanup,
+  expiry and honest observed-metric feedback. Actual native inference remains
+  blocked/unverified; jobs remain ephemeral and single-worker.
+- Removed unsupported marketing, partner, billing, certification and revenue
+  claims. Added factual pitch materials and explicit unreviewed policy notices.
+- Clean install, both builds, both type checks, 235 JavaScript tests, 15 Python
+  tests and all three production browser suites pass locally. Lint has 17 warnings
+  and zero errors. Audit now has 0 critical / 0 high / 7 moderate findings.
+- CI now runs an isolated replica-set integration suite, build/type/lint/tests,
+  three browser suites, dependency audit and Python checks. Remote outcomes are
+  recorded separately from local results; local DB integration is explicitly skipped.
+  The `dc0c0b9` CI run subsequently passed the actual replica-set integration and
+  all Linux browser suites; see the verification record for the run and scope.
+- The final API audit also closed legacy AI coach-contact/draft-data exposure and
+  invented rating fallbacks. Provider workflows now default off, allowlist public
+  coach data, validate requests/outputs and enforce per-account budgets.
+
+Unfinished release gates include actual Firebase/provider deployment checks,
+legacy privileged-account provenance, 30-day localStorage JWT/session revocation,
+native/model evaluation, durable CV jobs/container memory enforcement, academy
+member operations, tournament divisions/withdrawals, moderation, billing, legal
+review, full accessibility/performance qualification and supervised pilot evidence.
+
 ## Evidence and scope
 
 This is an engineering audit of source code and local checks, not a production penetration test or a certification. No production accounts, database, billing, email delivery, or partner credentials were used. Findings marked **confirmed** have a direct source-level reproduction. Remaining risks need further investigation or integration tests.
@@ -26,7 +64,7 @@ This is an engineering audit of source code and local checks, not a production p
 | P2 | **Needs investigation:** browser-local JWTs with long validity increase XSS/session theft exposure; no global revocation workflow. | `client/src/store/authStore.ts`, `server/src/config/jwt.ts` | Document tradeoffs and design session rotation/revocation before release. |
 | P2 | **Needs integration evidence:** academy member records, approval operations, notifications persistence/recovery, timezone availability and full mobile accessibility. | routes, models and role dashboards | Not verified end to end. |
 
-## Local baseline
+## Initial local baseline (2026-11-13)
 
 Environment: Windows, Node 24.18.0, npm 11.16.0, Python 3.11.9. No real service credentials supplied.
 

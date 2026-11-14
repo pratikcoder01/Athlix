@@ -5,20 +5,26 @@ ATHLIX combines a Next.js client, Express/MongoDB API, authenticated realtime ch
 
 The proposed first pilot is karate academies and local tournament organizers; demand and geography remain hypotheses. Review the [product audit](docs/PRODUCT_AUDIT.md), [roadmap](docs/ROADMAP.md), and [investor-readiness disclosure](docs/pitch/INVESTOR_READINESS.md) before presenting the build. No user counts, customer reviews, partnerships, security certifications, revenue, or independently measured model accuracy are claimed.
 
+Current implementation and evidence: [feature status](docs/FEATURE_STATUS.md),
+[verification record](docs/VERIFICATION.md), [setup](docs/setup_guide.md), and
+[operations/rollback](docs/OPERATIONS.md). Local test passes are distinguished
+from unverified live-provider and native-inference checks.
+The [architecture overview](docs/ARCHITECTURE.md) explains the trust boundaries.
+
 ---
 
 ## 📁 Repository Architecture
 
 ```text
 athlix/
-├── .github/                       # Pull Request and Issue templates
+├── .github/                       # CI, Pull Request and Issue templates
 ├── client/                        # Next.js 15 + React 19 + TypeScript Frontend
 ├── server/                        # Express + TypeScript API Backend
+├── cv-service/                    # Internal FastAPI pose-analysis worker
 ├── docs/                          # Architecture design and deployment details
 │   ├── db_design.md               # MongoDB collection structure and ERD
 │   ├── api_map.md                 # Route endpoint map & Socket.io channels
 │   └── setup_guide.md             # Local environment & production deployments
-├── vercel.json                    # Root Vercel zero-config deploy schema
 ├── CONTRIBUTING.md                # Scoped branch workflows & commit style
 └── package.json                   # Root monorepo workspace coordinator
 ```
@@ -67,9 +73,9 @@ npm run dev
 * **Frontend Client (Next.js)**: `http://localhost:3000`
 * **Backend Server (Express)**: `http://localhost:5000`
 
-For full configuration keys and cloud deployment setup guides, refer to the [Setup Guide](file:///docs/setup_guide.md).
-For database design details, see [Database Design](file:///docs/db_design.md).
-For API maps and Socket channels, see [API Route Map](file:///docs/api_map.md).
+For configuration and deployment preparation, refer to the [Setup Guide](docs/setup_guide.md).
+For database design details, see [Database Design](docs/db_design.md).
+For API maps and Socket channels, see [API Route Map](docs/api_map.md).
 
 ---
 

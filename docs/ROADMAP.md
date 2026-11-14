@@ -2,6 +2,10 @@
 
 Updated 2026-11-13. Work proceeds on `codex/athlix-market-ready`; no merge or production deployment is implied.
 
+Latest verification: 2026-11-14. See [VERIFICATION.md](VERIFICATION.md) and
+[FEATURE_STATUS.md](FEATURE_STATUS.md). Initial priorities below are retained as
+the release roadmap, not a claim that every phase is complete.
+
 ## Reviewable milestones
 
 1. **Account trust:** reject public privilege escalation in both auth flows, verify account linking, reject disabled identities, apply parsed validation, add audited operator provisioning and regression tests. Align signup copy with the actual account policy.
@@ -59,3 +63,34 @@ Updated 2026-11-13. Work proceeds on `codex/athlix-market-ready`; no merge or pr
 - Added 25 MB, 60-second, 1080p, 60-fps, sampled-frame and worker-deadline limits, bounded admission/results, cleanup/expiry and webcam track teardown. Feedback uses observed pose metrics and discloses unmeasured components.
 - Verification: server build PASS; client typecheck and targeted lint PASS; 8/8 Node proxy tests and 15/15 Python policy/API/scoring tests PASS; Python compileall and pip check PASS.
 - NOT RUN: actual MediaPipe inference, reviewed model/video benchmark and native memory isolation. Windows Application Control blocks a MediaPipe dependency DLL. Jobs remain an explicitly documented single-worker ephemeral service; durable jobs and container memory enforcement are release gates.
+
+### Delivered commit register
+
+Every commit below was pushed to the review branch. File groups and remaining
+limits are described in the linked subsystem documents and Git diffs.
+
+| Commit | Milestone and affected files | Verification |
+| --- | --- | --- |
+| `6edee73` | Auth controllers, validation/middleware, role audit/CLI, signup, audit/roadmap | 44 auth/operator regressions; server build; client types/lint |
+| `3a52c47` | Socket server/context, shared CORS and environment docs | 10 real loopback socket regressions |
+| `1c12c69`, `60682f1` | Tournament controller/policy/routes, AI compatibility handler and real event UI | 31 bracket/ownership/concurrency-policy tests; peer review fixed future-version and dependent-result gaps |
+| `9492139` | CV proxy/routes, Python service/worker/scoring, kata/recorder UI | 8 proxy + 15 Python tests; types/lint/pip check; native inference NOT RUN |
+| `f429d71` | Marketing/pricing/contact/legal notices, scoped organizer analytics, pitch docs | 4 marketing/contact + 4 analytics tests; types/lint |
+| `fc57860` | Firebase reset/forgot UI and recovery helpers/docs | 3 unit tests; SDK transport browser success/expired/invalid cases |
+| `e2e77b7` | Booking transaction/policy/models/UI, profile/directory/academy data flows | 50 booking + 13 directory tests; 1 DB guard; local replica-set suite skipped; 4 booking browser scenarios |
+| `b6ce8b7` | Persisted feed/settings, community API/models, workspace browser suite | 23 community regressions and production profile/academy/feed browser checks |
+| `247c555` | Canonical lockfile, reviewed dependency upgrades, native bounded fetch | Clean locked install; 6 provider/config tests; audit 0 critical/0 high/7 moderate |
+| `764bd53` | Hydration/motion/theme components, readable helper text, core browser suite | Production SDK/event/CV/theme suites; 360/768/1440 responsive checks |
+| `a482482` | Health/readiness, request/error logs, config, shutdown, rate limits, CI/setup/rollback/evaluation docs | 18 operations tests including actual HTTP/WebSocket draining; full builds/type/lint/tests |
+| `dc0c0b9` | Stable initial scroll provider, route/viewport browser diagnostics and remaining auth-page claim cleanup | Client build/lint and all three local production browser suites; both CI jobs green including real MongoDB and Linux Chromium |
+| `ab4bad8` | Default-off experimental AI, published-coach privacy projection, bounded request/output schemas and principal-owned plan writes | 21 new AI security regressions, independent review and complete 235-test local JavaScript suite; no live provider call |
+
+One build during the dependency update encountered its intermediate removed-adapter
+state; the final clean install and both production builds passed afterward. One
+community/ops verification attempt also overlapped that clean install and was
+rerun successfully in the complete suite. These intermediate failures were not
+reported as passing checks.
+
+The next release-critical work is actual staging identity/native-video validation,
+session revocation/storage design, existing privileged-account review and the
+remaining product gates, not a production rollout based solely on fixture tests.

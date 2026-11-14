@@ -8,10 +8,10 @@ authentication database lookups or provider work; handlers repeat the gate.
 The owned deterministic bracket alias stays available without this feature.
 
 Enabled routes still require an active account and share five requests per
-account per15minutes. This quota is process-local; distributed quotas, aggregate
+account per 15 minutes. This quota is process-local; distributed quotas, aggregate
 provider budgets and live-provider acceptance remain deployment work.
 
-Coach ranking considers at most25 active published UTC profiles belonging to
+Coach ranking considers at most 25 active published UTC profiles belonging to
 active coach accounts. A runtime public-field allowlist strips email, phone,
 Firebase identifiers, controls and invented ratings before both the provider
 prompt and API response. Returned IDs must be unique members of that roster.
