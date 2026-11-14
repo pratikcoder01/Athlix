@@ -15,6 +15,8 @@ class KarateRuleEngine:
     def analyze_movement(self, video_data: Dict[str, Any]) -> Dict[str, Any]:
         frames = video_data.get("frames", [])
         fps = video_data.get("fps", 30.0)
+        if not frames or not any(frame.get("metrics") for frame in frames):
+            raise ValueError("No confident pose metrics are available for scoring.")
         
         # 1. Classify each frame
         raw_stances = []
@@ -148,7 +150,7 @@ class KarateRuleEngine:
                 end = min(len(seq), i + half + 1)
                 window = seq[start:end]
                 # Find mode
-                mode = max(set(window), key=window.count)
+                mode = max(dict.fromkeys(window), key=window.count)
                 smoothed.append(mode)
             return smoothed
 
@@ -173,8 +175,8 @@ class KarateRuleEngine:
                 if seq[i] != current_name:
                     # Close current segment
                     if current_name != "Unknown" and current_name != "None":
-                        start_time = round(start_idx / fps, 2)
-                        end_time = round(i / fps, 2)
+                        start_time = round(frames[start_idx]["timestamp"], 2)
+                        end_time = round(frames[i]["timestamp"], 2)
                         if end_time - start_time >= 0.25: # filter out very short glitches
                             segments.append({
                                 "id": f"{prefix}_{start_idx}",
@@ -188,8 +190,8 @@ class KarateRuleEngine:
                     
             # Close the last one
             if current_name != "Unknown" and current_name != "None":
-                start_time = round(start_idx / fps, 2)
-                end_time = round(len(seq) / fps, 2)
+                start_time = round(frames[start_idx]["timestamp"], 2)
+                end_time = round(video_data.get("duration", frames[-1]["timestamp"] + 1 / fps), 2)
                 if end_time - start_time >= 0.25:
                     segments.append({
                         "id": f"{prefix}_{start_idx}",
@@ -227,7 +229,7 @@ class KarateRuleEngine:
                 if l_wrist_y > l_hip_y or r_wrist_y > r_hip_y:
                     guard_drops += 1
                     
-        guard_score = 100
+        guard_score = None
         if total_standing_frames > 0:
             guard_score = max(0, min(100, int(100 - (guard_drops / total_standing_frames) * 100)))
 
@@ -260,20 +262,20 @@ class KarateRuleEngine:
                 score = 100 - abs(l_knee - 105) - abs(r_knee - 105)
                 precisions.append(max(0, min(100, score)))
                 
-        precision_score = int(sum(precisions) / len(precisions)) if precisions else 80
+        precision_score = int(sum(precisions) / len(precisions)) if precisions else None
 
         # - Calculate composite score using explicit weights
-        overall_score = int(
-            stability_score * self.score_weights["stability"] +
-            guard_score * self.score_weights["guard"] +
-            precision_score * self.score_weights["precision"] +
-            symmetry_score * self.score_weights["symmetry"] +
-            velocity_score * self.score_weights["velocity"]
-        )
+        component_scores = {
+            "stability": stability_score, "guard": guard_score,
+            "precision": precision_score, "symmetry": symmetry_score,
+            "velocity": velocity_score,
+        }
+        available_weight = round(sum(self.score_weights[key] for key, value in component_scores.items() if value is not None), 10)
+        overall_score = int(sum(value * self.score_weights[key] for key, value in component_scores.items() if value is not None) / available_weight)
 
         # Stance / Technique Timelines count
-        stances_seen = list(set([seg["name"] for seg in stance_segments]))
-        techs_seen = list(set([seg["name"] for seg in technique_segments]))
+        stances_seen = sorted(set(seg["name"] for seg in stance_segments))
+        techs_seen = sorted(set(seg["name"] for seg in technique_segments))
 
         # 5. Kata Recognition - honest only, no silent guessing
         kata_name = "Not confident enough to classify"
@@ -300,7 +302,8 @@ class KarateRuleEngine:
             },
             "score_formula": {
                 "weights": self.score_weights,
-                "description": "Composite score = (stability * 0.25) + (guard * 0.15) + (precision * 0.25) + (symmetry * 0.20) + (velocity * 0.15)"
+                "description": "Weighted sum of available components divided by their total weight. Unobserved precision or guard components are not scored.",
+                "available_weight": available_weight
             },
             "stats": {
                 "peak_velocity": round(peak_speed, 2),

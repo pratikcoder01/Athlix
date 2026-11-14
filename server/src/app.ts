@@ -14,6 +14,7 @@ import bookingRoutes from './routes/bookingRoutes';
 import tournamentRoutes from './routes/tournamentRoutes';
 import postRoutes from './routes/postRoutes';
 import aiRoutes from './routes/aiRoutes';
+import cvRoutes from './routes/cvRoutes';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/cv', cvRoutes);
 
 // API Health Check
 app.get('/api/health', (req, res) => {

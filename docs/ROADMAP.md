@@ -52,3 +52,10 @@ Updated 2026-11-13. Work proceeds on `codex/athlix-market-ready`; no merge or pr
 - Closed manual and AI-compatibility ownership bypasses. Added bounded literal search, strict tree/ID validation, read-only completion and compare-and-set version checks.
 - Atomic registration deduplicates enrollment and serializes against bracket publication. Published registration-order seeds are locked; entry fees are explicitly unpaid informational amounts.
 - Server build and 29/29 tournament policy/controller tests PASS; client typecheck and targeted tournament lint PASS. Controller DB operations are mocked; database races remain NOT RUN due Windows Application Control blocking MongoDB. Divisions/withdrawals/legacy bracket migration remain unfinished.
+
+### Video privacy and processing bounds
+
+- Authenticated Node proxy now derives owner identity and uses a private server-only service key; Python status/deletion is owner-scoped. Uploads require explicit consent and fail closed when service/model configuration is absent.
+- Added 25 MB, 60-second, 1080p, 60-fps, sampled-frame and worker-deadline limits, bounded admission/results, cleanup/expiry and webcam track teardown. Feedback uses observed pose metrics and discloses unmeasured components.
+- Verification: server build PASS; client typecheck and targeted lint PASS; 8/8 Node proxy tests and 15/15 Python policy/API/scoring tests PASS; Python compileall and pip check PASS.
+- NOT RUN: actual MediaPipe inference, reviewed model/video benchmark and native memory isolation. Windows Application Control blocks a MediaPipe dependency DLL. Jobs remain an explicitly documented single-worker ephemeral service; durable jobs and container memory enforcement are release gates.

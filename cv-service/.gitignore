@@ -2,5 +2,10 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+*.task
 temp_uploads/
-pose_landmarker_full.task
+training/models/
+*.mp4
+*.mov
+*.avi
+*.webm

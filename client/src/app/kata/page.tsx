@@ -2,18 +2,18 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  Upload, Camera, Play, Pause, ChevronRight, Activity, ArrowLeft,
+  Upload, Camera, Play, Pause, ChevronRight, Activity,
   RotateCcw, Sparkles, AlertTriangle, Shield, CheckCircle, Zap, Clock,
-  ChevronLeft, LayoutDashboard, FileText, BarChart3, HelpCircle, ShieldAlert, Award, Video
+  ChevronLeft, BarChart3, ShieldAlert, Award, Video
 } from 'lucide-react';
 
 import Navbar from '../../components/shared/Navbar';
+import { useAuthStore } from '../../store/authStore';
 import Footer from '../../components/shared/Footer';
 import { GlassCard } from '../../components/shared/GlassCard';
 import { AnimatedBadge } from '../../components/shared/AnimatedBadge';
-import { AnimatedText } from '../../components/shared/AnimatedText';
 import { VideoOverlay } from '../../components/kata/VideoOverlay';
 import { WebcamRecorder } from '../../components/kata/WebcamRecorder';
 
@@ -24,6 +24,8 @@ import {
 } from 'recharts';
 
 export default function KataAnalyzerPage() {
+  const token = useAuthStore(state => state.token);
+  const [consent, setConsent] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showWebcam, setShowWebcam] = useState<boolean>(false);
@@ -45,57 +47,48 @@ export default function KataAnalyzerPage() {
   const [showAngles, setShowAngles] = useState<boolean>(true);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 360 });
 
-  // Handle Drag & Drop Upload
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      // Check length/size limit
-      if (file.size > 200 * 1024 * 1024) {
-        setErrorMsg('Video file size exceeds 200MB limit.');
-        return;
-      }
-      setSelectedFile(file);
-      setVideoUrl(URL.createObjectURL(file));
-      setErrorMsg(null);
+  const BACKEND_URL = `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '')}/api/cv`;
+
+  useEffect(() => {
+    return () => { if (videoUrl) URL.revokeObjectURL(videoUrl); };
+  }, [videoUrl]);
+
+  const chooseFile = (file: File) => {
+    if (file.size === 0 || file.size > 25 * 1024 * 1024) {
+      setErrorMsg('Choose a non-empty video of 25 MB or less.');
+      return;
     }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (!['mp4', 'mov', 'avi', 'webm'].includes(ext || '')) {
-        setErrorMsg('Unsupported format. Please upload MP4, MOV, AVI, or WebM.');
-        return;
-      }
-      setSelectedFile(file);
-      setVideoUrl(URL.createObjectURL(file));
-      setErrorMsg(null);
+    if (!/\.(mp4|mov|avi|webm)$/i.test(file.name)) {
+      setErrorMsg('Use MP4, MOV, AVI or WebM format.');
+      return;
     }
-  };
-
-  // Handle Webcam complete
-  const handleWebcamComplete = (blob: Blob) => {
-    const file = new File([blob], "recorded_kata.webm", { type: "video/webm" });
     setSelectedFile(file);
     setVideoUrl(URL.createObjectURL(file));
-    setShowWebcam(false);
+    setConsent(false);
     setErrorMsg(null);
   };
-
-  // Dynamic backend URL: local for dev, Render for production
-  const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000' 
-    : 'https://athlix-cv-service.onrender.com'; // Replace this with your actual Render URL after deployment
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files?.[0]) chooseFile(event.target.files[0]);
+  };
+  const handleDragOver = (event: React.DragEvent) => event.preventDefault();
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    if (event.dataTransfer.files[0]) chooseFile(event.dataTransfer.files[0]);
+  };
+  const handleWebcamComplete = (blob: Blob) => {
+    const type = blob.type.startsWith('video/mp4') ? 'video/mp4' : 'video/webm';
+    chooseFile(new File([blob], `recorded_kata.${type === 'video/mp4' ? 'mp4' : 'webm'}`, { type }));
+    setShowWebcam(false);
+  };
 
   // Start analysis by sending file to FastAPI
   const triggerAnalysis = async () => {
     if (!selectedFile) return;
+    if (!token || !consent) {
+      setErrorMsg('Sign in and consent to server-side processing before analysis.');
+      return;
+    }
+    setErrorMsg(null);
 
     setStatus('uploading');
     setProgress(5);
@@ -103,16 +96,19 @@ export default function KataAnalyzerPage() {
 
     const formData = new FormData();
     formData.append('file', selectedFile);
+    formData.append('consent', 'true');
 
     try {
       const response = await fetch(`${BACKEND_URL}/analyze`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
+        signal: AbortSignal.timeout(45_000),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to start video processing');
+        throw new Error(errorData.message || 'Failed to start video processing');
       }
 
       const data = await response.json();
@@ -123,45 +119,50 @@ export default function KataAnalyzerPage() {
     } catch (err: any) {
       console.error(err);
       setStatus('failed');
-      setErrorMsg(err.message || 'Server connection failed. Make sure the FastAPI service is running.');
+      setErrorMsg(err.message || 'The video service is unavailable. Please try again later.');
     }
   };
 
-  // Poll analysis status
+  // Poll serially, stop on logout/navigation, and bound lost-job recovery time.
   useEffect(() => {
-    if (!taskId || status !== 'processing') return;
-
-    const interval = setInterval(async () => {
+    if (!taskId || status !== 'processing' || !token) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const controller = new AbortController();
+    const started = Date.now();
+    const poll = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/status/${taskId}`);
-        if (!res.ok) throw new Error('Failed to retrieve task status');
-        
-        const data = await res.json();
+        if (Date.now() - started > 4 * 60_000) throw new Error('Analysis timed out. Please retry with a shorter clip.');
+        const response = await fetch(`${BACKEND_URL}/status/${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]),
+          cache: 'no-store',
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Analysis status is unavailable.');
+        if (stopped) return;
         if (data.status === 'completed') {
           setResult(data.result);
           setStatus('completed');
           setProgress(100);
-          clearInterval(interval);
         } else if (data.status === 'failed') {
           setStatus('failed');
-          setErrorMsg(data.error || 'Pose landmarks analysis failed.');
-          clearInterval(interval);
+          setErrorMsg(data.error || 'Pose analysis failed.');
         } else {
-          setProgress(data.progress || 10);
-          setProgressMsg(data.message || 'Processing body landmarks...');
+          setProgress(data.progress ?? 0);
+          setProgressMsg(data.message || 'Processing visible body landmarks...');
+          timer = setTimeout(poll, 1500);
         }
-      } catch (err: any) {
-        console.error(err);
-        setStatus('failed');
-        setErrorMsg('Lost connection to analysis pipeline.');
-        clearInterval(interval);
+      } catch (error) {
+        if (!stopped) {
+          setStatus('failed');
+          setErrorMsg(error instanceof Error ? error.message : 'Lost connection to the analysis service.');
+        }
       }
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [taskId, status]);
-
-
+    };
+    timer = setTimeout(poll, 1500);
+    return () => { stopped = true; clearTimeout(timer); controller.abort(); };
+  }, [taskId, status, token, BACKEND_URL]);
 
   // Video playback timeupdate handler
   const handleTimeUpdate = () => {
@@ -236,6 +237,10 @@ export default function KataAnalyzerPage() {
 
   // Reset page state
   const resetAnalyzer = () => {
+    if (taskId && token && ['completed', 'failed'].includes(status)) {
+      void fetch(`${BACKEND_URL}/status/${taskId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).catch(() => undefined);
+    }
+    setConsent(false);
     setSelectedFile(null);
     setVideoUrl(null);
     setTaskId(null);
@@ -252,7 +257,7 @@ export default function KataAnalyzerPage() {
   const getLineData = () => {
     if (!result || !result.frames) return [];
     return result.frames
-      .filter((_: any, idx: number) => idx % 8 === 0)
+      .filter((frame: any, idx: number) => idx % 8 === 0 && frame.metrics?.velocities)
       .map((f: any) => {
         const velocities = f.metrics?.velocities || { left_wrist: 0, right_wrist: 0 };
         const peakSpeed = Math.max(velocities.left_wrist, velocities.right_wrist);
@@ -287,7 +292,7 @@ export default function KataAnalyzerPage() {
               Karate Kata <span className="text-gradient-accent">Analyzer</span>
             </h1>
             <p className="text-text-secondary mt-1">
-              Upload or record your movement patterns. Get frame-by-frame body pose feedback, joint angles, and AI coaching.
+              Upload or record your movement patterns. Get sampled body pose feedback, joint angles and experimental movement metrics.
             </p>
           </div>
 
@@ -325,7 +330,7 @@ export default function KataAnalyzerPage() {
                 <Upload className="w-12 h-12 text-text-tertiary mb-4 animate-pulse" />
                 <h3 className="text-lg font-bold mb-2">Drag and drop your Kata video</h3>
                 <p className="text-sm text-text-secondary text-center max-w-sm mb-6">
-                  Supports MP4, MOV, AVI, or WebM format. Maximum length 2 minutes.
+                  Supports MP4, MOV, AVI, or WebM format. Maximum 25 MB, 60 seconds, 1080p and 60 fps.
                 </p>
 
                 <label 
@@ -351,7 +356,7 @@ export default function KataAnalyzerPage() {
                   
                   <div className="bg-surface/50 border border-border rounded-xl p-3 flex items-start gap-2.5 mb-6 text-xs text-text-secondary">
                     <Shield className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                    <span>Your video stays private and is only processed locally for metrics and scoring extraction.</span>
+                    <span>Your clip is uploaded to the ATHLIX analysis server. The temporary video is deleted after processing; results expire after 15 minutes. No video or metrics are sent to an external AI provider.</span>
                   </div>
                 </div>
 
@@ -380,20 +385,28 @@ export default function KataAnalyzerPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => { setSelectedFile(null); setVideoUrl(null); }}
+                  <div className="flex flex-col gap-3">
+                    {!token && <Link href="/login" className="text-sm text-accent underline">Sign in to analyze your video</Link>}
+                    <label className="flex items-start gap-2 text-xs text-text-secondary">
+                      <input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} className="mt-0.5" />
+                      I have permission to upload this clip and consent to server-side pose analysis and temporary result storage.
+                    </label>
+                    <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => { setSelectedFile(null); setVideoUrl(null); setConsent(false); }}
                       className="px-4 py-2 bg-secondary text-text-primary text-sm font-semibold rounded-lg hover:bg-secondary/80 transition-colors"
                     >
                       Clear
                     </button>
                     <button 
                       onClick={triggerAnalysis}
-                      className="flex items-center gap-1.5 px-5 py-2 bg-accent text-black text-sm font-bold rounded-lg shadow-glow hover:scale-105 transition-all duration-200"
+                      disabled={!token || !consent}
+                      className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 px-5 py-2 bg-accent text-black text-sm font-bold rounded-lg shadow-glow hover:scale-105 transition-all duration-200"
                     >
                       <Activity className="w-4 h-4" />
-                      Run AI Analysis
+                      Run Pose Analysis
                     </button>
+                    </div>
                   </div>
                 </GlassCard>
               </div>
@@ -441,7 +454,7 @@ export default function KataAnalyzerPage() {
             </div>
             <div className="flex justify-between w-full text-xs text-text-tertiary">
               <span>Progress: {progress}%</span>
-              <span>Est. remaining: ~{Math.max(5, Math.ceil((100 - progress) * 0.35))}s</span>
+              <span>Processing can take up to 3 minutes</span>
             </div>
           </GlassCard>
         )}
@@ -794,11 +807,11 @@ export default function KataAnalyzerPage() {
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
                     <p className="text-[10px] font-bold text-text-secondary uppercase">Guard</p>
-                    <p className="text-lg font-black text-info">{result.scores.guard}/100</p>
+                    <p className="text-lg font-black text-info">{result.scores.guard == null ? 'Not measured' : `${result.scores.guard}/100`}</p>
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
                     <p className="text-[10px] font-bold text-text-secondary uppercase">Precision</p>
-                    <p className="text-lg font-black text-success">{result.scores.precision}/100</p>
+                    <p className="text-lg font-black text-success">{result.scores.precision == null ? 'Not measured' : `${result.scores.precision}/100`}</p>
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
                     <p className="text-[10px] font-bold text-text-secondary uppercase">Symmetry</p>
@@ -817,7 +830,7 @@ export default function KataAnalyzerPage() {
                   <li>• This app uses 2D monocular pose estimation (MediaPipe), not true 3D tracking</li>
                   <li>• Depth estimation is approximate and should not be used for precise measurements</li>
                   <li>• Technique classification is limited to broad categories (Arm Strike, Leg Strike, Block)</li>
-                  <li>• Kata name recognition is not available due to limited training data</li>
+                  <li>• Kata sequence recognition is unavailable; no trained classifier is included</li>
                   <li>• Scores are based on pose landmarks only and do not measure physical force or power</li>
                 </ul>
               </GlassCard>
@@ -829,10 +842,10 @@ export default function KataAnalyzerPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles className="w-5 h-5 text-accent animate-pulse" />
-                    <h3 className="font-extrabold text-xl">AI Coach Feedback</h3>
+                    <h3 className="font-extrabold text-xl">Pose Feedback</h3>
                   </div>
                   <p className="text-xs text-text-secondary leading-relaxed">
-                    Personalized feedback generated using DeepSeek LLM reasoning.
+                    Feedback from experimental pose heuristics. No external AI provider is used.
                   </p>
                 </div>
 
