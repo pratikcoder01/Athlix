@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { randomUUID } from 'crypto';
 
 export const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+export const MAX_CV_RESPONSE_BYTES = 32 * 1024 * 1024;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function serviceConfig() {
@@ -28,24 +29,72 @@ export function requireCvConfigured(req: AuthenticatedRequest, res: Response, ne
 async function forward(req: AuthenticatedRequest, res: Response, path: string, init: RequestInit = {}, requestId?: string) {
   const config = serviceConfig();
   if (!config || !req.user) return res.status(503).json({ message: 'Video analysis is unavailable.' });
+  const disconnected = new AbortController();
+  const abort = () => disconnected.abort();
+  const close = () => { if (!res.writableFinished) abort(); };
+  req.once('aborted', abort);
+  res.once('close', close);
+  const signal = AbortSignal.any([AbortSignal.timeout(30_000), disconnected.signal]);
   try {
+    if (req.aborted || res.destroyed) { abort(); return; }
     const response = await fetch(`${config.url}${path}`, {
       ...init,
       headers: { 'X-Athlix-Service-Key': config.secret, 'X-Athlix-User': String(req.user._id), ...(requestId ? { 'X-Athlix-Request-ID': requestId } : {}) },
-      signal: AbortSignal.timeout(30_000),
+      signal,
       redirect: 'error',
     });
+    if (disconnected.signal.aborted || res.destroyed) {
+      void response.body?.cancel().catch(() => undefined);
+      return;
+    }
     if (response.status === 204) return res.status(204).end();
-    const payload = await response.json() as { detail?: unknown };
+    const payload = await boundedCvJson(response, signal) as { detail?: unknown };
+    if (disconnected.signal.aborted || res.destroyed) return;
     if (!response.ok) {
       const status = [400, 404, 409, 413, 415, 422, 429, 503].includes(response.status) ? response.status : 502;
-      const message = typeof payload.detail === 'string' && status !== 502 ? payload.detail : 'The video service could not complete the request.';
+      const message = typeof payload.detail === 'string' && status !== 502 ? payload.detail.slice(0, 500) : 'The video service could not complete the request.';
       return res.status(status).json({ message });
     }
     res.setHeader('Cache-Control', 'private, no-store');
     return res.status(response.status).json(payload);
   } catch {
+    if (disconnected.signal.aborted || res.destroyed) return;
     return res.status(502).json({ message: 'The video service is unavailable. Please retry later.' });
+  } finally {
+    req.removeListener('aborted', abort);
+    res.removeListener('close', close);
+  }
+}
+
+/** Bound chunked as well as declared responses, and cancel pending reads on disconnect. */
+async function boundedCvJson(response: globalThis.Response, signal: AbortSignal): Promise<unknown> {
+  if (!response.body) throw new Error('Missing CV response body');
+  const declared = response.headers.get('content-length');
+  if (declared && /^\d+$/.test(declared) && Number(declared) > MAX_CV_RESPONSE_BYTES) {
+    void response.body.cancel().catch(() => undefined);
+    throw new Error('CV response exceeds the response budget');
+  }
+  const reader = response.body.getReader();
+  const cancel = () => { void reader.cancel().catch(() => undefined); };
+  signal.addEventListener('abort', cancel, { once: true });
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    signal.throwIfAborted();
+    while (true) {
+      const { done, value } = await reader.read();
+      signal.throwIfAborted();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_CV_RESPONSE_BYTES) { cancel(); throw new Error('CV response exceeds the response budget'); }
+      chunks.push(value);
+    }
+    const payload: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('Invalid CV response');
+    return payload;
+  } finally {
+    signal.removeEventListener('abort', cancel);
+    reader.releaseLock();
   }
 }
 

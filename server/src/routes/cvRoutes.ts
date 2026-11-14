@@ -5,6 +5,7 @@ import path from 'path';
 import { AuthenticatedRequest } from '../types';
 import protect from '../middleware/authMiddleware';
 import { analyzeVideo, deleteVideoResult, getVideoStatus, MAX_VIDEO_BYTES, requireCvConfigured } from '../controllers/cvController';
+import { createCvUploadHandler } from '../utils/cvUploadLifecycle';
 
 const router = Router();
 const upload = multer({
@@ -22,25 +23,10 @@ const upload = multer({
   },
 });
 const uploadLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 5, keyGenerator: (req: AuthenticatedRequest) => String(req.user?._id), standardHeaders: true, legacyHeaders: false, message: { message: 'Too many video submissions. Please retry in 15 minutes.' } });
-let activeUploads = 0;
 
 router.use(protect);
 router.use(requireCvConfigured);
-router.post('/analyze', uploadLimiter, (req, res, next) => {
-  if (activeUploads >= 2) return res.status(429).json({ message: 'The analyzer is busy. Please retry shortly.' });
-  activeUploads++;
-  let released = false;
-  const release = () => { if (!released) { released = true; activeUploads--; } };
-  res.once('finish', release);
-  res.once('close', release);
-  upload.single('file')(req, res, (error) => {
-    if (error) {
-      const status = error instanceof multer.MulterError ? (error.code === 'LIMIT_FILE_SIZE' ? 413 : 400) : error.statusCode || 400;
-      return res.status(status).json({ message: error.code === 'LIMIT_FILE_SIZE' ? 'Video exceeds the 25 MB upload limit.' : 'Invalid video upload. Use one supported video, consent and an optional request identifier.' });
-    }
-    next();
-  });
-}, analyzeVideo);
+router.post('/analyze', uploadLimiter, createCvUploadHandler(upload.single('file'), analyzeVideo));
 router.get('/status/:id', getVideoStatus);
 router.delete('/status/:id', deleteVideoResult);
 

@@ -15,6 +15,10 @@ def provision(output):
     if output.exists():
         if output.stat().st_size != MANIFEST["bytes"] or hashlib.sha256(output.read_bytes()).hexdigest() != MANIFEST["sha256"]:
             raise ValueError("Refusing to replace an existing different model file.")
+        # Existing pinned weights may have been provisioned with a restrictive
+        # umask by an older version. They are public model bytes, and the
+        # dedicated nonroot container must also be able to read this bind mount.
+        output.chmod(0o644)
         return output
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
