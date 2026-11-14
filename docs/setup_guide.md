@@ -71,6 +71,14 @@ verified by transport-mocked unit tests.
 
 ## Optional video worker
 
+Experimental provider-backed coaching is separate from the video worker. It is
+disabled by default. Only after reviewing provider access/privacy and evaluation,
+set `AI_COACHING_ENABLED=true` plus the chosen provider keys in `server/.env`.
+Without explicit opt-in the plan, match and nudge routes return unavailable; the
+ordinary published-coach directory and deterministic event brackets still work.
+Requests/outputs are validated and limited to five requests/account/15 minutes.
+No provider acceptance or coaching usefulness is established by mock tests.
+
 Follow [`cv-service/README.md`](../cv-service/README.md) to create its Python
 environment, install constrained requirements and supply a reviewed MediaPipe
 model file. Set the same server-only `CV_SERVICE_API_KEY` on Express and Python,
