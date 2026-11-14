@@ -86,8 +86,16 @@ async function tournamentTests() {
   console.log('PASS athlete registration request and duplicate-submit UI gate');await athlete.context.close();
 }
 async function videoTests() {
-  const {context,page}=await pageFor('athlete');let uploads=0;
-  await page.route('**/api/cv/analyze',async route=>{uploads++;assert.equal(route.request().headers().authorization,'Bearer fixture-api-token');await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Analysis is unavailable in this test fixture.'})});});
+  const {context,page}=await pageFor('athlete');let uploads=0;const requestIds=[];
+  let finishLateReply;const lateReply=new Promise(resolve=>{finishLateReply=resolve;});
+  await page.route('**/api/cv/analyze',async route=>{
+    uploads++;assert.equal(route.request().headers().authorization,'Bearer fixture-api-token');
+    const fields=route.request().postDataBuffer().toString('utf8');const match=fields.match(/name="requestId"\r\n\r\n([a-f\d-]{36})/i);assert.ok(match,'Upload must include its stable request UUID');requestIds.push(match[1]);
+    if(uploads===2)return route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({task_id:'51c48680-38ce-4cc4-9905-548b310cd5d1',status:'pending'})});
+    if(uploads===4){await new Promise(resolve=>setTimeout(resolve,1500));await route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({task_id:'51c48680-38ce-4cc4-9905-548b310cd5d1',status:'pending'})}).catch(()=>{});finishLateReply();return;}
+    return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Analysis is unavailable in this test fixture.'})});
+  });
+  await page.route('**/api/cv/status/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({task_id:'51c48680-38ce-4cc4-9905-548b310cd5d1',status:'failed',error:'Fixture analysis was interrupted.'})}));
   await page.goto(`${base}/kata`,{waitUntil:'domcontentloaded'});
   await visible(page.getByRole('button',{name:'Log out',exact:true}));
   await page.locator('#video-upload-input').setInputFiles({name:'fixture.mp4',mimeType:'video/mp4',buffer:Buffer.from('bounded UI fixture')});
@@ -97,7 +105,15 @@ async function videoTests() {
   await page.getByRole('checkbox',{name:/permission to upload/}).check();await analyze.click();
   await visible(page.getByText('Analysis is unavailable in this test fixture.'));assert.equal(uploads,1);
   assert.equal(await page.getByText(/Analysis completed/i).count(),0);
-  console.log('PASS video consent gate, authenticated upload and honest service error');await context.close();
+  await page.getByRole('button',{name:'Try Again',exact:true}).click();await visible(page.getByText('Fixture analysis was interrupted.',{exact:true}));
+  assert.equal(requestIds[1],requestIds[0],'Uncertain transport failure must retry the same accepted operation');
+  await page.getByRole('button',{name:'Try Again',exact:true}).click();await visible(page.getByText('Analysis is unavailable in this test fixture.',{exact:true}));
+  assert.notEqual(requestIds[2],requestIds[1],'Confirmed terminal failure must permit a new analysis operation');
+  await page.getByRole('button',{name:'Try Again',exact:true}).click();await visible(page.getByRole('heading',{name:'Analyzing Movement Technique',exact:true}));
+  await page.getByRole('button',{name:'Log out',exact:true}).click();await lateReply;
+  await visible(page.locator('#video-upload-input'));assert.equal(await page.getByRole('heading',{name:'Analyzing Movement Technique',exact:true}).count(),0);
+  assert.equal(await page.getByText('fixture.mp4',{exact:true}).count(),0);
+  console.log('PASS video consent, stable retry/new-job UUIDs, terminal failures and in-flight logout cleanup');await context.close();
 }
 async function responsiveTests() {
   const {context,page}=await pageFor();const pageErrors=[];
@@ -129,6 +145,6 @@ async function themeTests() {
 }
 (async()=>{
   await fs.mkdir(output,{recursive:true});browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
-  try{await recoveryTests();await tournamentTests();await videoTests();await responsiveTests();await themeTests();}
+  try{if(process.env.ATHLIX_E2E_SCOPE==='video'){await videoTests();}else{await recoveryTests();await tournamentTests();await videoTests();await responsiveTests();await themeTests();}}
   finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
