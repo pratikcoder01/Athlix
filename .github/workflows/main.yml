@@ -16,7 +16,9 @@ concurrency:
 jobs:
   javascript:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
+    env:
+      AUTH_API_ORIGIN: http://127.0.0.1:5000
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -60,6 +62,13 @@ jobs:
         run: npm run test
         env:
           TEST_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      - name: Firebase demo-emulator identity and recovery acceptance
+        timeout-minutes: 8
+        run: npx --yes firebase-tools@15.36.0 emulators:exec --project demo-athlix --only auth --config test/firebase.json "node --test server/test/firebase-emulator.integration.test.cjs"
+        env:
+          TEST_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+          FIREBASE_PROJECT_ID: demo-athlix
+          GCLOUD_PROJECT: demo-athlix
       - name: Build client and server
         run: npm run build
       - name: Install browser for isolated UI smoke tests
@@ -74,8 +83,14 @@ jobs:
           trap 'kill "$app_pid" 2>/dev/null || true' EXIT
           node -e 'const deadline=Date.now()+60000; (async()=>{while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3100");if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,500));}throw Error("Built client did not become ready");})().catch(e=>{console.error(e.message);process.exit(1)})'
           node client/test/e2e-smoke.cjs
+          node client/test/auth-proxy-e2e.cjs
           node client/test/booking-e2e.cjs
           node client/test/workspace-e2e.cjs
+          node client/test/academy-operations-e2e.cjs
+          node client/test/training-workspace-e2e.cjs
+          node client/test/tournament-divisions-e2e.cjs
+          node client/test/community-moderation-e2e.cjs
+          node client/test/accessibility-e2e.cjs
         env:
           ATHLIX_E2E_BASE_URL: http://127.0.0.1:3100
       - name: Development hydration diagnostics
@@ -103,7 +118,10 @@ jobs:
 
   python:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    env:
+      CV_SERVICE_API_KEY: athlix-ci-only-0123456789abcdef-not-a-production-credential
+      CV_MODEL_HOST_PATH: ${{ runner.temp }}/pose_landmarker_heavy.task
     defaults:
       run:
         working-directory: cv-service
@@ -128,3 +146,19 @@ jobs:
         run: python -m compileall -q main.py video_safety.py cv ai
       - name: Python service and scoring regressions
         run: python -m unittest discover -s tests -v
+      - name: Verify pinned model and actual native inference on generated video
+        timeout-minutes: 5
+        run: |
+          python provision_model.py --output "$CV_MODEL_PATH"
+          python native_smoke.py
+        env:
+          CV_MODEL_PATH: ${{ runner.temp }}/pose_landmarker_heavy.task
+      - name: Build and start isolated resource-limited video container
+        timeout-minutes: 10
+        run: docker compose -p athlix-cv-ci -f compose.yaml up --build --detach
+      - name: Verify container isolation, native job and restart persistence
+        timeout-minutes: 7
+        run: python container_smoke.py
+      - name: Remove isolated video test container and test volume
+        if: always()
+        run: docker compose -p athlix-cv-ci -f compose.yaml down --volumes --remove-orphans

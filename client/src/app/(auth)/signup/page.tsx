@@ -183,7 +183,7 @@ export default function SignupPage() {
           <motion.div variants={fadeIn} className="mt-8 flex items-center gap-2.5 p-3.5 rounded-xl bg-accent/5 border border-accent/20">
             <div className="flex -space-x-2">
               {['SC', 'MR', 'EW'].map((av, i) => (
-                <div key={i} className={cn('w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-black border-2 border-background', ['bg-orange-500', 'bg-blue-500', 'bg-green-500'][i])}>
+                <div key={i} className={cn('w-7 h-7 rounded-full flex items-center justify-center text-black text-[9px] font-black border-2 border-background', ['bg-orange-500', 'bg-blue-500', 'bg-green-500'][i])}>
                   {av}
                 </div>
               ))}
@@ -307,7 +307,7 @@ export default function SignupPage() {
                 disabled={isSubmitting}
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
               >
                 {isSubmitting ? (
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">

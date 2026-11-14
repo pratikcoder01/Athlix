@@ -66,7 +66,7 @@ export const Footer: React.FC = () => {
             transition={{ delay: 0.5, type: 'spring' }}
           >
             <Link href="/signup">
-              <MagneticButton size="lg" variant="premium">
+              <MagneticButton as="span" size="lg" variant="premium">
                 Get Started <ArrowRight className="ml-2 w-5 h-5" />
               </MagneticButton>
             </Link>

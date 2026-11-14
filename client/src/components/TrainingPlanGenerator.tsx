@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useState, memo } from 'react';
 import MagneticButton from './shared/MagneticButton';
 import { useAuthStore } from '../store/authStore';
 
@@ -43,58 +43,17 @@ function TrainingPlanGenerator() {
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [skeletonStage, setSkeletonStage] = useState(0);
-  const skeletonTimer = useRef<number>(0);
-
-  const getIntensityColor = (intensity: 'low' | 'medium' | 'high'): string => {
-    const colors = {
-      low: '#FF5A3D',
-      medium: '#FF8B68',
-      high: '#FF5A3D',
-    };
-    return colors[intensity] || '#ff6b35';
-  };
-
-  const generateDrills = (count: number): string[] => {
-    const drills = [
-      'Shadow Sparring - 3 rounds',
-      'Heavy Bag Work - 5 minutes',
-      'Footwork Drills - 10 minutes',
-      'Technical Drill - 15 minutes',
-      'Live Sparring - 3 rounds',
-      'Conditioning Circuits',
-      'Stretching & Mobility',
-      'Breathing Exercises',
-      'Video Review Session',
-    ];
-    return drills.slice(0, count);
-  };
-
-  const incrementSkeletonStage = () => {
-    if (skeletonStage < 3) {
-      setSkeletonStage(skeletonStage + 1);
-      skeletonTimer.current = window.setTimeout(incrementSkeletonStage, 1500);
-    } else {
-      clearTimeout(skeletonTimer.current);
-    }
-  };
-
-  useEffect(() => {
-    skeletonTimer.current = window.setTimeout(incrementSkeletonStage, 1500);
-    return () => clearTimeout(skeletonTimer.current);
-  }, [skeletonStage]);
 
   const handleFormSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!formData.discipline || !formData.trainingGoal) {
-      alert('Please fill in all required fields (Discipline and Training Goal)');
+      setError('Please fill in Discipline and Training Goal.');
       return;
     }
 
     setLoading(true);
     setError(null);
-    setSkeletonStage(0);
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -121,8 +80,7 @@ function TrainingPlanGenerator() {
 
       const data = await response.json();
       setPlan(data.plan);
-    } catch (err) {
-      console.error('Error generating plan:', err);
+    } catch {
       setError('Failed to generate training plan. Please try again.');
     } finally {
       setLoading(false);
@@ -190,6 +148,7 @@ function TrainingPlanGenerator() {
   return (
     <div className="bg-secondary border border-border rounded-sm p-6 sm:p-8 relative overflow-hidden shadow-xl">
       <div className="absolute inset-0 bracket-dots pointer-events-none opacity-40" />
+      {error && <p role="alert" className="relative z-10 mb-4 text-sm text-red-400">{error}</p>}
       
       <div className="relative z-10 mb-6 border-b border-border/40 pb-4">
         <h3 className="text-lg font-display font-black uppercase tracking-wide">AI TRAINING PLAN GENERATOR</h3>
@@ -266,12 +225,10 @@ function TrainingPlanGenerator() {
         <div className="relative z-10 flex flex-col items-center py-12 text-center">
           <div className="w-10 h-10 border-4 border-t-primary border-border rounded-full animate-spin mb-6" />
           <h4 className="text-sm font-display font-black tracking-wider uppercase mb-2">
-            {skeletonStage === 0 ? 'Analyzing your training history...' :
-             skeletonStage === 1 ? 'Assessing your goals and current level...' :
-             'Building your week...'}
+            Waiting for the plan service…
           </h4>
           <p className="text-text-secondary text-xs max-w-xs leading-relaxed">
-            Our AI coach is compiling drills tailored to your belt rank and schedule.
+            Your submitted discipline, goal and weekly availability are being sent for experimental suggestions. Review any plan with a qualified coach.
           </p>
         </div>
       )}

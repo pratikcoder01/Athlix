@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Trophy } from 'lucide-react';
@@ -193,7 +194,7 @@ const AthleteSlot: React.FC<{
           }`}
         >
           {athlete.avatar.startsWith('/') ? (
-            <img src={athlete.avatar} alt={athlete.name} className="w-full h-full object-cover" />
+            <Image src={athlete.avatar} alt={athlete.name} width={24} height={24} className="w-full h-full object-cover" />
           ) : (
             athlete.avatar
           )}
@@ -485,7 +486,7 @@ export default function InteractiveBracketSimulator() {
             <div key={ath.id} className="bg-surface/60 border border-border/80 p-2.5 rounded-sm flex flex-col items-center text-center">
               <div className="w-10 h-10 rounded-full overflow-hidden mb-2 bg-secondary border border-border flex items-center justify-center">
                 {ath.avatar.startsWith('/') ? (
-                  <img src={ath.avatar} alt={ath.name} className="w-full h-full object-cover" />
+                  <Image src={ath.avatar} alt={ath.name} width={40} height={40} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-[10px] font-mono font-bold text-text-secondary">{ath.avatar}</span>
                 )}
