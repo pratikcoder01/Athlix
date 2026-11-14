@@ -71,7 +71,7 @@ test('apply scopes role compare-and-set, audit and inactive coach creation to th
   assert.equal(session.withTransaction.mock.callCount(), 1);
   assert.deepEqual(update.mock.calls[0].arguments, [
     { _id: options.userId, role: 'athlete', isActive: true },
-    { $set: { role: 'coach' } }, { new: true, runValidators: true, session },
+    { $set: { role: 'coach' }, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true, session },
   ]);
   assert.deepEqual(audit.mock.calls[0].arguments, [[{
     userId: options.userId, previousRole: 'athlete', nextRole: 'coach', operator: options.operator, reason: options.reason,

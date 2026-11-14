@@ -56,7 +56,7 @@ export const provisionRole = async (input: RoleProvisioningOptions) => {
     await session.withTransaction(async () => {
       const changed = await User.findOneAndUpdate(
         { _id: options.userId, role: options.expectedRole, isActive: true },
-        { $set: { role: options.role } },
+        { $set: { role: options.role }, $inc: { sessionVersion: 1 } },
         { new: true, runValidators: true, session }
       );
       if (!changed) throw new Error('Account changed concurrently; no role change committed');

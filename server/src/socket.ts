@@ -1,20 +1,22 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import jwt, { JwtPayload } from 'jsonwebtoken';
 import { User } from './models/User';
 import { Tournament } from './models/Tournament';
 import { getJwtSecret } from './config/jwt';
 import { createOriginPolicy } from './config/cors';
+import { sessionExists, sessionVersion, verifyAccessToken } from './utils/sessions';
 
 interface SocketAccount {
   id: string;
   isActive: boolean;
+  sessionVersion?: number;
 }
 
 interface RealtimeDependencies {
   getSecret: () => string;
   findAccount: (id: string) => Promise<SocketAccount | null>;
   tournamentExists: (id: string) => Promise<boolean>;
+  sessionExists: (id: string, userId: string, version: number) => Promise<boolean>;
   environment: NodeJS.ProcessEnv;
 }
 
@@ -25,10 +27,11 @@ const MAX_TIMER_MS = 2_147_483_647;
 const dependencies: RealtimeDependencies = {
   getSecret: getJwtSecret,
   findAccount: async (id) => {
-    const account = await User.findById(id).select('_id isActive').lean();
-    return account ? { id: account._id.toString(), isActive: account.isActive === true } : null;
+    const account = await User.findById(id).select('_id isActive sessionVersion').lean();
+    return account ? { id: account._id.toString(), isActive: account.isActive === true, sessionVersion: account.sessionVersion } : null;
   },
   tournamentExists: async (id) => Boolean(await Tournament.exists({ _id: id })),
+  sessionExists,
   environment: process.env,
 };
 
@@ -48,16 +51,14 @@ export const createRealtimeServer = (server: HttpServer, overrides: Partial<Real
       if (typeof token !== 'string' || !token || token.length > 8192) {
         throw new Error('Invalid token');
       }
-      const decoded = jwt.verify(token, services.getSecret(), { algorithms: ['HS256'] }) as JwtPayload;
-      if (typeof decoded !== 'object' || typeof decoded.id !== 'string' ||
-          !objectIdPattern.test(decoded.id) || typeof decoded.exp !== 'number' ||
-          !Number.isFinite(decoded.exp)) {
-        throw new Error('Invalid token');
-      }
+      const decoded = verifyAccessToken(token, services.getSecret());
       const account = await services.findAccount(decoded.id);
-      if (!account || !account.isActive) throw new Error('Account unavailable');
+      if (!account || !account.isActive || sessionVersion(account) !== decoded.ver ||
+          !await services.sessionExists(decoded.sid, decoded.id, decoded.ver)) throw new Error('Account unavailable');
       socket.data.userId = account.id;
       socket.data.expiresAt = decoded.exp * 1000;
+      socket.data.sessionId = decoded.sid;
+      socket.data.sessionVersion = decoded.ver;
       next();
     } catch {
       // Do not disclose account existence, database errors, or token contents.
@@ -82,7 +83,8 @@ export const createRealtimeServer = (server: HttpServer, overrides: Partial<Real
     const isStillActive = async (): Promise<boolean> => {
       if (Date.now() >= socket.data.expiresAt) return false;
       const account = await services.findAccount(userId);
-      return Boolean(account?.isActive);
+      return Boolean(account?.isActive && sessionVersion(account) === socket.data.sessionVersion &&
+        await services.sessionExists(socket.data.sessionId, userId, socket.data.sessionVersion));
     };
     // Recheck account disabling for long-lived connections, including passive readers.
     let revalidating = false;

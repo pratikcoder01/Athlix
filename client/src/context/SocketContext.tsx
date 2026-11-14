@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
+import { loadNotifications, markAllNotificationsRead } from '../lib/trainingApi';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,8 @@ export interface NotificationItem {
   type: 'booking' | 'social' | 'tournament' | 'system';
   message: string;
   createdAt: string;
+  read?: boolean;
+  link?: string;
 }
 
 export interface BookingUpdate {
@@ -33,9 +36,10 @@ interface SocketContextProps {
   socket: Socket | null;
   notifications: NotificationItem[];
   unreadCount: number;
+  notificationError: string;
   bookingUpdates: BookingUpdate[];
   newPosts: NewPost[];
-  markAllRead: () => void;
+  markAllRead: () => Promise<void>;
   clearBookingUpdates: () => void;
   clearNewPosts: () => void;
 }
@@ -46,9 +50,10 @@ const SocketContext = createContext<SocketContextProps>({
   socket: null,
   notifications: [],
   unreadCount: 0,
+  notificationError: '',
   bookingUpdates: [],
   newPosts: [],
-  markAllRead: () => {},
+  markAllRead: async () => {},
   clearBookingUpdates: () => {},
   clearNewPosts: () => {},
 });
@@ -64,6 +69,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationError, setNotificationError] = useState('');
   const [bookingUpdates, setBookingUpdates] = useState<BookingUpdate[]>([]);
   const [newPosts, setNewPosts] = useState<NewPost[]>([]);
 
@@ -72,6 +78,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSocket(null);
     setNotifications([]);
     setUnreadCount(0);
+    setNotificationError('');
     setBookingUpdates([]);
     setNewPosts([]);
     if (!userId || !token) return;
@@ -90,11 +97,25 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn('Socket.io connection error:', err.message);
     });
 
-    // ── Real-time notification ──────────────────────────────────────────────
-    newSocket.on('notification', (notification: NotificationItem) => {
-      setNotifications((prev) => [notification, ...prev].slice(0, 50)); // cap at 50
-      setUnreadCount((c) => c + 1);
-    });
+    // Socket events are refresh hints. The database owns inbox contents/counts,
+    // including events received while this browser was disconnected.
+    let notificationRequest: AbortController | undefined;
+    const refreshNotifications = () => {
+      notificationRequest?.abort();
+      const controller = new AbortController(); notificationRequest = controller;
+      loadNotifications(token, 1, false, controller.signal).then(result => {
+        if (controller.signal.aborted) return;
+        setNotifications(result.notifications.map(item => ({ ...item, id: item._id })));
+        setUnreadCount(result.unreadCount); setNotificationError('');
+      }).catch(error => {
+        if (!controller.signal.aborted) setNotificationError(error instanceof Error ? error.message : 'Notification records are unavailable');
+      });
+    };
+    refreshNotifications();
+    newSocket.on('notification', refreshNotifications);
+    newSocket.on('connect', refreshNotifications);
+    window.addEventListener('focus', refreshNotifications);
+    window.addEventListener('athlix:notifications-updated', refreshNotifications);
 
     // ── Booking accepted / rejected / completed ────────────────────────────
     newSocket.on('booking_update', (update: BookingUpdate) => {
@@ -109,13 +130,18 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSocket(newSocket);
 
     return () => {
+      notificationRequest?.abort();
+      window.removeEventListener('focus', refreshNotifications);
+      window.removeEventListener('athlix:notifications-updated', refreshNotifications);
       newSocket.disconnect();
     };
   }, [userId, token]);
 
-  const markAllRead = useCallback(() => {
-    setUnreadCount(0);
-  }, []);
+  const markAllRead = useCallback(async () => {
+    if (!token) return;
+    try { await markAllNotificationsRead(token); }
+    catch (error) { setNotificationError(error instanceof Error ? error.message : 'Unable to update notifications'); throw error; }
+  }, [token]);
 
   const clearBookingUpdates = useCallback(() => {
     setBookingUpdates([]);
@@ -131,6 +157,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         socket,
         notifications,
         unreadCount,
+        notificationError,
         bookingUpdates,
         newPosts,
         markAllRead,

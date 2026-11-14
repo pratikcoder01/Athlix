@@ -3,6 +3,7 @@ const { once } = require('node:events');
 const http = require('node:http');
 const { test } = require('node:test');
 const jwt = require('jsonwebtoken');
+const { accessToken } = require('./helpers/sessionTokens.cjs');
 const { io: connect } = require('socket.io-client');
 const { createRealtimeServer } = require('../dist/socket');
 const { createOriginPolicy } = require('../dist/config/cors');
@@ -11,7 +12,7 @@ const secret = 'test-socket-secret-used-only-in-automated-tests';
 const aliceId = 'aaaaaaaaaaaaaaaaaaaaaaaa';
 const bobId = 'bbbbbbbbbbbbbbbbbbbbbbbb';
 const tournamentId = 'cccccccccccccccccccccccc';
-const tokenFor = (id, options = {}) => jwt.sign({ id }, secret, { expiresIn: '5m', ...options });
+const tokenFor = (id, options = {}) => accessToken(id, secret, { expiresIn: '5m', ...options });
 
 async function fixture(t, options = {}) {
   const accounts = new Map([
@@ -23,6 +24,7 @@ async function fixture(t, options = {}) {
     getSecret: () => secret,
     findAccount: async (id) => accounts.get(id) || null,
     tournamentExists: async (id) => id === tournamentId,
+    sessionExists: async () => true,
     environment: { NODE_ENV: 'production', ALLOWED_ORIGIN: 'https://athlix.example' },
     ...options,
   });
@@ -117,6 +119,22 @@ test('handshake rejects deleted/disabled users and masks persistence failures', 
   assert.equal(error.message, 'Not authorized');
 });
 
+test('handshake rejects revoked session records and globally revoked account versions', async t => {
+  const missing = await fixture(t, { sessionExists: async () => false });
+  assert.equal((await once(missing.open(tokenFor(aliceId)), 'connect_error', { signal: AbortSignal.timeout(4000) }))[0].message, 'Not authorized');
+  const current = await fixture(t); current.accounts.set(aliceId, { id: aliceId, isActive: true, sessionVersion: 1 });
+  assert.equal((await once(current.open(tokenFor(aliceId)), 'connect_error', { signal: AbortSignal.timeout(4000) }))[0].message, 'Not authorized');
+  const fresh = await connected(current.open(accessToken(aliceId, secret, {}, { ver: 1 }))); assert.equal(fresh.connected, true);
+});
+
+test('session revocation after connect rejects further subscription and disconnects', async t => {
+  let available = true;
+  const f = await fixture(t, { sessionExists: async () => available });
+  const client = await connected(f.open(tokenFor(aliceId))); available = false;
+  const disconnected = once(client, 'disconnect', { signal: AbortSignal.timeout(2000) });
+  assert.equal((await subscribe(client, tournamentId)).success, false); await disconnected; assert.equal(client.connected, false);
+});
+
 test('personal room identity comes from the JWT; cross-account notifications remain inaccessible', async (t) => {
   const { io, open } = await fixture(t);
   const alice = await connected(open(tokenFor(aliceId)));
@@ -167,7 +185,7 @@ test('account disabling revokes subsequent subscriptions and disconnects the cli
 
 test('existing connections disconnect when their JWT expires', async (t) => {
   const { open } = await fixture(t);
-  const token = jwt.sign({ id: aliceId, exp: Math.floor(Date.now() / 1000) + 2 }, secret);
+  const token = accessToken(aliceId, secret, { expiresIn: 2 });
   const alice = await connected(open(token));
   await once(alice, 'disconnect', { signal: AbortSignal.timeout(4000) });
   assert.equal(alice.connected, false);

@@ -4,11 +4,13 @@ import { IUserDocument } from '../models/User';
 
 export interface AuthenticatedRequest extends Request {
   user?: IUserDocument;
+  sessionId?: string;
   file?: any;
   files?: any;
 }
 
 export interface IUser {
+  sessionVersion?: number;
   name: string;
   email?: string;           // optional — phone-OTP users may not have email
   phone?: string;           // optional — set for phone-OTP sign-in users
@@ -63,6 +65,10 @@ export interface IAcademy {
   schedule?: string;
   gallery?: string[];
   membersCount?: number;
+  isPublished?: boolean;
+  archivedAt?: Date | null;
+  version?: number;
+  operationsRevision?: number;
 }
 
 export interface ISeed {
@@ -101,6 +107,19 @@ export interface ITournament {
   organizerId: Types.ObjectId;
   registrations?: Types.ObjectId[];
   brackets?: IBracket;
+  divisions?: ITournamentDivision[];
+  divisionCancellations?: Array<{ key: string; title: string; reason: string; cancelledAt: Date; cancelledBy: Types.ObjectId }>;
+  status: 'upcoming' | 'ongoing' | 'completed';
+}
+
+export interface ITournamentDivision {
+  key: string;
+  title: string;
+  discipline: string;
+  eligibilityNotes: string;
+  capacity: number;
+  registrations: Types.ObjectId[];
+  brackets?: IBracket;
   status: 'upcoming' | 'ongoing' | 'completed';
 }
 
@@ -111,12 +130,21 @@ export interface IPost {
   mediaType?: 'image' | 'video' | 'none';
   likes?: Types.ObjectId[];
   commentsCount?: number;
+  visibility?: 'visible' | 'hidden' | 'deleted';
+  version?: number;
+  interactionRevision?: number;
+  hiddenAt?: Date;
+  hiddenBy?: Types.ObjectId;
 }
 
 export interface IComment {
   authorId: Types.ObjectId;
   postId: Types.ObjectId;
   content: string;
+  visibility?: 'visible' | 'hidden' | 'deleted';
+  version?: number;
+  hiddenAt?: Date;
+  hiddenBy?: Types.ObjectId;
 }
 
 export interface IBooking {

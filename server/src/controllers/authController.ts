@@ -1,18 +1,9 @@
 import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
-import { Profile } from '../models/Profile';
 import { AuthenticatedRequest } from '../types';
 import { registerSchema } from '../utils/validation';
 
-import { getJwtSecret } from '../config/jwt';
-
-// Generate JWT token helper
-const generateToken = (id: any): string => {
-  return jwt.sign({ id }, getJwtSecret(), {
-    expiresIn: '30d',
-  });
-};
+import { buildAuthUser, ensureBaseProfile, establishSession } from '../utils/sessions';
 
 // @desc    Register a new athlete; privileged roles require trusted provisioning.
 // @route   POST /api/auth/register
@@ -42,26 +33,8 @@ export const register = async (req: AuthenticatedRequest, res: Response, next: N
     });
 
     // 2. Create basic athlete/user profile
-    const profile = await Profile.create({
-      userId: user._id,
-      discipline: discipline || 'BJJ',
-      beltRank: beltRank || 'White',
-    });
-
-    res.status(201).json({
-      success: true,
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileImage: profile.profileImage || '',
-        bio: profile.bio || '',
-        discipline: profile.discipline,
-        beltRank: profile.beltRank,
-      },
-    });
+    const profile = await ensureBaseProfile(user._id, discipline || 'BJJ', beltRank || 'White');
+    res.status(201).json(await establishSession(req, res, user, profile));
   } catch (error) {
     next(error);
   }
@@ -75,29 +48,20 @@ export const login = async (req: AuthenticatedRequest, res: Response, next: Next
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+    if (user?.firebaseUid) {
+      // Once linked, recovery and revocation belong to Firebase. Keeping the
+      // older bcrypt password as an alternate login would bypass that policy.
+      return res.status(401).json({ success: false, message: 'Invalid email or password. Use your linked Firebase account when applicable.' });
+    }
     if (!user || user.isActive !== true || !(await user.matchPassword(password))) {
-      const err: any = new Error('Invalid email or password');
+      const err: any = new Error('Invalid email or password. Use your linked Firebase account when applicable.');
       err.statusCode = 401;
       return next(err);
     }
 
     // Resolve profile details
-    const profile = await Profile.findOne({ userId: user._id });
-
-    res.status(200).json({
-      success: true,
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileImage: profile?.profileImage || '',
-        bio: profile?.bio || '',
-        discipline: profile?.discipline || 'BJJ',
-        beltRank: profile?.beltRank || 'White',
-      },
-    });
+    const profile = await ensureBaseProfile(user._id);
+    res.status(200).json(await establishSession(req, res, user, profile));
   } catch (error) {
     next(error);
   }
@@ -111,19 +75,10 @@ export const getMe = async (req: AuthenticatedRequest, res: Response, next: Next
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
-    const profile = await Profile.findOne({ userId: req.user._id });
+    const profile = await ensureBaseProfile(req.user._id);
     res.status(200).json({
       success: true,
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
-        profileImage: profile?.profileImage || '',
-        bio: profile?.bio || '',
-        discipline: profile?.discipline || 'BJJ',
-        beltRank: profile?.beltRank || 'White',
-      },
+      user: buildAuthUser(req.user, profile),
     });
   } catch (error) {
     next(error);

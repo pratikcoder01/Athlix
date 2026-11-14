@@ -2,11 +2,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Sun, Moon, Menu, X, LogOut, Bell } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { logoutSession } from '../../lib/authSession';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSocket } from '../../context/SocketContext';
@@ -45,14 +47,16 @@ const NavLink = ({
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const { logout, isAuthenticated } = useAuthStore();
-  const { notifications, unreadCount, markAllRead } = useSocket();
+  const { user, isAuthenticated } = useAuthStore();
+  const { unreadCount, notificationError } = useSocket();
   const { theme, toggleTheme } = useThemeStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
-  const notifRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -60,28 +64,35 @@ export const Navbar: React.FC = () => {
   });
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const menuButton = menuButtonRef.current;
+    document.body.style.overflow = 'hidden';
+    drawerRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setIsOpen(false); return; }
+      if (event.key !== 'Tab') return;
+      const items = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])') || []);
+      const first = items[0]; const last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
-    if (notifOpen) document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [notifOpen]);
+    document.addEventListener('keydown', handleKey);
+    return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = previousOverflow; menuButton?.focus(); };
+  }, [isOpen]);
 
   const handleLogout = async () => {
-    try { await signOut(auth); } catch { /* ignore */ }
-    logout();
+    setSigningOut(true); setLogoutError('');
+    try { await logoutSession(); await signOut(auth); setIsOpen(false); }
+    catch (error) { setLogoutError(error instanceof Error ? error.message : 'Sign-out could not be confirmed. Please retry.'); }
+    finally { setSigningOut(false); }
   };
 
   const navLinks = [
-    { name: 'Product', href: '/features' },
     { name: 'Coaches', href: '/coaches' },
-    { name: 'Find Gyms', href: '/gyms' },
+    { name: 'Academies', href: '/academies' },
     { name: 'Kata Analyzer', href: '/kata' },
     { name: 'Tournaments', href: '/tournaments' },
-    { name: 'Academy Hub', href: '/organizer' },
-    { name: 'Pricing', href: '/pricing' },
   ];
 
   const isActive = (path: string) => pathname === path;
@@ -106,7 +117,7 @@ export const Navbar: React.FC = () => {
                 whileHover={{ x: '100%' }}
                 transition={{ duration: 0.5 }}
               />
-              <img src="/logo.png" alt="Athlix Logo" className="w-full h-full object-contain" />
+              <Image src="/logo.png" alt="Athlix Logo" width={32} height={32} className="w-full h-full object-contain" />
             </div>
             <span className="text-xl font-bold tracking-tight text-primary">
               Athlix
@@ -144,51 +155,23 @@ export const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
-                <div className="relative" ref={notifRef}>
-                  <button
-                    aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
-                    aria-expanded={notifOpen}
-                    onClick={() => { setNotifOpen((v) => !v); if (!notifOpen) markAllRead(); }}
+                <Link href="/notifications"
+                    aria-label={`Notifications${!notificationError && unreadCount ? `, ${unreadCount} unread` : ''}`}
+                    title={notificationError ? 'Notification count unavailable. Open inbox to retry.' : 'Open saved notifications'}
                     className="p-2 text-text-secondary hover:text-text-primary transition-colors rounded-full hover:bg-surface relative"
                   >
                     <Bell className="h-4 w-4" />
-                    {unreadCount > 0 && (
+                    {!notificationError && unreadCount > 0 && (
                       <span className="absolute top-1 right-1 h-2 w-2 bg-accent rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,148,0.8)]" />
                     )}
-                  </button>
-                  <AnimatePresence>
-                    {notifOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-2 w-80 glass-panel-strong rounded-2xl shadow-xl overflow-hidden"
-                      >
-                        <div className="p-4 border-b border-border flex justify-between items-center">
-                          <h4 className="text-sm font-semibold">Notifications</h4>
-                        </div>
-                        <div className="max-h-[300px] overflow-y-auto p-2">
-                          {notifications.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-text-tertiary">All caught up!</div>
-                          ) : (
-                            notifications.map(n => (
-                              <div key={n.id} className="p-3 mb-1 rounded-xl bg-surface border border-border text-sm">
-                                {n.message}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                </Link>
 
                 <Link href="/dashboard">
-                  <MagneticButton variant="outline" size="sm">
+                  <MagneticButton as="span" variant="outline" size="sm">
                     Console
                   </MagneticButton>
                 </Link>
-                <button onClick={handleLogout} className="p-2 text-text-tertiary hover:text-danger transition-colors" aria-label="Log out">
+                <button disabled={signingOut} onClick={() => { void handleLogout(); }} className="p-2 text-text-tertiary hover:text-danger transition-colors disabled:opacity-40" aria-label="Log out">
                   <LogOut className="h-4 w-4" />
                 </button>
               </div>
@@ -198,7 +181,7 @@ export const Navbar: React.FC = () => {
                   Log in
                 </Link>
                 <Link href="/signup">
-                  <MagneticButton variant="premium" size="sm">
+                  <MagneticButton as="span" variant="premium" size="sm">
                     Get Started
                   </MagneticButton>
                 </Link>
@@ -211,23 +194,25 @@ export const Navbar: React.FC = () => {
             <button onClick={toggleTheme} className="p-2 text-text-secondary" aria-label="Toggle theme">
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-            <button onClick={() => setIsOpen(true)} className="p-2 text-primary" aria-label="Open menu">
+            <button ref={menuButtonRef} onClick={() => setIsOpen(true)} aria-expanded={isOpen} aria-controls="athlix-mobile-menu" className="p-2 text-primary" aria-label="Open menu">
               <Menu className="h-6 w-6" />
             </button>
           </div>
 
         </div>
       </div>
+      {logoutError && <p role="alert" className="mx-auto max-w-7xl border border-danger/40 bg-background px-4 py-3 text-sm text-danger">{logoutError}</p>}
 
       {/* Mobile Drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            id="athlix-mobile-menu" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu"
             initial={{ opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 w-full sm:w-80 glass-panel-strong border-l border-border z-[100] flex flex-col p-6"
+            className="fixed inset-y-0 right-0 w-full sm:w-80 glass-panel-strong border-l border-border z-[100] flex flex-col overflow-y-auto p-6"
           >
             <div className="flex justify-between items-center mb-8">
               <span className="text-xl font-bold">Menu</span>
@@ -255,10 +240,15 @@ export const Navbar: React.FC = () => {
             <div className="mt-auto pt-8 flex flex-col gap-4">
               {isAuthenticated ? (
                 <>
+                  <Link href="/training" onClick={() => setIsOpen(false)}>Training history</Link>
+                  <Link href="/bookings" onClick={() => setIsOpen(false)}>My sessions</Link>
+                  <Link href="/feed" onClick={() => setIsOpen(false)}>Community</Link>
+                  <Link href="/notifications" onClick={() => setIsOpen(false)}>Notifications{!notificationError && unreadCount > 0 ? ` (${unreadCount})` : ''}</Link>
+                  {user?.role === 'coach' && <Link href="/clients" onClick={() => setIsOpen(false)}>My clients</Link>}
                   <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                    <MagneticButton variant="premium" className="w-full">Go to Console</MagneticButton>
+                    <MagneticButton as="span" variant="premium" className="w-full">Go to Console</MagneticButton>
                   </Link>
-                  <button onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full py-4 text-danger font-medium">
+                  <button disabled={signingOut} onClick={() => { void handleLogout(); }} className="w-full py-4 text-danger font-medium disabled:opacity-40">
                     Log out
                   </button>
                 </>
@@ -268,7 +258,7 @@ export const Navbar: React.FC = () => {
                     Log in
                   </Link>
                   <Link href="/signup" onClick={() => setIsOpen(false)}>
-                    <MagneticButton variant="premium" className="w-full">Get Started</MagneticButton>
+                    <MagneticButton as="span" variant="premium" className="w-full">Get Started</MagneticButton>
                   </Link>
                 </>
               )}

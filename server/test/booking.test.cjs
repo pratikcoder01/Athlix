@@ -1,7 +1,9 @@
 const assert = require('node:assert/strict');
-const { test, before, after, afterEach, mock } = require('node:test');
+const { test, before, after, beforeEach, afterEach, mock } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { AuthSession } = require('../dist/models/AuthSession.js');
+const { accessToken } = require('./helpers/sessionTokens.cjs');
 const mongoose = require('mongoose');
 const { User } = require('../dist/models/User.js');
 const { CoachProfile } = require('../dist/models/CoachProfile.js');
@@ -52,9 +54,10 @@ before(async () => {
 });
 after(() => new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
 afterEach(() => { mock.restoreAll(); emitted.length = 0; });
+beforeEach(() => mock.method(AuthSession, 'exists', async () => ({ _id: 'test-session' })));
 
 async function request(path, body, actor = athleteId, method = 'POST') {
-  const token = jwt.sign({ id: actor }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = accessToken(actor, process.env.JWT_SECRET);
   const response = await fetch(`${base}${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   return { status: response.status, body: await response.json() };
 }

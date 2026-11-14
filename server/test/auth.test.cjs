@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { test, before, after, afterEach, mock } = require('node:test');
+const { test, before, after, beforeEach, afterEach, mock } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
@@ -12,6 +12,8 @@ require.cache[firebaseModule] = { id: firebaseModule, filename: firebaseModule, 
 
 const { User } = require('../dist/models/User.js');
 const { Profile } = require('../dist/models/Profile.js');
+const { AuthSession } = require('../dist/models/AuthSession.js');
+const { accessToken } = require('./helpers/sessionTokens.cjs');
 const { CoachProfile } = require('../dist/models/CoachProfile.js');
 const { register } = require('../dist/controllers/authController.js');
 const router = require('../dist/routes/authRoutes.js').default;
@@ -30,6 +32,11 @@ before(async () => {
 });
 after(() => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())));
 afterEach(() => mock.restoreAll());
+beforeEach(() => {
+  mock.method(AuthSession.prototype, 'save', async function () { return this; });
+  mock.method(AuthSession, 'exists', async () => ({ _id: 'test-session' }));
+  mock.method(Profile, 'findOneAndUpdate', async () => ({}));
+});
 
 const athleteId = '507f1f77bcf86cd799439011';
 const privilegedRoles = ['coach', 'academy_owner', 'tournament_organizer', 'admin'];
@@ -198,6 +205,14 @@ test('legacy login preserves a trusted active admin role', async () => {
   assert.equal(result.body.user.role, 'admin');
 });
 
+test('linked Firebase accounts cannot retain an older bcrypt login after provider recovery', async () => {
+  const password = mock.fn(async () => true);
+  mock.method(User, 'findOne', async () => account({ firebaseUid: identity.uid, matchPassword: password }));
+  const result = await post('/auth/login', { email: signup.email, password: signup.password });
+  assert.equal(result.status, 401); assert.match(result.body.message, /linked Firebase/);
+  assert.equal(result.body.token, undefined); assert.equal(password.mock.callCount(), 0);
+});
+
 for (const token of [
   jwt.sign({ id: athleteId }, process.env.JWT_SECRET, { algorithm: 'HS384', expiresIn: '1h' }),
   jwt.sign({ id: athleteId }, process.env.JWT_SECRET),
@@ -214,7 +229,7 @@ for (const token of [
 
 test('protected routes reject inactive users on every request', async () => {
   mock.method(User, 'findById', () => ({ select: async () => account({ isActive: false }) }));
-  const token = jwt.sign({ id: athleteId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = accessToken(athleteId, process.env.JWT_SECRET);
   const response = await fetch(`${base}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(response.status, 401);
 });
@@ -222,7 +237,7 @@ test('protected routes reject inactive users on every request', async () => {
 test('protected routes use current database role for an active token owner', async () => {
   mock.method(User, 'findById', () => ({ select: async () => account({ role: 'athlete' }) }));
   mock.method(Profile, 'findOne', async () => ({}));
-  const token = jwt.sign({ id: athleteId, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = accessToken(athleteId, process.env.JWT_SECRET, {}, { role: 'admin' });
   const response = await fetch(`${base}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(response.status, 200);
   assert.equal((await response.json()).user.role, 'athlete');

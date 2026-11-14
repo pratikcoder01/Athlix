@@ -2,6 +2,10 @@ export const hasMinimumSecretStrength = (secret: string) => secret.length >= 32 
 
 export function validateRuntimeConfig(environment: NodeJS.ProcessEnv = process.env) {
   const production = environment.NODE_ENV === 'production';
+  const cookieSameSite = environment.AUTH_COOKIE_SAME_SITE || 'lax';
+  if (!['lax', 'strict', 'none'].includes(cookieSameSite) || (cookieSameSite === 'none' && !production)) {
+    throw new Error('AUTH_COOKIE_SAME_SITE must be lax/strict, or none only with production HTTPS');
+  }
   const portText = environment.PORT || '5000';
   if (!/^\d+$/.test(portText) || Number(portText) > 65535 || Number(portText) < (production ? 1 : 0)) {
     throw new Error('PORT must be a valid listening port');

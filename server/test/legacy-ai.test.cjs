@@ -2,6 +2,8 @@ const assert = require('node:assert/strict');
 const { test, before, after, afterEach, mock } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { AuthSession } = require('../dist/models/AuthSession.js');
+const { accessToken } = require('./helpers/sessionTokens.cjs');
 const { Types } = require('mongoose');
 const { User } = require('../dist/models/User');
 const { Profile } = require('../dist/models/Profile');
@@ -42,9 +44,9 @@ async function invoke(name, body = {}, account = actor) {
 }
 function enabled() { process.env.AI_COACHING_ENABLED = 'true'; }
 function roster(records = [publicCoach]) { return mock.method(CoachProfile,'aggregate',() => ({ exec: async () => records })); }
-function authenticate() { mock.method(User,'findById',id => ({ select: async () => ({ ...actor,_id:new Types.ObjectId(id) }) })); }
+function authenticate() { mock.method(AuthSession,'exists',async () => ({_id:'test-session'}));mock.method(User,'findById',id => ({ select: async () => ({ ...actor,_id:new Types.ObjectId(id) }) })); }
 async function post(path, body, id = actorId) {
-  const token=jwt.sign({id},process.env.JWT_SECRET,{expiresIn:'1h'});
+  const token=accessToken(id,process.env.JWT_SECRET);
   const response=await fetch(`${base}/ai${path}`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
   return {response,body:await response.json()};
 }

@@ -77,7 +77,7 @@ test('academy search is literal, owner-scoped and bounded; public projection exc
 });
 
 test('academy detail validates identifiers and returns 404 for absent records', async () => {
-  const find = mock.method(Academy, 'findById', () => ({ select() { return this; }, populate: async () => null }));
+  const find = mock.method(Academy, 'findOne', () => ({ select() { return this; }, populate: async () => null }));
   let result = await invoke(academy.getAcademyById, { params: { id: 'not-an-id' } });
   assert.equal(result.res.code, 400); assert.equal(find.mock.callCount(), 0);
   result = await invoke(academy.getAcademyById, { params: { id } }); assert.equal(result.res.code, 404);

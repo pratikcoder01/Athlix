@@ -16,6 +16,9 @@ import tournamentRoutes from './routes/tournamentRoutes';
 import postRoutes from './routes/postRoutes';
 import aiRoutes from './routes/aiRoutes';
 import cvRoutes from './routes/cvRoutes';
+import trainingRoutes from './routes/trainingRoutes';
+import coachClientRoutes from './routes/coachClientRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 const app = express();
 const proxyHops = process.env.TRUST_PROXY_HOPS || '0';
@@ -33,7 +36,8 @@ app.use(
   cors({
     origin: originPolicy.origin,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-ATHLIX-Session'],
+    credentials: true,
     exposedHeaders: ['X-Request-ID'],
   })
 );
@@ -53,6 +57,9 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/cv', cvRoutes);
+app.use('/api/training', trainingRoutes);
+app.use('/api/coach-clients', coachClientRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Fallback 404 handler
 app.use('*', (req, res, next) => {

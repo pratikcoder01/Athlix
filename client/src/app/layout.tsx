@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '../context/QueryProvider';
+import AuthSessionProvider from '../context/AuthSessionProvider';
 import SocketProvider from '../context/SocketContext';
 import ThemeProvider from '../components/shared/ThemeProvider';
 import SmoothScrollProvider from '../components/shared/SmoothScrollProvider';
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="en" className={cn('dark', inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans text-text-primary antialiased selection:bg-accent selection:text-black" suppressHydrationWarning>
         <QueryProvider>
+          <AuthSessionProvider>
           <SocketProvider>
             <ThemeProvider>
               <SmoothScrollProvider>
@@ -52,6 +54,7 @@ export default function RootLayout({
               </SmoothScrollProvider>
             </ThemeProvider>
           </SocketProvider>
+          </AuthSessionProvider>
         </QueryProvider>
       </body>
     </html>

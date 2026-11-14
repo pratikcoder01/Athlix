@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { chromium } = require('playwright');
+const { installSession } = require('./helpers/auth-fixture.cjs');
 const base = process.env.ATHLIX_E2E_BASE_URL || 'http://127.0.0.1:3100';
 if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(base).hostname)) throw new Error('Use an isolated loopback app');
 const athleteId = '507f1f77bcf86cd799439011';
@@ -23,9 +24,7 @@ let browser;
 
 async function pageFor(role, colorScheme = 'light') {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'en-US', timezoneId: 'Asia/Kolkata', reducedMotion: 'reduce', colorScheme });
-  await context.addInitScript(({ role, id }) => localStorage.setItem('athlix-auth', JSON.stringify({ state: {
-    user: { id, name: 'Fixture User', email: 'fixture@example.test', role }, token: 'booking-fixture-token', isAuthenticated: true,
-  }, version: 0 })), { role, id: role === 'coach' ? coachId : athleteId });
+  await installSession(context, { id: role === 'coach' ? coachId : athleteId, name: 'Fixture User', email: 'fixture@example.test', role }, 'booking-fixture-token');
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   await page.routeWebSocket('**/socket.io/**', socket => socket.close());

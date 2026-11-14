@@ -2,6 +2,8 @@ const assert = require('node:assert/strict');
 const { test, afterEach, mock } = require('node:test');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { AuthSession } = require('../dist/models/AuthSession.js');
+const { accessToken } = require('./helpers/sessionTokens.cjs');
 const { User } = require('../dist/models/User.js');
 const router = require('../dist/routes/cvRoutes.js').default;
 const nativeFetch = global.fetch;
@@ -14,6 +16,7 @@ afterEach(() => mock.restoreAll());
 
 async function fixture(t, upstream = async () => Response.json({ task_id: '51c48680-38ce-4cc4-9905-548b310cd5d1', status: 'pending' }, { status: 202 })) {
   const owner = (++account).toString(16).padStart(24, '0');
+  mock.method(AuthSession, 'exists', async () => ({ _id: 'test-session' }));
   mock.method(User, 'findById', id => ({ select: async () => ({ _id: id, role: 'athlete', isActive: true }) }));
   const calls = [];
   mock.method(global, 'fetch', async (url, init) => { calls.push({ url, init }); return upstream(url, init); });
@@ -22,12 +25,13 @@ async function fixture(t, upstream = async () => Response.json({ task_id: '51c48
   const server = await new Promise(resolve => { const listener = app.listen(0, '127.0.0.1', () => resolve(listener)); });
   t.after(() => new Promise(resolve => server.close(resolve)));
   const url = `http://127.0.0.1:${server.address().port}/cv`;
-  const token = jwt.sign({ id: owner }, process.env.JWT_SECRET, { expiresIn: '5m' });
+  const token = accessToken(owner, process.env.JWT_SECRET);
   const headers = { Authorization: `Bearer ${token}` };
   const upload = (options = {}) => {
     const form = new FormData();
     form.append('file', new Blob([options.bytes || 'video'], { type: options.mime || 'video/mp4' }), options.name || 'clip.mp4');
     if (options.consent !== false) form.append('consent', options.consent || 'true');
+    if (options.requestId !== undefined) form.append('requestId', options.requestId);
     return nativeFetch(`${url}/analyze`, { method: 'POST', headers: { ...headers, ...options.headers }, body: form });
   };
   return { url, owner, headers, calls, upload };
@@ -72,9 +76,23 @@ test('video proxy derives owner and service credential without trusting client h
   assert.equal(f.calls[0].url, 'http://127.0.0.1:8000/analyze');
   assert.equal(f.calls[0].init.headers['X-Athlix-User'], f.owner);
   assert.equal(f.calls[0].init.headers['X-Athlix-Service-Key'], process.env.CV_SERVICE_API_KEY);
+  assert.match(f.calls[0].init.headers['X-Athlix-Request-ID'], /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i);
   assert.equal(f.calls[0].init.redirect, 'error');
   assert.equal(f.calls[0].init.body.get('file').name, 'clip.mp4');
   assert.equal(response.headers.get('cache-control'), 'private, no-store');
+});
+
+test('analysis retries forward a validated stable request UUID but never an injected client header', async t => {
+  const f = await fixture(t);
+  const requestId = '51c48680-38ce-4cc4-9905-548b310cd5d1';
+  assert.equal((await f.upload({ requestId, headers: { 'X-Athlix-Request-ID': 'attacker-chosen-header' } })).status, 202);
+  assert.equal(f.calls[0].init.headers['X-Athlix-Request-ID'], requestId);
+});
+
+test('invalid request UUID fails before any upstream job is submitted', async t => {
+  const f = await fixture(t);
+  for (const requestId of ['../../task', 'not-a-uuid', 'x'.repeat(100)]) assert.equal((await f.upload({ requestId })).status, 400);
+  assert.equal(f.calls.length, 0);
 });
 
 test('status and deletion validate task ids and forward only the current principal', async t => {

@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { safeLocalMongoUri, safeTestDbName } = require('./helpers/localMongo.cjs');
 const { User } = require('../dist/models/User.js');
+const { AuthSession } = require('../dist/models/AuthSession.js');
 const { Profile } = require('../dist/models/Profile.js');
 const { CoachProfile } = require('../dist/models/CoachProfile.js');
 const { Booking } = require('../dist/models/Booking.js');
@@ -52,7 +53,7 @@ test('real replica-set booking isolation, persistence and rollback across indepe
   await mongoose.connect(uri, { dbName, serverSelectionTimeoutMS: 5000, maxPoolSize: 20 });
   const hello = await mongoose.connection.db.admin().command({ hello: 1 });
   assert.ok(hello.setName, 'A replica set is required; a standalone database cannot prove transaction correctness');
-  for (const model of [User, Profile, CoachProfile, Booking, Notification, BookingScheduleLock, RoleChangeAudit]) await model.init();
+  for (const model of [User, AuthSession, Profile, CoachProfile, Booking, Notification, BookingScheduleLock, RoleChangeAudit]) await model.init();
 
   async function startApi(failNotifications = false) {
     const child = fork(path.join(__dirname, 'helpers', 'booking-api-worker.cjs'), [], {
@@ -96,7 +97,11 @@ test('real replica-set booking isolation, persistence and rollback across indepe
     return { athleteA, athleteB, otherAthlete, coachA, coachB, start, details };
   }
   async function request(api, actor, route, body, method = 'POST') {
-    const token = jwt.sign({ id: String(actor._id) }, secret, { expiresIn: '1h' });
+    const liveActor = await User.findById(actor._id).lean();
+    const session = await AuthSession.create({ userId: actor._id, credentialHash: 'integration-fixture-never-a-browser-secret',
+      sessionVersion: liveActor.sessionVersion, expiresAt: new Date(Date.now() + 60 * 60_000) });
+    const token = jwt.sign({ id: String(actor._id), sid: String(session._id), ver: liveActor.sessionVersion }, secret,
+      { expiresIn: '15m', issuer: 'athlix', audience: 'athlix-api' });
     const response = await fetch(`${api}${route}`, { method,
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });

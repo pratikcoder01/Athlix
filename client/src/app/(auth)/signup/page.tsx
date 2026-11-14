@@ -15,7 +15,6 @@ import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
 import { cn } from '../../../lib/utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -58,7 +57,8 @@ export default function SignupPage() {
       const provider = new GoogleAuthProvider();
       const firebaseUserCred = await signInWithPopup(auth, provider);
       const idToken = await firebaseUserCred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -80,7 +80,8 @@ export default function SignupPage() {
     try {
       const firebaseUserCred = await signInAnonymously(auth);
       const idToken = await firebaseUserCred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
@@ -101,7 +102,8 @@ export default function SignupPage() {
       const firebaseUserCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(firebaseUserCred.user, { displayName: data.name });
       const idToken = await firebaseUserCred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken, name: data.name }),

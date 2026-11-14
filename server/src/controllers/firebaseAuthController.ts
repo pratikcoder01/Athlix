@@ -1,38 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import type { DecodedIdToken } from 'firebase-admin/auth';
 import { authAdmin } from '../config/firebase';
 import { User } from '../models/User';
-import { Profile } from '../models/Profile';
 import { firebaseLoginSchema } from '../utils/validation';
 
-import { getJwtSecret } from '../config/jwt';
-
-/**
- * Generate a signed ATHLIX JWT (same format as legacy authController).
- * All downstream protect() middleware and role checks remain unchanged.
- */
-const generateToken = (id: any): string =>
-  jwt.sign(
-    { id },
-    getJwtSecret(),
-    { expiresIn: '30d' }
-  );
-
-/**
- * Build the standard user response object used by every auth endpoint.
- */
-const buildUserResponse = (user: any, profile: any) => ({
-  id: user._id,
-  name: user.name,
-  email: user.email || '',
-  phone: user.phone || '',
-  role: user.role,
-  profileImage: profile?.profileImage || '',
-  bio: profile?.bio || '',
-  discipline: profile?.discipline || 'BJJ',
-  beltRank: profile?.beltRank || 'White',
-});
+import { ensureBaseProfile, establishSession } from '../utils/sessions';
 
 // ---------------------------------------------------------------------------
 // POST /api/auth/firebase
@@ -124,13 +96,6 @@ export const firebaseLogin = async (
         // No password — Firebase is the identity provider
       });
 
-      // Create base profile
-      await Profile.create({
-        userId: user._id,
-        discipline: discipline || 'BJJ',
-        beltRank: 'White',
-      });
-
     }
 
     if (user.isActive !== true) {
@@ -138,16 +103,8 @@ export const firebaseLogin = async (
     }
 
     // 4. Resolve profile for response
-    const profile = await Profile.findOne({ userId: user._id });
-
-    // 5. Issue ATHLIX JWT
-    const token = generateToken(user._id);
-
-    return res.status(200).json({
-      success: true,
-      token,
-      user: buildUserResponse(user, profile),
-    });
+    const profile = await ensureBaseProfile(user._id, discipline || 'BJJ');
+    return res.status(200).json(await establishSession(req, res, user, profile, decodedToken.auth_time));
   } catch (error) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       return res.status(409).json({ success: false, message: 'Account identity already exists; sign in again' });

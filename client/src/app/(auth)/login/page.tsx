@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import {
-  Lock, Mail, Award, Shield, Smartphone, AlertCircle, User,
+  Lock, Mail, Shield, Smartphone, AlertCircle, User,
   ArrowRight, Eye, EyeOff, Sparkles, Trophy, Brain, Users
 } from 'lucide-react';
 import {
@@ -21,7 +21,6 @@ import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
 import { cn } from '../../../lib/utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -60,7 +59,8 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -82,7 +82,8 @@ export default function LoginPage() {
     try {
       const cred = await signInAnonymously(auth);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
@@ -102,7 +103,8 @@ export default function LoginPage() {
     try {
       const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),

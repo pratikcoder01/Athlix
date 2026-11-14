@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Smartphone, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Smartphone, ChevronRight, AlertCircle } from 'lucide-react';
 import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
@@ -15,7 +15,6 @@ import { useAuthStore } from '../../../../store/authStore';
 import MagneticButton from '../../../../components/shared/MagneticButton';
 import SpotlightCard from '../../../../components/shared/SpotlightCard';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 type Step = 'phone' | 'otp' | 'role';
 
@@ -102,7 +101,8 @@ export default function PhoneLoginPage() {
       const idToken = await firebaseUserCred.user.getIdToken();
 
       // Exchange Firebase ID token for ATHLIX JWT
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken, name: name || 'Athlete', role }),
@@ -165,7 +165,7 @@ export default function PhoneLoginPage() {
 
         {/* Step indicators */}
         <div className="flex items-center gap-2 mb-6">
-          {(['phone', 'otp'] as Step[]).map((s, i) => (
+          {(['phone', 'otp'] as Step[]).map(s => (
             <React.Fragment key={s}>
               <div
                 className={`h-1.5 flex-1 rounded-full transition-colors ${

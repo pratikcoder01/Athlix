@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const managed = (events || []).filter(event => entityId(event.organizerId) === user?.id);
   const professional = ['academy_owner', 'tournament_organizer', 'admin'].includes(user?.role || '');
   const actionLinks = [
+    { href: user?.role === 'coach' ? '/clients' : '/training', title: user?.role === 'coach' ? 'Your coaching clients' : 'Record your training', detail: user?.role === 'coach' ? 'Review booked clients and keep private coaching notes.' : 'Save structured training entries and review saved plans.', icon: CalendarDays },
     { href: '/profile', title: 'Build your profile', detail: 'Update your discipline, rank and personal achievements.', icon: UserRound },
     { href: user?.role === 'coach' ? '/coach-settings' : '/coaches', title: user?.role === 'coach' ? 'Manage coaching' : 'Find a coach', detail: user?.role === 'coach' ? 'Publish your rate and weekly UTC availability.' : 'Review published rates and request a session.', icon: CalendarDays },
     { href: '/tournaments', title: user?.role === 'tournament_organizer' ? 'Manage tournaments' : 'Explore tournaments', detail: 'View saved events, registrations and match results.', icon: Trophy },
@@ -66,7 +67,7 @@ export default function DashboardPage() {
         </section>
         <section className={workspacePanel}><h2 className="mb-5 text-xl font-bold">Continue your training journey</h2><div className="space-y-3">{actionLinks.map(({ href, title, detail, icon: Icon }) => <Link href={href} key={href} className="flex items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:border-accent/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div className="flex-1"><h3 className="font-semibold">{title}</h3><p className="mt-1 text-sm text-text-secondary">{detail}</p></div><ArrowRight className="mt-0.5 h-4 w-4 shrink-0" /></Link>)}</div></section>
       </div>
-      {professional && <section className={`${workspacePanel} mt-6`}><h2 className="text-xl font-bold">Operations</h2><p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-secondary">Use academy listings and tournament management for current operations. Academy member management, billing and revenue reporting are not available yet.</p><div className="mt-5 flex flex-wrap gap-3"><Link href="/academies" className={workspaceButton}>Academy directory</Link><Link href="/tournaments" className={workspaceButton}>Tournament workspace</Link></div></section>}
+      {professional && <section className={`${workspacePanel} mt-6`}><h2 className="text-xl font-bold">Operations</h2><p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-secondary">Open your academy listing to manage its members, attendance and publication. Tournament organizers manage event registration and match results. Billing and revenue reporting remain unavailable.</p><div className="mt-5 flex flex-wrap gap-3"><Link href="/academies" className={workspaceButton}>Academy directory</Link><Link href="/tournaments" className={workspaceButton}>Tournament workspace</Link></div></section>}
     </>}
   </WorkspaceShell>;
 }

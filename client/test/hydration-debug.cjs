@@ -1,11 +1,13 @@
 // Diagnostic only: full development React messages, without customer data or APIs.
 const { chromium } = require('playwright');
+const { installSession } = require('./helpers/auth-fixture.cjs');
 const base = process.env.ATHLIX_E2E_BASE_URL || 'http://127.0.0.1:3101';
 if (!['127.0.0.1','localhost','[::1]'].includes(new URL(base).hostname)) throw Error('Use an isolated loopback app');
 let browser;
 (async () => {
   browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
   const context = await browser.newContext({ reducedMotion: 'reduce' });
+  await installSession(context, null);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => { const detail = `${page.url()}\n${error.stack || error.message}`; errors.push(detail); console.error(detail); });
