@@ -12,13 +12,13 @@ import { cn } from '../lib/utils';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-athlix-sans',
   display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-athlix-mono',
   display: 'swap',
 });
 const displayFont = Space_Grotesk({ subsets: ['latin'], variable: '--font-athlix-display', display: 'swap' });
