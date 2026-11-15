@@ -13,18 +13,33 @@ Framer Motion's wrapper with an ordinary `div` also reproduced the failure.
 This matches the host-fiber replay mechanism documented in the upstream
 [React hydration cursor report](https://github.com/react/react/issues/37584).
 The report links the [upstream renderer correction](https://github.com/react/react/pull/35494).
-ATHLIX avoids the affected shape by rendering a concrete `Suspense` boundary
-inside the transition wrapper around the Flight route slot. The route suspends
-at that boundary rather than replaying the already claimed host element.
-The accessible loading fallback is shown only while that boundary is pending.
-Page content continues to be prerendered.
+ATHLIX avoids the affected shape by resolving the Flight route slot in a stable,
+module-level `RouteContent` function component inside the transition wrapper.
+A delayed chunk then replays the function fiber without claiming the transition
+host element twice. Page content continues to be prerendered, with the same
+markup and no new whole-page loading fallback.
 
 The controlled A/B used the same production build and response-delay seed.
-Without the boundary it failed on visit 3, `/login` at 360px. Adding the boundary
+Without the extra fiber it failed on visit 3, `/login` at 360px. Adding a Suspense boundary
 coherently to the served HTML and corresponding client element passed 105 visits
 with up to 90ms of response jitter. This isolated the change before editing the
-source and rebuilding. Blocking streamed metadata did not fix the reproduction
-and was removed.
+source and rebuilding. However, its fresh-build streaming fallback occasionally
+replaced the page's original `main` despite retaining the frame and avoiding
+error 418. The stricter DOM retention assertion caught that behavior, and the
+final source uses the stable function fiber instead. Blocking streamed metadata
+did not fix the reproduction and was removed.
+
+The stable function-fiber A/B then passed 105/105 visits under the same 90ms
+seeded jitter, with both the original transition wrapper and page element
+retained. This covers seven routes at three widths over five passes. The
+fresh-source production test below separately checks the rebuilt source.
+
+The final source rebuild passed on 2026-11-15. Its unmodified production renderer
+then passed 63/63 visits through the static fixture mode: seven routes, three
+widths and three passes, with seeded delays up to 90ms. Every visit retained the
+original prerendered transition wrapper and `main`, with no browser exceptions
+or hydration console errors. This local result does not replace CI server/API
+acceptance or live staging checks.
 
 `client/test/hydration-production-e2e.cjs` exercises the actual production build
 at 360, 768 and 1440px on seven public routes, with three passes by default.

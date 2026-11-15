@@ -2,6 +2,8 @@
 const { chromium } = require('playwright');
 const { installSession } = require('./helpers/auth-fixture.cjs');
 const base = process.env.ATHLIX_E2E_BASE_URL || 'http://127.0.0.1:3101';
+const passes = Number(process.env.ATHLIX_HYDRATION_PASSES || 9);
+if (!Number.isInteger(passes) || passes < 1 || passes > 9) throw Error('Hydration diagnostic passes must be 1–9');
 if (!['127.0.0.1','localhost','[::1]'].includes(new URL(base).hostname)) throw Error('Use an isolated loopback app');
 let browser;
 (async () => {
@@ -16,7 +18,7 @@ let browser;
       errors.push(message.text()); console.error('HYDRATION CONSOLE', page.url(), message.text());
     }
   });
-  for (let pass = 0; pass < 9; pass++) {
+  for (let pass = 0; pass < passes; pass++) {
     for (const width of [360,768,1440]) {
       await page.setViewportSize({ width, height: 900 });
       for (const route of ['/','/signup','/login','/pricing','/tournaments','/kata','/academies']) {

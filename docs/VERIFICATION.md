@@ -9,9 +9,9 @@ The latest completed local `npm test` run passes **15 client + 398 server tests
 (413 total)**; eight service-dependent suites explicitly skip. Python passes
 **32 tests** using the service's virtual environment. Standalone lint passes with
 **zero warnings/errors**, both type checks pass, and both production builds pass.
-Further UI/hydration changes require fresh checks. Audit remains **zero
-high/critical and seven moderate** findings. These results do not establish that
-the currently edited tree has passed remote CI.
+Audit remains **zero high/critical and seven moderate** findings. These local
+results are separate from remote CI; current run outcomes are linked from
+[PR #2](https://github.com/pratikcoder01/Athlix/pull/2).
 
 CI now supplies the real disposable Mongo replica set for academy, training,
 community, divisions, sessions and migration rollback, plus a demo-only Firebase
@@ -38,13 +38,13 @@ and [push run 43623610030](https://github.com/pratikcoder01/Athlix/actions/runs/
   418. The PR browser run passed the first smoke, real Next proxy/HttpOnly-cookie
   round-trip, booking scenarios and profile/academy/feed suite, then timed out on
   an academy attendance locator. That locator has been corrected in source, but
-  its corrected hosted-run result is pending. Production hydration remains an
-  active failure until a reproduced fix passes; development diagnostics passed
+  its corrected hosted-run result is tracked in PR #2. Production hydration was
+  reproduced and addressed as documented in HYDRATION.md; development diagnostics passed
   189 route/viewport visits in both runs and do not override the production error.
 
-The workflow now attempts all nine browser suites before returning failure so
-that an early failure does not conceal later results. Final source changes,
-accessibility refinements and local commits after `8bea3de` need a new remote run.
+The workflow now attempts all ten browser suites before returning failure so
+that an early failure does not conceal later results. The observations above
+are retained as prior failure evidence; later source CI is tracked in PR #2.
 
 Windows Application Control still blocks local Mongo/native import, Docker's
 daemon is unavailable, and automatic approval review rejected root's local
@@ -53,6 +53,23 @@ was retried through another mechanism. A listener-free Playwright fixture can
 serve actual compiled HTML/chunks through request interception, permitting local
 hydration and accessibility diagnostics without a server process. These fixture
 results remain distinct from CI's actual Next HTTP/proxy checks.
+
+The rebuilt source passed all seven existing browser suites that can use this
+listener-free transport: recovery/tournaments/video/responsive/theme smoke,
+booking, profiles/academy creation/feed, training/clients/notifications,
+divisions, moderation, and accessibility. The accessibility suite passed 26
+route/theme cases, four viewport widths, main/heading and single keyboard target
+checks, and drawer focus trapping/restoration in both themes. No browser
+exceptions or external Google font requests were observed. Dynamic academy
+management and the actual Next auth rewrite/cookie round-trip still require the
+CI server. The additional production timing regression is recorded separately
+in [HYDRATION.md](HYDRATION.md).
+
+The final rebuilt route-resolution fix also passed **63 production visits** with
+deterministically delayed assets and the unmodified production renderer. The
+original server-rendered frame and main elements were retained on every visit;
+no page or hydration console errors were observed. This listener-free check
+does not substitute for the CI server or hosted staging acceptance.
 
 Read-only Firebase configuration discovery is recorded in
 [STAGING_DISCOVERY.md](STAGING_DISCOVERY.md): the existing live project uses the

@@ -82,15 +82,11 @@ jobs:
           app_pid=$!
           trap 'kill "$app_pid" 2>/dev/null || true' EXIT
           node -e 'const deadline=Date.now()+60000; (async()=>{while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3100");if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,500));}throw Error("Built client did not become ready");})().catch(e=>{console.error(e.message);process.exit(1)})'
-          node client/test/e2e-smoke.cjs
-          node client/test/auth-proxy-e2e.cjs
-          node client/test/booking-e2e.cjs
-          node client/test/workspace-e2e.cjs
-          node client/test/academy-operations-e2e.cjs
-          node client/test/training-workspace-e2e.cjs
-          node client/test/tournament-divisions-e2e.cjs
-          node client/test/community-moderation-e2e.cjs
-          node client/test/accessibility-e2e.cjs
+          failed=0
+          for suite in e2e-smoke auth-proxy-e2e booking-e2e workspace-e2e academy-operations-e2e training-workspace-e2e tournament-divisions-e2e community-moderation-e2e accessibility-e2e hydration-production-e2e; do
+            if ! node "client/test/$suite.cjs"; then failed=1; fi
+          done
+          exit "$failed"
         env:
           ATHLIX_E2E_BASE_URL: http://127.0.0.1:3100
       - name: Development hydration diagnostics
@@ -103,6 +99,8 @@ jobs:
           trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
           node -e 'const deadline=Date.now()+60000; (async()=>{while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3101");if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,500));}throw Error("Development client did not become ready");})().catch(e=>{console.error(e.message);process.exit(1)})'
           ATHLIX_E2E_BASE_URL=http://127.0.0.1:3101 node client/test/hydration-debug.cjs
+        env:
+          ATHLIX_HYDRATION_PASSES: ${{ job.status == 'success' && '9' || '1' }}
       - name: Audit dependencies (high and critical block the check)
         run: npm audit --audit-level=high --json > npm-audit.json
       - name: Retain dependency audit results

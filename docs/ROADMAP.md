@@ -104,15 +104,17 @@ reported as passing checks.
 | `dde6d69` | Automated accessibility/responsive checks, real browser/proxy cookie round-trip, demo identity recovery, actual model/container/restart CI | Local lint has zero warnings/errors; CI outcome must be observed |
 | `edd1d27`, `8bea3de` | Correct CI model path, native graphics dependencies and explicit CPU inference | Native inference and actual constrained-container/restart checks passed in both remote runs at `8bea3de`; JavaScript/browser jobs failed, as recorded below |
 
-### Final review fixes in progress (2026-11-15)
+### Final review fixes (2026-11-15)
 
-Local commits after the last pushed `8bea3de` include `764711c` (retain bounded CV
+Review commits after `8bea3de` include `764711c` (retain bounded CV
 admission through upload/upstream cleanup and model read permissions), `6297431`
 (self-hosted display fonts), `2f2fd34` (reject unsupported production transaction
-topologies before listening) and `b684b39` (semantic font variables). They are not
-covered by the earlier remote results until pushed and rerun. Pending source also
-improves form/button semantics, keyboard and contrast checks, fixture locators
-and bounded hydration diagnostics.
+topologies before listening), `b684b39` (semantic font variables), `123ada2`
+(form/button semantics, keyboard targets, contrast and fixture locators), and
+`22f4b7b` (current operating contracts and measured release limits). Earlier
+remote results do not cover these additions. The final source also isolates
+delayed route resolution and adds a production hydration regression; current
+remote run outcomes are linked from PR #2.
 
 The latest combined local check passed 15 client and 398 server tests (413 total);
 eight service-dependent integration suites explicitly skipped. Python passed 32
@@ -129,8 +131,8 @@ isolation/restart persistence. JavaScript database suites passed 429 server test
 with one intentional skip, and the separate demo Firebase emulator passed seven
 identity/recovery cases. Both JavaScript jobs nevertheless failed: one on React
 418, the other on an academy attendance locator after earlier browser suites
-passed. The locator is corrected; the intermittent production hydration failure
-is still under investigation. Neither run is a green acceptance result. See
+passed. The locator is corrected; the reproduced hydration mechanism and source
+fix are documented in [HYDRATION.md](HYDRATION.md). Neither earlier run is a green acceptance result. See
 [verification](VERIFICATION.md) for linked runs and exact scope.
 
 Local production-server start was rejected by automatic approval review with
