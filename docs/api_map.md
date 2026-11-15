@@ -16,7 +16,9 @@ Browser access tokens stay in memory. A hashed rotating refresh credential is
 delivered only in a host-only HttpOnly cookie with a seven-day absolute deadline;
 it uses Secure and the `__Host-` name in production. The browser sends auth calls
 through the fixed same-origin Next `/api/auth/*` proxy, configured server-side by
-`AUTH_API_ORIGIN`. Cookie refresh/logout require an exact trusted Origin plus
+`AUTH_API_ORIGIN`, falling back to operator-configured `NEXT_PUBLIC_API_URL` when
+no dedicated override is supplied. Both paths validate an exact trusted origin.
+Cookie refresh/logout require an exact trusted Origin plus
 `X-ATHLIX-Session: 1`, independently of CORS. Untrusted browser login origins are
 also denied. Firebase identity/revocation is checked at exchange and cookie
 renewal; Firebase-only revocation can leave an already issued access token valid

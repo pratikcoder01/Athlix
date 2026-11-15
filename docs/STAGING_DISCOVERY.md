@@ -56,6 +56,13 @@ intentionally omitted from this record.
 
 ## Hosting access and pending acceptance
 
+The owner subsequently supplied the Vercel build log for `5f7376e`: the confirmed
+failure was a missing `AUTH_API_ORIGIN` while loading Next configuration. The
+compatibility fix reuses an explicitly configured `NEXT_PUBLIC_API_URL` when no
+dedicated auth origin exists, with the same origin validation. Neither the log
+nor this source change proves the deployed backend URL or hosted auth flow;
+follow the [Vercel setup steps](setup_guide.md#vercel-failure-missing-backend-origin).
+
 At discovery time this session had no connected Vercel or Render tools and no
 installed Vercel/Render CLI command. The owner was asked to connect Firebase,
 Vercel and Render; the existing Firebase CLI already permits these read-only

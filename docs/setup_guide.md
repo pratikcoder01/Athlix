@@ -9,8 +9,9 @@ and latest CI outcomes are tracked in [verification](VERIFICATION.md) and
 
 Use Node.js 24 (`.nvmrc`), npm and Python 3.11. The root manifest requires at least
 Node 22.18; CI uses Node 24. Install only from the canonical root workspace lock.
-The frontend production build/start requires an explicit server-only
-`AUTH_API_ORIGIN`; use loopback only for local/test services.
+The frontend production build/start requires an explicit backend origin in
+`NEXT_PUBLIC_API_URL`, or a dedicated server-only `AUTH_API_ORIGIN` override.
+Use loopback only for local/test services.
 
 ```powershell
 npm ci --legacy-peer-deps
@@ -32,7 +33,7 @@ failures. See [dependency review](DEPENDENCY_REVIEW.md).
 1. Create `server/.env` and `client/.env.local` from the corresponding sections
    of root `.env.example`. Keep Admin credentials, JWT/CV secrets and provider
    keys server-only. `AUTH_API_ORIGIN` belongs to the frontend build/server
-   configuration, not a `NEXT_PUBLIC_*` variable.
+   configuration and overrides the shared `NEXT_PUBLIC_API_URL` destination.
 2. Configure a reviewed MongoDB replica set or transaction-capable managed
    cluster. Booking, academy/member/attendance, community moderation and audited
    operator changes require transactions. A standalone MongoDB cannot prove or
@@ -143,7 +144,7 @@ Root `npm test` runs source regression suites. Supplying the guarded loopback
 Application Control blocks the local MongoDB executable and a native MediaPipe
 dependency; do not bypass it or label skipped checks as passing.
 
-After a production build, keep the same `AUTH_API_ORIGIN`, start the client on
+After a production build, keep the same backend origin settings, start the client on
 loopback 3100 and run the browser scripts from a second terminal:
 
 ```sh
@@ -172,8 +173,32 @@ or performance certification.
 Both hosts need the root lockfile/workspace install. Build/start the backend with
 `npm run build --workspace athlix-server` / `npm run start --workspace athlix-server`;
 build the frontend with `npm run build --workspace client`. Configure monorepo roots
-explicitly. The frontend production build and runtime need the same reviewed
-`AUTH_API_ORIGIN`; `NEXT_PUBLIC_API_URL` supplies direct bearer/realtime requests.
+explicitly. Keep frontend build and runtime origin settings consistent.
+`NEXT_PUBLIC_API_URL` supplies direct bearer/realtime requests and, by default,
+the same-origin auth proxy. Set `AUTH_API_ORIGIN` only when a dedicated auth
+upstream is required or an explicit override is preferred.
+
+### Vercel failure: missing backend origin
+
+The supplied Vercel log for `5f7376e` failed while loading `next.config.ts`
+because `AUTH_API_ORIGIN` was missing. It failed before page compilation;
+the npm warnings were not the terminating error. The compatibility fix reuses
+`NEXT_PUBLIC_API_URL` when no dedicated auth override is set. No backend address
+is guessed, and production still fails when both settings are missing.
+
+1. Open Vercel project `athlix-client`, then **Environment Variables**.
+2. Set `NEXT_PUBLIC_API_URL` to the Express backend's public HTTPS origin, for
+   example `https://your-api.example`, with no `/api` path. If a dedicated auth
+   destination is needed, set `AUTH_API_ORIGIN` to its reviewed HTTPS origin.
+3. Select the environment used by the failed deployment. Standard feature-branch
+   deployments use Preview; apply Production changes only in an approved rollout.
+4. Save and create a new deployment of the updated branch. Environment changes
+   do not change an existing deployment. Then verify `/api/auth/session`, real
+   sign-in/renewal/logout and the direct API/CORS configuration in staging.
+
+The destination URL is public configuration, not an API credential. Keep Firebase
+Admin, JWT, CV and provider secrets on their intended servers.
+See [Vercel environment setup](https://vercel.com/docs/environment-variables/managing-environment-variables).
 
 Production requires explicit `MONGO_URI`, strong JWT secret, Firebase credentials,
 exact HTTPS browser origins, protected CV configuration and reviewed indexes.

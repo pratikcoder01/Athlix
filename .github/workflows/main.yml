@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      AUTH_API_ORIGIN: http://127.0.0.1:5000
+      # Exercise builds and the real auth rewrite using the existing API setting.
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:5000
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

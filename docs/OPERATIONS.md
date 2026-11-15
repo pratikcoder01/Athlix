@@ -41,8 +41,10 @@ The expanded CI configuration is not evidence that its newest run succeeded.
 
 ## Session and proxy rollout
 
-- Frontend build/start requires server-only `AUTH_API_ORIGIN`: one explicit
-  reviewed HTTPS backend origin, without credentials/path/query/fragment.
+- Frontend build/start requires one explicit reviewed backend origin:
+  `AUTH_API_ORIGIN` takes precedence, otherwise `NEXT_PUBLIC_API_URL` is reused.
+  Both require HTTPS and reject credentials/path/query/fragment; a malformed
+  explicit override is rejected rather than silently selecting the fallback.
   Explicit loopback HTTP is accepted only for isolated local/CI services.
   Keep build/runtime configuration consistent; the fixed Next `/api/auth/*`
   rewrite cannot select its upstream from a caller's request.

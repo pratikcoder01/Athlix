@@ -60,8 +60,8 @@ athlix/
 
 ## ⚙️ Initial Setup & Commands
 
-First configure the environment, including the frontend's server-only
-`AUTH_API_ORIGIN`, using the [Setup Guide](docs/setup_guide.md). To install all
+First configure the frontend backend origin, `NEXT_PUBLIC_API_URL` and optional
+server-only `AUTH_API_ORIGIN` override, using the [Setup Guide](docs/setup_guide.md). To install all
 dependencies across the entire monorepo:
 ```bash
 npm run install-all

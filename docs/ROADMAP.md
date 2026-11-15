@@ -150,3 +150,15 @@ Checkout remains disabled by the owner's explicit decision until plan prices
 are decided. Billing is an intentional deferral. Legal/customer evidence and
 permissioned domain evaluation still require business or external inputs
 described by the feature matrix.
+
+### Confirmed Vercel configuration failure (2026-11-15)
+
+The supplied build log identifies missing `AUTH_API_ORIGIN` at `5f7376e` as the
+terminating error. Auth configuration now reuses an existing operator-configured
+`NEXT_PUBLIC_API_URL` when no dedicated override is present. Exact-origin/HTTPS
+validation and fail-closed missing configuration remain; malformed overrides
+never silently fall back. Eighteen client tests and a production build using
+only the public API setting passed. CI now builds and tests the real proxy with
+that fallback; current hosted/CI outcomes are recorded on PR #2. Hosted builds
+still need the real Express backend origin; no URL or successful deployment was
+invented. The setup guide includes the corresponding Vercel environment steps.

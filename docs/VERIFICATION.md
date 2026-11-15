@@ -1,5 +1,20 @@
 # Verification record
 
+## Vercel backend-origin compatibility (2026-11-15)
+
+The owner's Vercel log at `5f7376e` confirms that the missing `AUTH_API_ORIGIN`
+stopped configuration loading. Auth configuration now falls back to an explicit
+`NEXT_PUBLIC_API_URL`, retains the dedicated override and all origin validation,
+and still rejects missing production configuration. All **18 client tests pass**,
+including fallback, precedence, invalid override and missing/unsafe configuration
+regressions. A fresh production client build passed with `AUTH_API_ORIGIN` absent
+and only an explicit loopback `NEXT_PUBLIC_API_URL`; its generated auth rewrite
+targets that configured origin. The build also ran lint and TypeScript checks.
+CI now exercises that fallback through the actual Next rewrite/browser suites.
+The previous green runs below establish `5f7376e`; later CI and Vercel outcomes
+are tracked on PR #2. No host setting was changed, and no hosted acceptance is
+claimed from the local loopback build.
+
 ## Continued increment: current evidence
 
 2026-11-15 (Asia/Calcutta). The continued increment includes revocable sessions,

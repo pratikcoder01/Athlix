@@ -53,10 +53,14 @@ an assertion that a live Firebase/hosting deployment has been accepted.
 
 The browser sends sign-in, session and logout requests to its own
 `/api/auth/:path*`. A fixed Next rewrite forwards those requests to
-`AUTH_API_ORIGIN` on the trusted backend. This server-only variable must be set
-explicitly in production builds/startup, contain only an exact HTTPS origin, and
-have no credentials/path/query/fragment. Explicit loopback HTTP is allowed for
-isolated CI/development. The request cannot choose an upstream.
+the trusted backend origin. `AUTH_API_ORIGIN` is an optional server-only override;
+when absent or blank, the proxy reuses the operator-configured `NEXT_PUBLIC_API_URL`.
+Production builds/startup require at least one of them. Both paths accept only an
+exact HTTPS origin without credentials/path/query/fragment; explicit loopback HTTP
+remains allowed for isolated CI/development. An invalid nonblank override fails
+instead of falling back. The request cannot choose an upstream. The public API
+origin is already visible to the browser and must contain no secrets; no session
+credential is made public by reusing that configured destination.
 
 This keeps the refresh cookie on the frontend host even when the API is hosted
 on a separate Render domain. The default `AUTH_COOKIE_SAME_SITE=lax` therefore
@@ -69,6 +73,8 @@ Set these in the reviewed deployment configuration:
 
 ```text
 # Frontend build/server environment; never NEXT_PUBLIC_AUTH_API_ORIGIN
+NEXT_PUBLIC_API_URL=https://your-reviewed-api.example
+# Optional when auth uses the same backend as NEXT_PUBLIC_API_URL:
 AUTH_API_ORIGIN=https://your-reviewed-api.example
 # Backend
 ALLOWED_ORIGIN=https://your-reviewed-frontend.example
