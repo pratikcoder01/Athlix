@@ -25,11 +25,14 @@ collect money, or change production roles.
 | --- | --- | --- |
 | 1 | Home and product-status page | Development scope, proposed karate pilot, labeled example screens, and no claimed traction. |
 | 2 | Athlete signup/login | A new account receives athlete permissions. Professional access requires approval. |
-| 3 | Tournaments with the approved organizer | Create a real event in the configured staging database; reload to show persistence. If creation is not supported by the current UI, disclose that gap rather than simulating success. |
+| 3 | Tournaments with the approved organizer | Create a real event and optional named divisions in the configured staging database; reload to show persistence. |
 | 4 | Athlete event registration | Register with an athlete account, refresh, then try duplicate registration and show the actual error. |
 | 5 | Organizer-managed bracket | Show an authorized update and, in a second account, the denied cross-organizer request. Demonstrate realtime only if the subscribed client actually receives the update. |
 | 6 | Organizer overview | Explain account-scoped saved counts. Registrations and listed fees are not revenue; no assumed bracket capacity is displayed. |
-| Optional | Experimental kata analysis | Show processing/error states and explain 2D heuristics, low-confidence limitations, consent, and lack of a validated accuracy score. |
+| Optional | Academy operations | Use an approved owner to edit a listing, save a permissioned synthetic member and attendance record, reload, and show another owner denied access. |
+| Optional | Training/client workspaces | Save a structured training log, review own plans, show a coach's actual booked clients and private notes, and demonstrate persisted notification read state. |
+| Optional | Community safety | Edit/remove an author's own text; report a post and show an admin's audited decision. Do not imply a staffed moderation service or guaranteed response time. |
+| Optional | Experimental kata analysis | Show processing/error states and explain pose heuristics, low-confidence limitations, bounded retained results, consent, and lack of a validated accuracy score. |
 
 Close with the next validation question: which part of the organizer's real
 workflow is most costly today, and would this pilot make it measurably easier?
@@ -40,6 +43,6 @@ Do not turn that question into an invented testimonial.
 Record the tested commit, environment, service configuration (without secrets),
 browser/viewport, steps, actual outcomes, and any failures. Save only consented,
 non-sensitive screenshots. Explicitly mark unexercised steps **NOT RUN**, including
-payment, credential verification, academy member management, official scoring,
-and full cloud integration when unavailable. A fallback screen is a useful demo
+payment, credential verification, official scoring, and full cloud integration
+when unavailable. A fallback screen is a useful demo
 of error handling, not proof that the missing integration works.

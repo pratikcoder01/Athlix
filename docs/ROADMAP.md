@@ -1,8 +1,8 @@
 # ATHLIX execution roadmap
 
-Updated 2026-11-13. Work proceeds on `codex/athlix-market-ready`; no merge or production deployment is implied.
+Updated 2026-11-15. Work proceeds on `codex/athlix-market-ready`; no merge or production deployment is implied.
 
-Latest verification: 2026-11-14. See [VERIFICATION.md](VERIFICATION.md) and
+Latest verification: 2026-11-15. See [VERIFICATION.md](VERIFICATION.md) and
 [FEATURE_STATUS.md](FEATURE_STATUS.md). Initial priorities below are retained as
 the release roadmap, not a claim that every phase is complete.
 
@@ -66,7 +66,7 @@ the release roadmap, not a claim that every phase is complete.
 
 ### Delivered commit register
 
-Every commit below was pushed to the review branch. File groups and remaining
+Every commit in this historical register was pushed to the review branch. File groups and remaining
 limits are described in the linked subsystem documents and Git diffs.
 
 | Commit | Milestone and affected files | Verification |
@@ -91,6 +91,60 @@ community/ops verification attempt also overlapped that clean install and was
 rerun successfully in the complete suite. These intermediate failures were not
 reported as passing checks.
 
-The next release-critical work is actual staging identity/native-video validation,
-session revocation/storage design, existing privileged-account review and the
-remaining product gates, not a production rollout based solely on fixture tests.
+### Continued product and release work (2026-11-14)
+
+| Commit | Increment | Local evidence and next check |
+| --- | --- | --- |
+| `4ccda74` | Memory-only short access tokens, rotating HttpOnly sessions through a same-origin auth proxy, global revocation/profile recovery; structured training, saved plans, coach clients and persisted notifications | Session/workspace regression suites pass; real Mongo and demo Firebase acceptance supplied to CI |
+| `0737129` | Academy listing editing/archive/restore, owner-private members, attendance and operational counts | 31 academy/directory regressions; seven real transaction subtests supplied to CI |
+| `31f33b2` | Versioned author edits/removal, private reports, transactional moderator decisions and audit | 50 community regressions; eight real Mongo subtests supplied to CI |
+| `be4de1a` | Named divisions, capacity, athlete withdrawal, versioned results and public division cancellation | 21 division regressions and disposable Mongo/browser suites; review caught and fixed the underfilled-division start dead end |
+| `38e6a29` | Owner/content-bound video request retries, durable bounded SQLite state, crash recovery, container constraints, pinned model and native runtime probes | 30 Python tests and 10 Node CV regressions pass; actual container/native checks supplied to CI |
+| `2504d0d` | Explicit-target dry-run legacy bracket review, strict complete-tree validation, exact source/version CAS and transactional migration audit | 23 regressions; actual database rollback suite supplied to CI; no migration was applied |
+| `dde6d69` | Automated accessibility/responsive checks, real browser/proxy cookie round-trip, demo identity recovery, actual model/container/restart CI | Local lint has zero warnings/errors; CI outcome must be observed |
+| `edd1d27`, `8bea3de` | Correct CI model path, native graphics dependencies and explicit CPU inference | Native inference and actual constrained-container/restart checks passed in both remote runs at `8bea3de`; JavaScript/browser jobs failed, as recorded below |
+
+### Final review fixes in progress (2026-11-15)
+
+Local commits after the last pushed `8bea3de` include `764711c` (retain bounded CV
+admission through upload/upstream cleanup and model read permissions), `6297431`
+(self-hosted display fonts), `2f2fd34` (reject unsupported production transaction
+topologies before listening) and `b684b39` (semantic font variables). They are not
+covered by the earlier remote results until pushed and rerun. Pending source also
+improves form/button semantics, keyboard and contrast checks, fixture locators
+and bounded hydration diagnostics.
+
+The latest combined local check passed 15 client and 398 server tests (413 total);
+eight service-dependent integration suites explicitly skipped. Python passed 32
+tests in the service virtual environment. Builds and standalone type checks pass;
+dependency audit remains zero high/critical and seven moderate development-tool
+findings. Earlier in-progress tests
+failed while community mocks still reflected the old API and were corrected and
+rerun; an extended video fixture assertion was corrected after waiting for an
+intentionally hidden file input. That corrected browser path passed in the PR run
+at `8bea3de`.
+
+At `8bea3de`, both remote Python jobs passed native inference and actual Docker
+isolation/restart persistence. JavaScript database suites passed 429 server tests
+with one intentional skip, and the separate demo Firebase emulator passed seven
+identity/recovery cases. Both JavaScript jobs nevertheless failed: one on React
+418, the other on an academy attendance locator after earlier browser suites
+passed. The locator is corrected; the intermittent production hydration failure
+is still under investigation. Neither run is a green acceptance result. See
+[verification](VERIFICATION.md) for linked runs and exact scope.
+
+Local production-server start was rejected by automatic approval review with
+"blocked by policy"; no alternate launch was used by root to bypass it. CI owns
+the final production browser check. A previously running agent development
+server was stopped; its result is not substituted for a production run.
+
+Read-only discovery found the existing Firebase project and production authorized
+domain, with outgoing recovery links still using Firebase's hosted action page;
+no settings or users were changed. See [staging discovery](STAGING_DISCOVERY.md).
+The next release-critical checks are actual staging identity/email/cookie/hosting
+acceptance, reviewed account provenance and deployment/backup exercises. Source
+implementation and disposable CI do not establish production release readiness.
+Checkout remains disabled by the owner's explicit decision until plan prices
+are decided. Billing is an intentional deferral. Legal/customer evidence and
+permissioned domain evaluation still require business or external inputs
+described by the feature matrix.

@@ -1,5 +1,8 @@
 # ATHLIX — monetization hypotheses
 
+Owner decision, 2026-11-14: keep checkout disabled until plan prices are decided.
+No payment provider or paid deployment is authorized by this document.
+
 No working payment collection, recurring billing, paid entitlement, or settlement
 ledger is demonstrated in this build. Pricing pages offer discussion paths,
 not purchasable plans. Listed coach prices and tournament entry fees do not

@@ -1,22 +1,30 @@
 # Product feature status
 
-Updated 2026-11-14. "Implemented" describes source behavior with local regression
-and fixture-browser evidence; it does **not** mean deployed or independently
-accepted against live Firebase/MongoDB/native-video services.
+Updated 2026-11-15 for the latest source additions. The implementation column
+describes code behavior and its regression/fixture coverage; it does **not** mean
+the feature was deployed or accepted against live services. Latest aggregate
+test counts and remote run outcomes are tracked in [verification](VERIFICATION.md)
+and [PR #2](https://github.com/pratikcoder01/Athlix/pull/2). Older green CI runs
+do not establish the result of the new database, emulator or container suites.
 
-| Audience/area | Implemented and locally checked | Remaining or gated |
+| Audience/area | Implemented source behavior | Remaining or gated |
 | --- | --- | --- |
-| Accounts | Athlete-only public signup, Firebase exchange, verified legacy email linking, disabled-user checks, real Firebase reset UI, audited role CLI | Live identity/email acceptance, legacy role audit, modern session storage/revocation, partial profile-creation recovery |
-| Athletes | Real profile/belt/discipline and self-reported achievements, account-scoped dashboard, coach discovery, session requests/cancellation, event registration, text community | Verified achievements, structured training history/plan retrieval, rescheduling and richer onboarding |
-| Coaches | Operator-approved role, persisted rates/currency and explicit UTC availability, publish/unpublish, bookable directory, accept/reject/complete sessions | Real credentials verification, full client-management CRM, timezone-local recurring rules, rescheduling |
-| Academies | Approved-owner persisted listing creation, genuine directory/search, own saved-record overview; gyms alias uses that directory | Member records, attendance, listing editing/removal, academy billing and operational CRM |
-| Organizers | Real event creation/listing, atomic registration, deterministic single-elimination generation/byes, owned versioned winner/status updates, realtime subscriptions | Divisions, withdrawals, appeals/score rules, multiple formats, legacy bracket migration, official federation certification |
-| Community | Persisted text posts/comments, atomic desired-state likes, real counts, bounded pages and safe author data | Edit/delete, moderation/reporting, media upload, following and persisted social notification delivery |
-| Kata feedback | Authenticated owner-scoped bounded upload/jobs, consent, cleanup/expiry, measured-component feedback, low-confidence handling, safe missing-service/model states | Reviewed model/native runtime, permissioned benchmark, durable shared jobs, container memory enforcement; no accuracy/force/kata-recognition claim |
-| Provider coaching | Default-off opt-in, bounded requests/outputs, published public coach roster and caller-owned validated plans | Live provider/privacy acceptance, evaluated usefulness, distributed budgets and a complete plan-history workflow |
-| Marketing/commercial | Factual pilot scope, no fabricated social proof, honest unavailable billing, user-opened contact draft, factual pitch documents | Approved support mailbox, customer evidence, pricing validation, secure billing/entitlements, reviewed privacy/terms |
-| Operations | Locked installs, CI, safe request/error logs, liveness/readiness, bounded bodies/rate limits, graceful draining and rollback guidance | Production telemetry/support ownership, real backup restoration/rollout exercise, full cloud acceptance and remaining moderate advisories |
+| Accounts | Athlete-only public signup; verified Firebase legacy linking; idempotent missing-profile recovery; 15-minute memory-only access JWTs; seven-day absolute HttpOnly cookie sessions with hashed credential rotation/replay detection, current account/session checks and global revocation; same-origin auth proxy; real Firebase recovery; audited role CLI | Hosted HTTPS cookie/proxy and live identity/email acceptance; review of existing privileged-account provenance; operator-approved account migration/erasure; session/XSS controls and multiple-tab behavior need staging acceptance |
+| Athletes | Saved profile and self-reported achievements; private versioned training journal with idempotent creates, edits and archive; owner-only saved-plan retrieval; published coach discovery; real session requests/cancellation; event/division registration/withdrawal; text community and stored inbox | Independently verified achievements, richer onboarding, rescheduling and coach-approved training exchanges; archive is not permanent data erasure |
+| Coaches | Operator-approved role; stored hourly rates/currency and explicit UTC availability; publish/unpublish; booking acceptance/rejection/completion; accepted/completed-booking client directory and pair-private versioned coaching notes; stored booking notifications | Independent credentials verification, timezone-local recurrence, rescheduling, billing and broader CRM; coaches cannot read athletes' private journals through client APIs |
+| Academies | Published listing directory; owner/admin listing editing, unpublish, archive/restore; permission-acknowledged private member records, versioned edits/deactivation; daily UTC attendance and actual operational counts; transactional archive/member/attendance coordination | Hosted transaction/index acceptance, billing, class-level scheduling, imports, owner transfer, member self-service and reviewed retention/erasure; archive preserves records |
+| Organizers | Real owned events; up to 16 divisions and one division per athlete; bounded registration/capacity; prepublication withdrawal; versioned single-elimination brackets/byes/results; cancellation of an unpublished division with public reason and roster update; realtime refresh hints; dry-run-first audited legacy conversion tool | Actual legacy-source review/migration, automated age/weight/rank eligibility, score rules/appeals, richer formats, published-bracket forfeits/reseeding and federation certification; fees/refunds remain outside ATHLIX |
+| Community | Persisted text feed/comments; desired-state likes and real counts; author-only versioned edits and soft removal; bounded reports; admin-only queue and transactional hide/dismiss decisions with audit; hidden/deleted content filtering | Human moderation ownership/policies, appeals, legal erasure/retention, media, following and automatic social notifications; soft removal retains private records |
+| Kata feedback | Owner-scoped consented bounded uploads; idempotent owner/request/video retries; exclusive single-instance SQLite job/result state; expired-result deletion; interrupted jobs fail explicitly on restart; pinned model manifest/provisioning; native/container smoke passed at `8bea3de`; resource-limited Docker/Compose/Render templates; observed-component heuristic feedback | Final source CI, actual target-host image/model/disk/resource acceptance, permissioned combat-sports benchmark and expert usefulness review; no accuracy/force/kata-recognition claim; horizontal scaling needs a different shared-job design |
+| Provider coaching | Default-off explicit opt-in; bounded schemas/budgets; public published-coach allowlist; caller-owned validated plan saves; saved plans remain readable when provider features are disabled | Live provider/privacy acceptance, evaluated usefulness, distributed budgets and operator-approved commercial terms |
+| Marketing/commercial | Factual pilot scope, no fabricated social proof or revenue; checkout remains disabled by owner decision until prices are decided; user-opened contact draft; factual pitch documents | Approved support mailbox, customer evidence, pricing validation, secure billing/entitlements if later approved, and reviewed privacy/terms |
+| Operations | Canonical locked installs; CI for source checks, isolated database suites, demo Auth emulator, browser/accessibility fixtures, native/container smoke and audit gate; request IDs/safe logs; liveness/readiness; bounded shutdown; deployment/rollback guidance | Observed latest CI and live-host acceptance; approved production settings/indexes/data review; telemetry/support/moderation ownership; backup restore/rollout exercise; full accessibility/performance qualification and reviewed dependency findings |
 
-Some illustrative feature mockups and the bracket simulator remain explicitly
-labeled examples. They are separate from persisted production-intended flows.
-The product is a development/pilot candidate, not a market-ready release.
+Some illustrative mockups and the bracket simulator remain explicitly labeled
+examples. The product remains a development/pilot candidate. Completed source
+slices and passing synthetic checks do not constitute a market-ready release.
+
+Subsystem contracts: [sessions](SESSION_SECURITY.md), [training/clients/inbox](TRAINING_AND_CLIENTS.md),
+[academy operations](ACADEMY_OPERATIONS.md), [tournaments](TOURNAMENTS.md),
+[moderation](COMMUNITY_MODERATION.md), [migration review](MIGRATION_REVIEW.md),
+and [video worker](../cv-service/README.md).

@@ -129,14 +129,20 @@ recognize a kata, measure physical force, diagnose injury or establish model
 accuracy. Camera geometry and the heuristic scoring formulas still need a
 permissioned evaluation dataset and domain-expert review.
 
-Verification on 2026-11-14: Python API/ownership/resource-policy/scoring tests run
-with synthetic fixtures; Express proxy tests use a mocked upstream. Actual
-MediaPipe/video inference and an accuracy benchmark are **NOT RUN**: no reviewed
-model/permissioned video fixture was provided, and the Windows Application Control
-policy blocks matplotlib's `ft2font` DLL during MediaPipe import. Dependency
-resolution alone is not evidence that native inference works on the target host.
+Verification updated 2026-11-15: the current local suite passes 32 Python
+API/ownership/resource-policy/scoring/provisioning tests. Express proxy tests
+use a mocked upstream. Windows Application Control blocks a native dependency
+DLL locally; that policy was not bypassed. At pushed commit `8bea3de`, both remote
+Python jobs passed 30 then-current regressions, hash-pinned model provisioning,
+actual native inference on generated blank video and low-confidence rejection.
+The actual constrained Docker service passed owner isolation, retries, deletion
+and persisted results after restart. See the linked runs in
+[verification](../docs/VERIFICATION.md). These synthetic/runtime checks do not
+establish a permissioned human-video accuracy or usefulness benchmark, and do not
+prove acceptance on the intended live Render service.
 The SQLite tests additionally exercise concurrent independent connections,
 idempotency, TTL after reopening, result-size/nonfinite rejection, secure-delete
 payload removal, startup recovery and an actual killed-process lock release.
-Container build/run and hosted persistent-disk recovery still require their own
-observed environment checks; passing pure Python tests does not establish them.
+Later source changes need a fresh final CI run. Hosted persistent-disk/model/
+resource configuration still requires target-environment acceptance; passing CI
+does not establish that a live service has those settings.

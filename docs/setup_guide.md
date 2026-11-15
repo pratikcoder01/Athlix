@@ -1,17 +1,20 @@
 # ATHLIX setup and verification
 
-Updated 2026-11-14. This is a development/pilot build; completing setup does not
-establish production readiness. See [the audit](PRODUCT_AUDIT.md),
-[operations](OPERATIONS.md), and [dependency review](DEPENDENCY_REVIEW.md).
+Updated 2026-11-15 for current source. This is a development/pilot build;
+successful setup does not establish production readiness. Current test counts
+and latest CI outcomes are tracked in [verification](VERIFICATION.md) and
+[PR #2](https://github.com/pratikcoder01/Athlix/pull/2).
 
 ## Reproducible workspace
 
-Use Node.js 24 (the `.nvmrc` version), npm and Python 3.11. The root manifest's
-minimum supported Node version is 22.18; CI and the local review use Node 24.
-Install from the repository root using its single workspace lockfile:
+Use Node.js 24 (`.nvmrc`), npm and Python 3.11. The root manifest requires at least
+Node 22.18; CI uses Node 24. Install only from the canonical root workspace lock.
+The frontend production build/start requires an explicit server-only
+`AUTH_API_ORIGIN`; use loopback only for local/test services.
 
-```sh
+```powershell
 npm ci --legacy-peer-deps
+$env:AUTH_API_ORIGIN = 'http://127.0.0.1:5000'
 npm run typecheck
 npm run lint
 npm test
@@ -19,119 +22,164 @@ npm run build
 npm audit --audit-level=high
 ```
 
-The peer-resolution flag is part of this repository's locked recipe. Do not run
-independent client/server installs or `npm audit fix --force` to bypass a failure.
-See the dependency review for reviewed overrides and remaining moderate findings.
+On a POSIX shell, set `export AUTH_API_ORIGIN=http://127.0.0.1:5000` before those
+checks. Use the reviewed HTTPS backend origin for a hosted build and runtime.
+Do not run independent client/server installs or forced audit upgrades to bypass
+failures. See [dependency review](DEPENDENCY_REVIEW.md).
 
-## Local services
+## Local services and identity
 
-1. Create `server/.env` and `client/.env.local` from the appropriate sections of
-   the root `.env.example`. Do not copy server secrets into a client file.
-2. Configure a reviewed MongoDB target. Booking and role provisioning use
-   transactions: the database must be a replica set or a transaction-capable
-   managed cluster. A standalone local MongoDB is insufficient for those writes.
-3. Configure the same Firebase project in the server/client SDKs. The Admin SDK
-   uses either a service-account secret or Application Default Credentials.
-   Public Firebase client configuration is not an Admin service account.
-4. Set a securely generated `JWT_SECRET`, and exact `ALLOWED_ORIGIN` browser
-   origins. Development defaults allow localhost/127.0.0.1 on port 3000 only.
-5. From the repository root, run `npm run dev`. The client runs on port 3000 and
-   Express on port 5000 by default. Check `/api/health` for process liveness and
-   `/api/ready` for current database connectivity/drain state.
+1. Create `server/.env` and `client/.env.local` from the corresponding sections
+   of root `.env.example`. Keep Admin credentials, JWT/CV secrets and provider
+   keys server-only. `AUTH_API_ORIGIN` belongs to the frontend build/server
+   configuration, not a `NEXT_PUBLIC_*` variable.
+2. Configure a reviewed MongoDB replica set or transaction-capable managed
+   cluster. Booking, academy/member/attendance, community moderation and audited
+   operator changes require transactions. A standalone MongoDB cannot prove or
+   support those workflows. Deploy required unique/TTL indexes before traffic.
+3. Configure the same Firebase project on both SDKs, allowed identity domains and
+   password-action handler. Admin uses a protected service account or Application
+   Default Credentials. Client Firebase configuration is not an Admin credential.
+4. Set a securely generated `JWT_SECRET`, exact `ALLOWED_ORIGIN` browser origins
+   and `AUTH_COOKIE_SAME_SITE=lax` on the API. The frontend's fixed `/api/auth/*`
+   proxy preserves browser Origin, Cookie and Set-Cookie. Other APIs use the
+   short-lived bearer directly. Local defaults allow localhost/127.0.0.1:3000;
+   add an exact alternative port only for a reviewed local test setup.
+5. Run root `npm run dev` (client 3000, API 5000 by default). Check Express
+   `/api/health` for process liveness and `/api/ready` for current database/drain
+   state. These probes do not verify Firebase, transactions or the CV service.
 
-For a local disposable replica set, a developer with an approved Docker runtime
-can start MongoDB with `--replSet rs0 --bind_ip_all`, publish port 27017 **only on
-127.0.0.1**, and initialize member `127.0.0.1:27017` using `rs.initiate`. Use the
-CI workflow as a reproducible example. Do not expose a development database to
-the public network or reuse production credentials for tests.
+An approved Docker runtime can supply a disposable replica set, publishing
+27017 only on 127.0.0.1 and initializing `rs0` with that loopback member. CI's
+workflow is a reproducible example. Test suites use only `TEST_MONGO_URI`, validate
+the loopback URI and create/drop their exact random test database. They never use
+the application's production `MONGO_URI`.
 
-For the Firebase Auth Emulator, use the same test project ID on both SDKs, set
-`FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` on the server and
-`NEXT_PUBLIC_FIREBASE_USE_EMULATOR=true` on the development client. Provision test
-users in that emulator. Emulator installation and live identity flows are not
-verified by transport-mocked unit tests.
-
-## Account and product setup
-
-- New public accounts are athletes. Approved professional roles use the
-  [audited operator CLI](ROLE_PROVISIONING.md). Dry-run first; applying a role
-  changes a database and needs the operator's separately authorized target.
-- Coaches publish an explicit UTC availability schedule and stored hourly rate
-  through `/coach-settings`. Legacy schedules remain unpublished until reviewed.
-  Bookings quote the stored rate; sending a client price cannot override it.
-- Organizers use `/tournaments` to publish, register athletes, generate a
-  deterministic bracket and record results. Read [event limits](TOURNAMENTS.md).
-- Configure Firebase's recovery-email handler according to
-  [password recovery](PASSWORD_RECOVERY.md). Real email delivery is a separate
-  staging check. Firebase cannot reset an unlinked legacy bcrypt password.
-- Contact submission opens a user-sent email draft only when a reviewed
-  `NEXT_PUBLIC_CONTACT_EMAIL` is configured. It is not an email-delivery service.
-- Checkout/subscriptions, federation certification, verified commercial traction
-  and a validated model-accuracy benchmark are unavailable.
-
-## Optional video worker
-
-Experimental provider-backed coaching is separate from the video worker. It is
-disabled by default. Only after reviewing provider access/privacy and evaluation,
-set `AI_COACHING_ENABLED=true` plus the chosen provider keys in `server/.env`.
-Without explicit opt-in the plan, match and nudge routes return unavailable; the
-ordinary published-coach directory and deterministic event brackets still work.
-Requests/outputs are validated and limited to five requests/account/15 minutes.
-No provider acceptance or coaching usefulness is established by mock tests.
-
-Follow [`cv-service/README.md`](../cv-service/README.md) to create its Python
-environment, install constrained requirements and supply a reviewed MediaPipe
-model file. Set the same server-only `CV_SERVICE_API_KEY` on Express and Python,
-and `CV_SERVICE_URL` on Express. No shared key belongs in a `NEXT_PUBLIC_*` value.
-The browser uses authenticated `/api/cv` routes; do not expose the worker as an
-unauthenticated public upload API.
-
-Run one worker/instance. Jobs/results are ephemeral; restarting it loses jobs.
-Container memory limits, reviewed model/video fixtures and native inference on
-the target host remain release gates. The local Windows review could run the
-Python API/scoring tests, but Application Control blocked a native dependency.
-
-## Integration and browser checks
-
-Ordinary tests mock third-party providers and database operations where noted.
-Run the opt-in transaction suite only against an isolated loopback replica set:
+For isolated identity acceptance use only demo project `demo-athlix`, the checked-in
+`test/firebase.json` and an isolated replica set:
 
 ```powershell
 $env:TEST_MONGO_URI = 'mongodb://127.0.0.1:27017/?replicaSet=rs0'
-npm test
-Remove-Item Env:TEST_MONGO_URI
+$env:FIREBASE_PROJECT_ID = 'demo-athlix'
+$env:GCLOUD_PROJECT = 'demo-athlix'
+npx --yes firebase-tools@15.36.0 emulators:exec --project demo-athlix --only auth --config test/firebase.json "node --test server/test/firebase-emulator.integration.test.cjs"
 ```
 
-The suite validates the test target and creates its own disposable database;
-never use `MONGO_URI` to select its target. The real local replica-set check was
-**NOT RUN** because Windows Application Control blocked the MongoDB executable.
-CI is configured to supply an isolated replica set; inspect the actual CI result.
+Do not supply real service-account credentials to that suite. It enforces demo
+project/loopback guards and checks identity exchange, linking, reset credentials
+and revocation; it does not deliver an external email. For an interactive local
+demo client also set `NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-athlix` and
+`NEXT_PUBLIC_FIREBASE_USE_EMULATOR=true`; server emulator host is
+`FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`. Never use emulator settings in a real
+hosted identity environment. Actual latest emulator CI results must be observed.
 
-After a client build, start it on loopback port 3100 and run:
+## Account and product workspaces
+
+- Public accounts are athletes. Professional access uses the
+  [audited role CLI](ROLE_PROVISIONING.md); it defaults to a dry run. Existing
+  privileged-account provenance must be reviewed rather than assumed approved.
+- Sessions use memory-only 15-minute access and rotating HttpOnly cookies with
+  a seven-day absolute deadline. Old 30-day/sessionless tokens no longer work;
+  plan for sign-in after rollout. Linked accounts use Firebase sign-in. See
+  [session/proxy deployment and recovery](SESSION_SECURITY.md).
+- `/profile` edits self-reported details/achievements. `/training` manages the
+  caller's private history and reads saved plans; archive is not legal erasure.
+- Coaches publish stored rates/UTC availability at `/coach-settings`, manage
+  bookings at `/bookings` and accepted/completed clients/private notes at
+  `/clients`. `/notifications` reads the real recipient inbox; no email or push
+  delivery is implied. See [workspace contracts](TRAINING_AND_CLIENTS.md).
+- Academy owners/admins manage listings, members and daily attendance from
+  `/academies`; archive hides the listing and pauses writes, while restore retains
+  records. Review [permission/privacy and index requirements](ACADEMY_OPERATIONS.md).
+- Organizers use `/tournaments` for owned events, division configuration,
+  registration/withdrawal, brackets/results and unpublished-division cancellation.
+  Eligibility, fees and refunds remain organizer responsibilities. Legacy bracket
+  conversion is a separately reviewed [dry-run-first tool](MIGRATION_REVIEW.md).
+- `/feed` supports author edits/soft removal and reports. Current administrators
+  review `/moderation`; assign a human moderation owner and policy before a public
+  pilot. Read [moderation limits](COMMUNITY_MODERATION.md).
+- Configure genuine recovery-email delivery according to
+  [password recovery](PASSWORD_RECOVERY.md). The emulator and transport fixtures
+  cannot establish hosted delivery. Unlinked legacy bcrypt recovery remains limited.
+- Contact only opens a user-sent draft when `NEXT_PUBLIC_CONTACT_EMAIL` is set.
+  Checkout/subscriptions, federation certification and validated accuracy claims
+  remain unavailable. Privacy/terms still require appropriate review.
+
+## Optional video and provider services
+
+Provider-backed coaching defaults off. Enable `AI_COACHING_ENABLED=true` and
+reviewed provider credentials only after privacy/usefulness acceptance. Ordinary
+coach discovery, deterministic brackets and existing saved-plan reads remain
+available without AI. No provider acceptance is established by mock tests.
+
+Follow [video worker setup](../cv-service/README.md) for Python requirements and
+the pinned model manifest/provisioner. Set the same protected `CV_SERVICE_API_KEY`
+on Express/Python and a reviewed internal `CV_SERVICE_URL` on Express. Provision
+the manifest-pinned `.task` separately, record its hash/license/release approval,
+and set `CV_MODEL_PATH`. Customer uploads never download a model.
+
+Run exactly one instance/worker. Set `CV_STATE_DIR` to a private persistent local
+volume for completed results to survive restarts until their original 15-minute
+expiry; the system-temp default is not hosted durability. Interrupted jobs become
+failed/retryable and media is removed. SQLite is not a horizontally shared queue.
+
+`cv-service/compose.yaml` supplies non-root/read-only execution, a private 160 MiB
+tmpfs, 1,536 MiB memory, two CPUs, 64 PIDs, a persistent state volume and read-only
+model mount. Configure `CV_MODEL_HOST_PATH` and the service key before a reviewed
+local container run. Verify state-volume ownership for UID 10001. The Render
+template declares one instance and persistent disk with auto-deploy off; it is
+preparation, not an approved purchase or observed deployment. Target hosts need
+equivalent actual resource/disk controls and restart testing.
+
+FastAPI `/ready` checks the lease, SQLite, key and model file. It does not prove
+native inference or domain accuracy. CI includes pinned-model/generated-video
+native and container smoke scripts; outcomes are tracked on the PR. Permissioned
+athlete-video evaluation and hosted acceptance remain separate.
+
+## Browser and integration checks
+
+Root `npm test` runs source regression suites. Supplying the guarded loopback
+`TEST_MONGO_URI` enables real database concurrency/rollback suites. Windows
+Application Control blocks the local MongoDB executable and a native MediaPipe
+dependency; do not bypass it or label skipped checks as passing.
+
+After a production build, keep the same `AUTH_API_ORIGIN`, start the client on
+loopback 3100 and run the browser scripts from a second terminal:
 
 ```sh
 npm run start --workspace client -- --hostname 127.0.0.1 --port 3100
-# In another terminal, from the repository root:
+# Separate terminal, repository root:
 node client/test/e2e-smoke.cjs
+node client/test/auth-proxy-e2e.cjs
+node client/test/booking-e2e.cjs
+node client/test/workspace-e2e.cjs
+node client/test/academy-operations-e2e.cjs
+node client/test/training-workspace-e2e.cjs
+node client/test/tournament-divisions-e2e.cjs
+node client/test/community-moderation-e2e.cjs
+node client/test/accessibility-e2e.cjs
 ```
 
-The browser script uses API/Firebase transport fixtures to exercise actual UI
-request wiring and responsive layouts. It does not verify real email delivery,
-MongoDB persistence, payment settlement, or native video inference. On Windows it
-uses an approved installed Edge browser; CI installs Playwright Chromium.
+These use explicit synthetic identity/API fixtures; the auth proxy suite checks
+an actual local Next rewrite against a controlled backend. They do not prove live
+email, customer database, payment or model quality. Use approved Edge locally or
+the CI-installed Playwright Chromium. Consult each script and current verification
+for its precise boundaries; passing targeted accessibility checks is not full WCAG
+or performance certification.
 
 ## Hosting preparation
 
-Keep the repository root lockfile available to both builds. Backend preparation
-is `npm ci --legacy-peer-deps` then `npm run build --workspace athlix-server`;
-start with `npm run start --workspace athlix-server`. Frontend preparation uses
-the same root install then `npm run build --workspace client`. Configure each
-host's monorepo workspace/root settings explicitly rather than assuming a
-nonexistent root `vercel.json` or a stale subdirectory lockfile.
+Both hosts need the root lockfile/workspace install. Build/start the backend with
+`npm run build --workspace athlix-server` / `npm run start --workspace athlix-server`;
+build the frontend with `npm run build --workspace client`. Configure monorepo roots
+explicitly. The frontend production build and runtime need the same reviewed
+`AUTH_API_ORIGIN`; `NEXT_PUBLIC_API_URL` supplies direct bearer/realtime requests.
 
-Set `NODE_ENV=production`, explicit `MONGO_URI`, a securely generated secret of
-at least 32 characters, real Firebase credentials, and exact HTTPS client origins.
-Review proxy topology before configuring `TRUST_PROXY_HOPS`; default zero does
-not trust arbitrary forwarding headers. Restrict database ingress to required
-application infrastructure. No deployment or production setting was applied by
-these instructions. Follow the [release and rollback gates](OPERATIONS.md).
+Production requires explicit `MONGO_URI`, strong JWT secret, Firebase credentials,
+exact HTTPS browser origins, protected CV configuration and reviewed indexes.
+Review `TRUST_PROXY_HOPS` against the actual Vercel/Render ingress chain before
+changing its default zero; verify client-rate limits through the auth proxy.
+Merging the deployment branch may trigger hosted auto-deploys independently of
+this repository's CI. Confirm host settings and obtain the required concrete
+rollout approval. No hosting setting or production deployment is applied by this
+guide. Follow [operations and rollback](OPERATIONS.md).

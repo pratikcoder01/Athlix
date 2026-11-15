@@ -10,8 +10,9 @@ single-elimination bracket from registration order, without an AI ability rankin
 Byes advance automatically. Publication locks registration and seed order. Start
 the event before recording match winners; each next round uses the previous
 round's winners. A final winner is required before completion. Completed events
-are read-only. Divisions, withdrawals, score rules, appeals and reseeding are not
-implemented; do not represent this as a federation-certified scoring engine.
+are read-only. Named divisions, prepublication withdrawal and unpublished-division
+cancellation are described below. Score rules, appeals and published-bracket
+reseeding remain outside this slice; no federation certification is claimed.
 
 ## Authorization and concurrent writes
 
@@ -33,17 +34,19 @@ implemented; do not represent this as a federation-certified scoring engine.
 
 ## Verification and existing data
 
-`node --test server/test/tournament.test.cjs` passes 29 policy/controller tests:
+`node --test server/test/tournament.test.cjs` passes 31 policy/controller tests:
 2–256 entrants, byes, invalid trees/IDs/payloads, foreign organizers, compatibility
 seeding, stale writes, event transitions, deadline/capacity/dedup predicates.
-Controller persistence is mocked. Actual database concurrency is **NOT RUN**:
-the local MongoDB executable is blocked by Windows Application Control.
+Those controller persistence boundaries are mocked. The added division suite has
+21 further regressions and a real MongoDB concurrency suite supplied to CI. Local
+MongoDB is blocked by Windows Application Control; consult [verification](VERIFICATION.md)
+and the PR for the observed remote outcome.
 
 Older brackets with display-name participants or arbitrary model-generated seeds
 will fail the stricter tree validation. Export and review those events before
 using the new editor; no destructive migration or automatic reseeding is performed.
 Existing events should have MongoDB's normal `__v` field before editing.
-# Divisions and withdrawal increment (2026-11-14)
+## Divisions and withdrawal increment (2026-11-14)
 
 Events may configure up to 16 named divisions before the first registration.
 The organizer states each division's discipline, capacity and public eligibility

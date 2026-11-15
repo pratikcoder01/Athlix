@@ -82,12 +82,23 @@ dependency audit. High/critical findings fail the audit step; moderate findings
 remain visible in the uploaded JSON artifact. The workflow uses read-only
 repository permissions and verified action commit pins.
 
-A disposable MongoDB 8 replica set is started on the runner for the booking
-transaction integration suite. Only `TEST_MONGO_URI` is passed to tests, using
-loopback and a generated test database. Python 3.11 independently installs the
-constrained service dependencies, checks their consistency and syntax, and runs
-service/scoring unit tests. No model asset, cloud credentials, secrets, real user
-video, production database, merge, or deployment is required by these jobs.
+A disposable MongoDB 8 replica set is started on the runner for transactional
+booking, session, academy, community, division, training and migration suites.
+Only `TEST_MONGO_URI` is passed to tests, using loopback and generated test
+databases. A separate demo-only Firebase Auth emulator verifies actual identity
+and recovery contracts without real email or production Firebase credentials.
+Python 3.11 independently installs the constrained service dependencies, checks
+their consistency and syntax, and runs service/scoring tests. Native CI explicitly
+downloads the public official model version pinned by SHA-256 in
+`cv-service/model-manifest.json`; the binary is not committed. Generated blank
+video checks inference/rejection, then an actual constrained Docker service checks
+isolation and persisted results after restart. No real user video, cloud secrets,
+production database, merge or deployment is required by these jobs.
+
+The native/Python jobs at `8bea3de` passed these checks. The JavaScript jobs
+failed in browser checks despite passing database/emulator/build stages; see
+[VERIFICATION.md](VERIFICATION.md). A passing native job cannot establish model
+accuracy or make a failing application run acceptable.
 
 Workflow execution is **NOT VERIFIED** merely by adding its YAML. Check the
 actual GitHub Actions run before merging. Local Windows policy may prevent a

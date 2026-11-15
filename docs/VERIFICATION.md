@@ -1,6 +1,72 @@
 # Verification record
 
-Date: 2026-11-14 (Asia/Calcutta). Source implementation through `ab4bad8` on
+## Continued increment: current evidence
+
+2026-11-15 (Asia/Calcutta). The continued increment includes revocable sessions,
+academy operations, training, coach clients, notifications, moderation, divisions,
+video persistence and safe migration work described in [ROADMAP.md](ROADMAP.md).
+The latest completed local `npm test` run passes **15 client + 398 server tests
+(413 total)**; eight service-dependent suites explicitly skip. Python passes
+**32 tests** using the service's virtual environment. Standalone lint passes with
+**zero warnings/errors**, both type checks pass, and both production builds pass.
+Further UI/hydration changes require fresh checks. Audit remains **zero
+high/critical and seven moderate** findings. These results do not establish that
+the currently edited tree has passed remote CI.
+
+CI now supplies the real disposable Mongo replica set for academy, training,
+community, divisions, sessions and migration rollback, plus a demo-only Firebase
+Auth emulator for actual identity/recovery contracts. Browser checks cover all
+new workspaces, a real Next auth rewrite/HttpOnly cookie round-trip, automated
+WCAG scans and keyboard drawer behavior. Native checks download a hash-pinned
+official pose asset, run inference on generated blank video, and exercise actual
+container limits, owner isolation and result persistence after service restart.
+Observed at pushed commit `8bea3de` in
+[PR run 43623613570](https://github.com/pratikcoder01/Athlix/actions/runs/43623613570)
+and [push run 43623610030](https://github.com/pratikcoder01/Athlix/actions/runs/43623610030):
+
+- **Python job: PASS in both runs.** Thirty regressions, dependency/syntax checks,
+  hash-pinned model provisioning, actual native inference on generated blank video
+  and low-confidence rejection passed. The actual Docker service passed owner
+  isolation, request retry, deletion and result persistence after restart. Measured
+  constraints were non-root UID 10001, 1536 MiB memory, two CPUs, 64 PIDs,
+  read-only root, dropped capabilities and no-new-privileges.
+- **JavaScript job: FAIL in both runs.** Locked install, lint/types, disposable
+  MongoDB suites and both builds passed. The database run reported 429 passing
+  server tests and one explicit emulator skip; the separate demo Firebase Auth
+  emulator run passed all seven identity/recovery tests. It sent no real email.
+- The push browser run failed on intermittent production React hydration error
+  418. The PR browser run passed the first smoke, real Next proxy/HttpOnly-cookie
+  round-trip, booking scenarios and profile/academy/feed suite, then timed out on
+  an academy attendance locator. That locator has been corrected in source, but
+  its corrected hosted-run result is pending. Production hydration remains an
+  active failure until a reproduced fix passes; development diagnostics passed
+  189 route/viewport visits in both runs and do not override the production error.
+
+The workflow now attempts all nine browser suites before returning failure so
+that an early failure does not conceal later results. Final source changes,
+accessibility refinements and local commits after `8bea3de` need a new remote run.
+
+Windows Application Control still blocks local Mongo/native import, Docker's
+daemon is unavailable, and automatic approval review rejected root's local
+production-server launch (only reason: "blocked by policy"). No blocked launch
+was retried through another mechanism. A listener-free Playwright fixture can
+serve actual compiled HTML/chunks through request interception, permitting local
+hydration and accessibility diagnostics without a server process. These fixture
+results remain distinct from CI's actual Next HTTP/proxy checks.
+
+Read-only Firebase configuration discovery is recorded in
+[STAGING_DISCOVERY.md](STAGING_DISCOVERY.md): the existing live project uses the
+Firebase-hosted email action handler, and no dedicated staging origin was found.
+No recovery email or production configuration change was made.
+
+Live Firebase email/HTTPS cookie behavior/host secrets, production account provenance,
+deployment/backup exercises, legal/commercial approval and permissioned athlete
+video usefulness/accuracy are still **NOT RUN**. Generated blank-video inference
+can prove runtime execution and rejection behavior, never domain accuracy.
+
+## Historical evidence from the first milestone
+
+Date: 2026-11-14 (Asia/Calcutta). Historical source implementation through `ab4bad8` on
 `codex/athlix-market-ready`, reviewed in draft PR
 [pratikcoder01/Athlix#2](https://github.com/pratikcoder01/Athlix/pull/2).
 No merge or production deployment was performed.
@@ -62,7 +128,7 @@ locally; these checks are not a complete WCAG audit or Core Web Vitals benchmark
   remain explicit release gates.
 - **Billing, legal approval, customer traction, production uptime, real hosting
   rollback, complete accessibility/performance certification: NOT RUN/not claimed.**
-- Session tokens still have a 30-day lifetime and browser-local persistence.
+- At that historical milestone, session tokens had a 30-day lifetime and browser-local persistence.
   Broader revocation, token storage/rotation, partial account/profile recovery and
   privileged-account provenance remain unresolved security work.
 

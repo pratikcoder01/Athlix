@@ -1,6 +1,6 @@
 # ATHLIX — investor-readiness disclosure
 
-Status: 13 November 2026. The repository is a development-stage product. Security
+Status: 15 November 2026. The repository is a development-stage product. Security
 fixes and passing local tests do not establish market readiness, regulatory
 compliance, production reliability, or customer adoption.
 
@@ -9,7 +9,7 @@ compliance, production reliability, or customer adoption.
 | Topic | Evidence available | Gap before asserting readiness |
 | --- | --- | --- |
 | Product | Source for a Next.js/Express/MongoDB platform and Python pose-analysis service; local regression tests. | Fully exercise critical flows with configured staging Firebase, MongoDB, storage, realtime, and Python services. |
-| Authorization | Regression coverage for public role restrictions, account state, Socket.IO rooms, and owned resources. | Review legacy privileged accounts; assess session revocation, storage, and remaining endpoints. |
+| Authorization | Regression coverage for public role restrictions, current accounts, revoked sessions, Socket.IO rooms, and owned resources. Short memory-only access tokens and rotating HttpOnly sessions are implemented. | Review legacy privileged accounts; validate the actual HTTPS cookie/proxy and provider configuration. |
 | Market | Proposed karate academy/local-event pilot. | Interview records, observed workflows, geography choice, buyer decisions, repeat usage. |
 | Traction | No verified customer/activation/retention figures supplied to this audit. | Permissioned measurement and a defined reporting period; sample screen numbers are not evidence. |
 | Commercial | No paid checkout or settlement ledger. | Willingness-to-pay evidence and secure tested billing before selling plans. |

@@ -8,7 +8,7 @@ The proposed first pilot is karate academies and local tournament organizers; de
 Current implementation and evidence: [feature status](docs/FEATURE_STATUS.md),
 [verification record](docs/VERIFICATION.md), [setup](docs/setup_guide.md), and
 [operations/rollback](docs/OPERATIONS.md). Local test passes are distinguished
-from unverified live-provider and native-inference checks.
+from disposable-service CI and unverified live-host/provider acceptance.
 The [architecture overview](docs/ARCHITECTURE.md) explains the trust boundaries.
 
 ---
@@ -45,7 +45,7 @@ athlix/
 - **Secondary Accent**: `#FF8A3D` (Belt Orange - rank achievements)
 - **Gold Accent**: `#F7B500` (Belt Gold - achievement badges)
 - **Success Accent**: `#22C55E` (Emerald Green - approved states)
-- **Typography**: `Bebas Neue` (Accent Headers), `Clash Display` (Sleek UI Headers), `Inter` (Body Text)
+- **Typography**: self-hosted `Space Grotesk` (headings), `Sora` (numbers), `Inter` (body) and `JetBrains Mono` (mono)
 
 ---
 
@@ -60,7 +60,9 @@ athlix/
 
 ## ⚙️ Initial Setup & Commands
 
-To install all dependencies across the entire monorepo:
+First configure the environment, including the frontend's server-only
+`AUTH_API_ORIGIN`, using the [Setup Guide](docs/setup_guide.md). To install all
+dependencies across the entire monorepo:
 ```bash
 npm run install-all
 ```
@@ -85,16 +87,19 @@ The Kata Analyzer feature uses **2D monocular pose estimation** (MediaPipe) and 
 
 ### 🟢 What It Does Measure (Real, Calculated Metrics)
 - **Joint Angles**: Elbow, knee, hip, and shoulder angles using vector dot product math
-- **Center of Mass (COM)**: Weighted average of hip and shoulder landmark positions
-- **Stability**: Frame-to-frame variance in COM position (lower variance = more stable)
+- **Body-Center Proxy**: Weighted average of hip and shoulder landmark positions; not a measured physical center of mass
+- **Stability Heuristic**: Lateral displacement of that body-center proxy from the ankle midpoint
 - **Symmetry**: Comparison of left vs. right joint angles during stances
 - **Guard Position**: How often hands stay above hip level when not performing techniques
 - **Movement Velocity**: Frame-to-frame displacement of wrists/ankles divided by time
 - **Stance Width**: Normalized distance between ankles (relative to shoulder width)
 
-### 🟢 What It Actually Detects
-- **Broad Stances**: Natural Stance, Front Stance, Horse Stance, Back Stance
-- **Broad Techniques**: Arm Strike, Leg Strike, Block (no fine-grained technique classification)
+### 🟢 Heuristic Labels
+- **Broad Stance Rules**: Natural Stance, Front Stance, Horse Stance, Back Stance
+- **Broad Movement Rules**: Arm Strike, Leg Strike, Block
+
+These labels come from angle/distance/speed thresholds. Their recognition
+accuracy has not been measured against a permissioned combat-sports dataset.
 
 ### 🔴 What It Does NOT Measure
 - **True 3D Position**: Uses approximate world coordinates from MediaPipe, not true 3D tracking
@@ -105,9 +110,13 @@ The Kata Analyzer feature uses **2D monocular pose estimation** (MediaPipe) and 
 - **Weight Distribution**: Cannot accurately tell how much weight is on each foot
 
 ### Composite Score Formula
-The overall score is a weighted sum of calculated metrics:
+The overall score normalizes the configured weights over observed components:
 ```
-Overall Score = (Stability × 0.25) + (Guard × 0.15) + (Precision × 0.25) + (Symmetry × 0.20) + (Velocity × 0.15)
+Overall Score = sum(observed score × configured weight) / sum(observed weights)
+Configured weights: stability .25, guard .15, precision .25, symmetry .20, velocity .15
 ```
 
-All scores are calculated directly from pose landmark data and are displayed with full transparency.
+Unobserved guard/precision components are null and excluded, rather than assigned
+a plausible default. Scores are pose-derived heuristics, not official judging,
+physical force, medical advice or validated coaching outcomes. See the
+[evaluation protocol](docs/AI_EVALUATION.md) and [actual verification](docs/VERIFICATION.md).

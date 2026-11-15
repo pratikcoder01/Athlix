@@ -3,43 +3,63 @@
 Audit started 2026-11-13 against GitHub `main` at `870942cbf5378a40e3a3510801182c1c5d22ca5f`.
 Working branch: `codex/athlix-market-ready`. The downloaded ZIP is preserved separately.
 
-## Remediation status — 2026-11-14
+## Current remediation status — 2026-11-15
 
 The table below preserves the **initial** findings and their initial state. The
 implementation has since advanced through the commits in [the roadmap](ROADMAP.md).
 Use [verification](VERIFICATION.md) for current test evidence and
 [feature status](FEATURE_STATUS.md) for implemented versus unavailable workflows.
 
-- Fixed public role escalation, unsafe Firebase legacy linking, disabled-account
-  access, unauthenticated/private socket room access and production wildcard CORS.
-- Fixed cross-owner tournament/AI-compatibility writes, invalid bracket trees,
-  stale/future versions, retained dependent results, duplicate/closed enrollment,
-  and regex/pagination validation in event/profile/academy directories.
-- Replaced the fake reset success with real Firebase verification/confirmation.
-  Added server-priced UTC coaching, serialized transactional booking operations,
-  owner status transitions and actual profile/academy/community UI data flows.
-- Added authenticated owner-scoped bounded video jobs and consent, cleanup,
-  expiry and honest observed-metric feedback. Actual native inference remains
-  blocked/unverified; jobs remain ephemeral and single-worker.
-- Removed unsupported marketing, partner, billing, certification and revenue
-  claims. Added factual pitch materials and explicit unreviewed policy notices.
-- Clean install, both builds, both type checks, 235 JavaScript tests, 15 Python
-  tests and all three production browser suites pass locally. Lint has 17 warnings
-  and zero errors. Audit now has 0 critical / 0 high / 7 moderate findings.
-- CI now runs an isolated replica-set integration suite, build/type/lint/tests,
-  three browser suites, dependency audit and Python checks. Remote outcomes are
-  recorded separately from local results; local DB integration is explicitly skipped.
-  The `dc0c0b9` CI run subsequently passed the actual replica-set integration and
-  all Linux browser suites; see the verification record for the run and scope.
-- The final API audit also closed legacy AI coach-contact/draft-data exposure and
-  invented rating fallbacks. Provider workflows now default off, allowlist public
-  coach data, validate requests/outputs and enforce per-account budgets.
+- Closed public role escalation, unsafe Firebase legacy linking, disabled-user
+  access, arbitrary private socket rooms, cross-owner tournament writes and
+  production wildcard CORS. Provider coaching defaults off and allowlists public
+  coach data instead of contacts, draft controls or invented ratings.
+- Replaced the fake reset success with actual Firebase verification/confirmation.
+  Added 15-minute memory-only access JWTs, hashed rotating HttpOnly refresh
+  credentials, seven-day absolute sessions, current REST/socket session checks,
+  global revocation, fixed-origin Next auth proxy and missing-profile recovery.
+  Linked accounts cannot use an older bcrypt password to bypass Firebase recovery.
+- Persisted server-priced UTC booking and participant transaction locks remain
+  authoritative. New private training history/plan reads, coach relationship/client
+  notes and recipient-scoped stored notifications complete additional workspaces.
+- Academy owners/admins can edit/publish/archive/restore listings, manage private
+  members and daily attendance, and read actual counts. Tenant filters, versions,
+  unique indexes and academy write coordination protect concurrent operations.
+- Events support divisions, bounded enrollment, prepublication athlete withdrawal,
+  versioned brackets/results and reasoned cancellation of an unpublished division.
+  The unsafe legacy migration was replaced by an explicit-target, dry-run-first
+  full-tree review tool with hash/version CAS and transactional source-preserving
+  audit. No existing customer records were migrated.
+- Text community adds author-only versioned edits/soft removal, bounded reports,
+  private admin review and transactional hide/dismiss audits. Hidden/deleted
+  content is excluded from member reads/counts; human policy ownership remains
+  separate from these implementation controls.
+- Video jobs now use a bounded private SQLite store under an exclusive single
+  instance lease. Completed results survive reopening on a persistent local
+  volume until expiry; interrupted work fails explicitly and temporary media is
+  removed. Owner/request/video retries are idempotent. A pinned model manifest,
+  provisioner and non-root resource-limited container templates are supplied.
+- Unsupported marketing, partner, billing, certification and revenue claims were
+  removed. Factual pitch materials and explicit unreviewed policy notices remain.
+- Latest source checks, test counts, audit findings and browser evidence are
+  recorded in [VERIFICATION.md](VERIFICATION.md) and
+  [PR #2](https://github.com/pratikcoder01/Athlix/pull/2). Earlier green runs apply
+  to their recorded commits only. CI now includes expanded isolated database
+  suites, demo Firebase Auth recovery/identity acceptance, browser/accessibility
+  fixtures, pinned-model native smoke and container resource/restart checks;
+  at `8bea3de`, native/container checks passed while JavaScript jobs failed in
+  browser checks. Database/emulator/build stages passed. The production hydration
+  failure and final source acceptance remain active work, recorded in verification.
 
-Unfinished release gates include actual Firebase/provider deployment checks,
-legacy privileged-account provenance, 30-day localStorage JWT/session revocation,
-native/model evaluation, durable CV jobs/container memory enforcement, academy
-member operations, tournament divisions/withdrawals, moderation, billing, legal
-review, full accessibility/performance qualification and supervised pilot evidence.
+Remaining release gates include actual hosted identity/email/provider and HTTPS
+cookie/proxy acceptance, existing privileged-account provenance, reviewed indexes
+and legacy-source decisions, target-host native/container/disk acceptance,
+permissioned kata evaluation, human support/moderation ownership, legal
+review, backup restoration, full accessibility/performance qualification and
+supervised pilot evidence. Single-instance SQLite is not a horizontally shared
+job service, and archive/soft removal is not permanent personal-data erasure.
+Checkout remains disabled by owner decision until prices are decided; billing
+is an intentional deferral rather than a feature enabled by this increment.
 
 ## Evidence and scope
 
@@ -78,7 +98,7 @@ Environment: Windows, Node 24.18.0, npm 11.16.0, Python 3.11.9. No real service 
 | DB-backed signup/booking/tournament journeys | NOT RUN: isolated test database and Firebase project/emulator not configured yet. |
 | Production services, payment, mail, deployment | NOT RUN: intentionally outside local verification. |
 
-## Architecture and data flows
+## Initial architecture and data flows (historical baseline)
 
 - Next.js client authenticates with Firebase, exchanges an ID token for an API JWT, and stores API identity in Zustand. Legacy bcrypt signup/login also exists. Express middleware resolves the user in MongoDB.
 - Profile and CoachProfile documents extend User; academy records belong to an owner. Booking references an athlete and coach, persists notifications and publishes Socket.IO updates.
@@ -87,6 +107,11 @@ Environment: Windows, Node 24.18.0, npm 11.16.0, Python 3.11.9. No real service 
 
 ## Release gates
 
-Do not describe the product as market-ready yet. Release requires negative authorization tests, DB-backed concurrency tests, validated reset delivery, reproducible video evaluation, truthful marketing, critical journey smoke tests, operational setup/rollback documentation and review of unresolved dependency advisories. Source-level or mocked-model tests cannot establish production integration readiness.
+Do not describe the product as market-ready yet. Source includes negative
+authorization/concurrency tests, truthful marketing, persisted workflows and
+operational/rollback documentation; these are not substitutes for observed new CI
+results, live reset delivery, hosted proxy/session/database acceptance, reviewed
+deployment controls and reproducible permissioned video evaluation. Source or
+mocked-model tests cannot establish production integration readiness.
 
 Milestone outcomes and remaining limitations are recorded in `docs/ROADMAP.md` and the PR description.
