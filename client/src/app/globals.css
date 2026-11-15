@@ -26,6 +26,8 @@
   --brand-primary: #0a0a0a;
   --brand-primary-light: #171717;
   --brand-accent: #ff5a3d;
+  --brand-accent-text: #b9331b;
+  --brand-accent-text-hover: #a52b17;
   --brand-accent-light: #ff8a3d;
   --brand-accent-gold: #f7b500;
   --brand-accent-glow: rgba(255, 90, 61, 0.15);
@@ -46,13 +48,13 @@
   --color-border-strong: rgba(0, 0, 0, 0.12);
   --color-border-focus: rgba(255, 90, 61, 0.5);
   
-  --color-success: #10b981;
+  --color-success: #047857;
   --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-warning: #f59e0b;
+  --color-warning: #92400e;
   --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-danger: #ef4444;
+  --color-danger: #b91c1c;
   --color-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-info: #3b82f6;
+  --color-info: #1d4ed8;
   --color-info-bg: rgba(59, 130, 246, 0.1);
 
   /* Shadows - Light Theme */
@@ -76,6 +78,8 @@
   --brand-primary: #ffffff;
   --brand-primary-light: #e5e5e5;
   --brand-accent: #ff5a3d;
+  --brand-accent-text: #ff5a3d;
+  --brand-accent-text-hover: #ff8a3d;
   --brand-accent-light: #ff8a3d;
   --brand-accent-gold: #f7b500;
   --brand-accent-glow: rgba(255, 90, 61, 0.25);
@@ -409,6 +413,15 @@ select:focus-visible {
 /* ========================================
    PRINT STYLES
    ======================================== */
+.text-accent,
+.hover\:text-accent:hover {
+  color: var(--brand-accent-text);
+}
+.text-accent-light,
+.hover\:text-accent-light:hover {
+  color: var(--brand-accent-text-hover);
+}
+
 @media print {
   body {
     background: white;

@@ -58,9 +58,9 @@ function SectionLabel({ icon: Icon, label }: { icon?: React.FC<React.SVGProps<SV
 const features = [
   { icon: Brain, title: 'Kata analysis · experimental', description: '2D pose estimates and rule-based movement feedback. Camera angle and landmark confidence affect results; scores are not a validated measure of skill.', color: 'from-orange-500/20 to-red-500/10', iconColor: 'text-orange-400' },
   { icon: Trophy, title: 'Tournaments · pilot scope', description: 'Authenticated event registration and organizer-managed brackets. Real events require an approved organizer and configured backend.', color: 'from-yellow-500/20 to-amber-500/10', iconColor: 'text-yellow-400' },
-  { icon: Users, title: 'Academies · in development', description: 'Academy listing APIs exist. Member records, attendance, and day-to-day school operations still need a complete workflow.', color: 'from-blue-500/20 to-indigo-500/10', iconColor: 'text-blue-400' },
-  { icon: BarChart3, title: 'Progress · in development', description: 'Profile and analysis data are a starting point. Some dashboards are sample screens; they do not represent measured customer activity.', color: 'from-green-500/20 to-emerald-500/10', iconColor: 'text-green-400' },
-  { icon: Target, title: 'Coaching · in development', description: 'Booking and coach-profile APIs are under review. Directory examples do not establish coach availability or credential verification.', color: 'from-purple-500/20 to-violet-500/10', iconColor: 'text-purple-400' },
+  { icon: Users, title: 'Academy workspace', description: 'Approved owners can manage listing details, private member records, daily attendance, and saved operational counts.', color: 'from-blue-500/20 to-indigo-500/10', iconColor: 'text-blue-400' },
+  { icon: BarChart3, title: 'Your training records', description: 'Keep a private training journal and review your saved profile, sessions, plans, and notifications.', color: 'from-green-500/20 to-emerald-500/10', iconColor: 'text-green-400' },
+  { icon: Target, title: 'Coaching sessions', description: 'Review published rates and UTC availability, request sessions, and manage bookings. Coach credentials still require independent review.', color: 'from-purple-500/20 to-violet-500/10', iconColor: 'text-purple-400' },
   { icon: Shield, title: 'Professional access · reviewed', description: 'New public accounts start as athletes. Coach, academy owner, organizer, and administrator privileges require a trusted approval process.', color: 'from-cyan-500/20 to-teal-500/10', iconColor: 'text-cyan-400' },
 ];
 
@@ -75,7 +75,7 @@ const steps = [
 
 const faqs = [
   { q: 'Who is ATHLIX being built for?', a: 'Our proposed first pilot is karate academies and local tournament organizers. The initial geography and customer demand still need validation; broader combat-sports support is a roadmap direction.' },
-  { q: 'Is every screen ready for real customers?', a: 'No. This is a development build. Some directories, dashboards, and community screens contain sample content. Review the product status page before relying on a workflow.' },
+  { q: 'Is every screen ready for real customers?', a: 'This is a development pilot. Account workspaces use saved records; illustrative product mockups are labeled. Hosted acceptance, reviewed policies, and operating support are still needed before a public release.' },
   { q: 'What does the Kata Analyzer measure?', a: 'It estimates 2D body landmarks and calculates movement heuristics. It cannot measure physical force, diagnose injuries, or certify performance. No independently validated accuracy figure is available.' },
   { q: 'Are subscriptions or payments available?', a: 'No. Paid plans, checkout, and automated billing are not available. Pilot scope and commercial terms must be discussed with the team.' },
   { q: 'What should I know before sharing data?', a: 'Privacy and service terms are pending legal review. Avoid uploading sensitive or third-party information. Use only videos you have permission to share, and review the analyzer consent notice.' },
@@ -100,6 +100,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       <Navbar />
+      <main>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <motion.section
@@ -175,31 +176,29 @@ export default function Home() {
             variants={fadeUp}
             className="flex flex-col sm:flex-row gap-3 pt-2"
           >
-            <Link href="/signup">
-              <motion.button
+            <Link href="/signup" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+              <motion.span
                 whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
+                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
               >
                 <Sparkles className="w-5 h-5" />
                 Create Athlete Account
                 <ArrowRight className="w-5 h-5" />
-              </motion.button>
+              </motion.span>
             </Link>
-            <Link href="/features">
-              <motion.button
+            <Link href="/features" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+              <motion.span
                 whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
                 className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-semibold text-base border border-border bg-surface/60 backdrop-blur-sm text-text-primary hover:border-accent/40 hover:bg-surface transition-all duration-300 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current" />
                 See How It Works
-              </motion.button>
+              </motion.span>
             </Link>
           </motion.div>
 
           <motion.p variants={fadeUp} className="max-w-xl text-sm text-text-secondary pt-4">
-            Early development. Some screens contain sample data. No paid subscriptions or measured traction are claimed.
+            Development pilot with saved account workflows and labeled product mockups. Checkout remains disabled; no measured traction is claimed.
           </motion.p>
         </motion.div>
 
@@ -235,7 +234,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="text-xl md:text-2xl font-black font-display text-text-tertiary/50 hover:text-text-secondary transition-colors duration-300 cursor-default tracking-tight"
+                className="text-xl md:text-2xl font-black font-display text-text-tertiary hover:text-text-secondary transition-colors duration-300 cursor-default tracking-tight"
               >
                 {logo}
               </motion.span>
@@ -353,7 +352,7 @@ export default function Home() {
                 transition={{ duration: 0.6, delay: i * 0.08 }}
                 className="group relative rounded-2xl border border-border bg-surface p-8 hover:border-accent/30 transition-all duration-300 hover:shadow-md"
               >
-                <div className="text-5xl font-black font-display text-accent/20 group-hover:text-accent/40 transition-colors duration-300 leading-none mb-4">
+                <div className="text-5xl font-black font-display text-accent leading-none mb-4">
                   {step.n}
                 </div>
                 <h4 className="text-lg font-bold font-display text-text-primary mb-1.5">{step.title}</h4>
@@ -403,7 +402,7 @@ export default function Home() {
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                     <item.icon className="w-5 h-5 text-accent" />
                   </div>
-                  <span className="text-[10px] font-black tracking-widest uppercase text-accent/70 border border-accent/20 rounded-full px-2.5 py-1 bg-accent/5">
+                  <span className="text-[10px] font-black tracking-widest uppercase text-text-primary border border-accent/20 rounded-full px-2.5 py-1 bg-accent/5">
                     {item.badge}
                   </span>
                 </div>
@@ -517,25 +516,23 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/signup">
-                  <motion.button
+                <Link href="/signup" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+                  <motion.span
                     whileHover={{ y: -2, scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
+                    className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
                   >
                     <Sparkles className="w-5 h-5" />
                     Create Athlete Account
                     <ArrowRight className="w-5 h-5" />
-                  </motion.button>
+                  </motion.span>
                 </Link>
-                <Link href="/features">
-                  <motion.button
+                <Link href="/features" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+                  <motion.span
                     whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
                     className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-semibold text-base border border-border bg-surface/60 backdrop-blur-sm text-text-primary hover:border-accent/40 hover:bg-surface transition-all duration-300 cursor-pointer"
                   >
                     View Product Status
-                  </motion.button>
+                  </motion.span>
                 </Link>
               </div>
 
@@ -547,6 +544,7 @@ export default function Home() {
         </div>
       </section>
 
+      </main>
       <Footer />
     </div>
   );

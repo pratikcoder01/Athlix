@@ -125,7 +125,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <main className="min-h-screen bg-background flex">
       {/* ── Left Branding Panel ── */}
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col items-center justify-center p-12 bg-surface border-r border-border">
         <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-accent/15 rounded-full blur-3xl pointer-events-none" />
@@ -241,6 +241,7 @@ export default function SignupPage() {
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                 <input
                   id="signup-name"
+                  autoComplete="name"
                   {...register('name')}
                   placeholder="John Doe"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
@@ -257,6 +258,7 @@ export default function SignupPage() {
                 <input
                   id="signup-email"
                   type="email"
+                  autoComplete="email"
                   {...register('email')}
                   placeholder="you@example.com"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
@@ -273,12 +275,16 @@ export default function SignupPage() {
                 <input
                   id="signup-password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   {...register('password')}
                   placeholder="Min. 6 characters"
                   className="w-full pl-10 pr-11 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  aria-controls="signup-password"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
                 >
@@ -364,6 +370,6 @@ export default function SignupPage() {
           </p>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

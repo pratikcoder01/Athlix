@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16 relative overflow-hidden">
+    <main className="min-h-screen bg-background flex items-center justify-center px-4 py-16 relative overflow-hidden">
       {/* Background */}
       <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl pointer-events-none" />
       <div
@@ -137,6 +137,7 @@ export default function ForgotPasswordPage() {
                     <input
                       id="forgot-email"
                       type="email"
+                      autoComplete="email"
                       {...register('email')}
                       placeholder="you@example.com"
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
@@ -164,7 +165,7 @@ export default function ForgotPasswordPage() {
                     disabled={isSubmitting}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer mt-1"
+                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer mt-1"
                   >
                     {isSubmitting ? (
                       <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -181,6 +182,6 @@ export default function ForgotPasswordPage() {
           )}
         </AnimatePresence>
       </motion.div>
-    </div>
+    </main>
   );
 }

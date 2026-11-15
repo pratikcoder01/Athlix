@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary overflow-hidden">
       {/* Fine background grid */}
       <div className="absolute inset-0 mat-grid opacity-20 pointer-events-none" />
 
@@ -82,9 +82,9 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
+          <h1 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
             ENTER NEW PASSWORD
-          </h2>
+          </h1>
           <p className="text-text-secondary text-xs mt-2">
             {email ? `Choose a new password for ${email}.` : 'Open the recovery link from your Firebase password reset email.'}
           </p>
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
             <MagneticButton
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
+              className="w-full bg-primary hover:bg-opacity-95 text-text-inverse py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
             >
               {isSubmitting ? 'SAVING...' : 'UPDATE PASSWORD'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
             </MagneticButton>
@@ -147,6 +147,6 @@ export default function ResetPasswordPage() {
           </>}
         </SpotlightCard>
       </div>
-    </div>
+    </main>
   );
 }

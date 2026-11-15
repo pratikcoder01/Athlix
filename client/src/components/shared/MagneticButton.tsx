@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
-interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MagneticButtonProps extends HTMLMotionProps<'button'> {
   children: React.ReactNode;
   variant?: 'primary' | 'ghost' | 'outline' | 'premium' | 'accent';
   size?: 'sm' | 'md' | 'lg' | 'icon';
@@ -20,8 +20,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   as = 'button',
   ...restProps
 }) => {
-  const { type, onClick, id, title, style } = restProps;
-  const props = { type, onClick, id, title, style };
+  const props = restProps;
   const ref = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const reducedMotion = useReducedMotion();
@@ -86,6 +85,9 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   };
 
   if (as === 'span') {
+    // A visual span inside a Link must not gain Motion's automatic tabIndex
+    // from a tap gesture and become a second keyboard target inside the link.
+    const spanAnimation = { animate: animationProps.animate, whileHover: animationProps.whileHover, transition: animationProps.transition };
     return (
       <motion.span
         ref={ref as React.Ref<HTMLSpanElement>}
@@ -93,7 +95,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
         onMouseLeave={handleMouseLeave}
         className={cn(classes, 'cursor-pointer inline-flex')}
         aria-disabled={disabled}
-        {...animationProps}
+        {...spanAnimation}
       >
         {innerElement}
       </motion.span>

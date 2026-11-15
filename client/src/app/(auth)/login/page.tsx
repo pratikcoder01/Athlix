@@ -127,7 +127,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <main className="min-h-screen bg-background flex">
       {/* ── Left Branding Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col items-center justify-center p-12 bg-surface border-r border-border">
         <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-accent/15 rounded-full blur-3xl pointer-events-none" />
@@ -240,6 +240,7 @@ export default function LoginPage() {
                 <input
                   id="login-email"
                   type="email"
+                  autoComplete="username"
                   {...register('email')}
                   placeholder="you@example.com"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
@@ -261,12 +262,16 @@ export default function LoginPage() {
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   {...register('password')}
                   placeholder="••••••••"
                   className="w-full pl-10 pr-11 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  aria-controls="login-password"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
                 >
@@ -365,6 +370,6 @@ export default function LoginPage() {
           </p>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

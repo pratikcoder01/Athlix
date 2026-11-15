@@ -49,11 +49,11 @@ async function session(role, id) {
   const organizer = await session('tournament_organizer', owner), page = organizer.page;
   await page.getByLabel('Division title', { exact: true }).fill('Adult open'); await page.getByLabel('Division key', { exact: true }).fill('adult-open');
   await page.getByLabel('Eligibility rules').fill('Organizer checks age and belt before participation.'); await page.getByRole('button', { name: 'Add division', exact: true }).click();
-  await page.getByLabel('Division', { exact: true }).waitFor(); assert.equal(event.divisions.length, 1);
+  await page.getByRole('combobox', { name: 'Division', exact: true }).waitFor(); assert.equal(event.divisions.length, 1);
   await page.getByLabel('Division title', { exact: true }).fill('Unused division'); await page.getByLabel('Division key', { exact: true }).fill('unused');
   await page.getByLabel('Eligibility rules').fill('An unpublished division that can be cancelled if underfilled.'); await page.getByRole('button', { name: 'Add division', exact: true }).click();
-  await page.getByLabel('Division', { exact: true }).selectOption('unused'); assert.equal(event.divisions.length, 2);
-  await page.getByLabel('Division', { exact: true }).selectOption('adult-open');
+  await page.getByRole('combobox', { name: 'Division', exact: true }).selectOption('unused'); assert.equal(event.divisions.length, 2);
+  await page.getByRole('combobox', { name: 'Division', exact: true }).selectOption('adult-open');
   for (const id of athletes) {
     const athlete = await session('athlete', id);
     await athlete.page.getByRole('button', { name: 'Register for division', exact: true }).click(); await athlete.page.getByRole('button', { name: 'You are registered', exact: true }).waitFor();
@@ -71,16 +71,16 @@ async function session(role, id) {
   // unpublished division can still be cancelled before the event starts.
   await page.getByRole('button', { name: 'Generate division bracket', exact: true }).waitFor({ state: 'hidden' });
   const published = JSON.stringify(event.divisions[0].brackets);
-  await page.getByLabel('Division', { exact: true }).selectOption('unused');
+  await page.getByRole('combobox', { name: 'Division', exact: true }).selectOption('unused');
   await page.getByLabel('Public division cancellation reason').fill('Too few entrants; contact the organizer for alternatives.');
   await page.getByRole('button', { name: 'Cancel selected division and withdraw entrants', exact: true }).click();
   await page.getByRole('heading', { name: 'Cancelled divisions', exact: true }).waitFor();
   assert.equal(event.divisions.length, 1); assert.equal(event.divisionCancellations[0].key, 'unused');
   assert.equal(JSON.stringify(event.divisions[0].brackets), published); assert.equal(event.registrations.length, 2);
-  await page.getByLabel('Division', { exact: true }).selectOption('adult-open');
+  await page.getByRole('combobox', { name: 'Division', exact: true }).selectOption('adult-open');
   await page.getByRole('button', { name: 'Start tournament', exact: true }).click(); await page.getByRole('button', { name: 'Start division', exact: true }).click();
   await page.getByRole('button', { name: 'Record Athlete 1 as winner', exact: true }).click(); await page.getByRole('button', { name: 'Complete division', exact: true }).click();
-  await page.getByRole('button', { name: 'Complete tournament', exact: true }).click(); await page.getByRole('status').waitFor(); assert.equal(event.status, 'completed'); assert.equal(event.divisions[0].status, 'completed');
+  await page.getByRole('button', { name: 'Complete tournament', exact: true }).click(); await page.getByRole('status').filter({ hasText: 'Division fixture saved' }).waitFor(); assert.equal(event.status, 'completed'); assert.equal(event.divisions[0].status, 'completed');
   for (const width of [360, 768, 1024, 1440]) { await page.setViewportSize({ width, height: 900 }); assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Division details overflow at ${width}`); }
   assert.deepEqual(errors, []); console.log('PASS division setup, registrations/withdrawal, conflict recovery, safe cancellation and full result lifecycle');
   await organizer.context.close();

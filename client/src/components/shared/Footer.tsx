@@ -45,6 +45,7 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-border pb-16 mb-16">
           <div className="max-w-xl">
             <AnimatedText 
+              as="h2"
               text="Ready to elevate your game?" 
               className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4"
               delay={0.1}
@@ -133,7 +134,7 @@ export const Footer: React.FC = () => {
         >
           <p>© {new Date().getFullYear()} ATHLIX project.</p>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default">
+            <div className="flex items-center gap-2 cursor-default">
               <div className="w-2 h-2 rounded-full bg-amber-400" />
               <span>Development build · Service status unverified</span>
             </div>

@@ -71,9 +71,9 @@ async function ownerFlow() {
   await page.getByLabel('Active member on this page').selectOption(memberId); await page.getByRole('button', { name: 'Save attendance', exact: true }).click();
   await page.getByRole('status').filter({ hasText: 'Attendance saved' }).waitFor(); await page.getByText('present', { exact: true }).waitFor();
   assert.equal(records.length, 1);
-  await page.getByLabel('Attendance status', { exact: true }).selectOption('excused'); await page.getByRole('button', { name: 'Save attendance', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Attendance status', exact: true }).selectOption('excused'); await page.getByRole('button', { name: 'Save attendance', exact: true }).click();
   await page.getByText('excused', { exact: true }).waitFor(); assert.equal(records.length, 1); assert.equal(records[0].status, 'excused');
-  await page.getByRole('button', { name: /Permissioned fixture member.*ATH-1/ }).click(); await page.getByLabel('Membership status', { exact: true }).selectOption('inactive');
+  await page.getByRole('button', { name: /Permissioned fixture member.*ATH-1/ }).click(); await page.getByRole('combobox', { name: 'Membership status', exact: true }).selectOption('inactive');
   await page.getByRole('button', { name: 'Save member changes', exact: true }).click();
   await page.getByRole('button', { name: /Permissioned fixture member.*inactive/ }).waitFor(); assert.equal(members[0].status, 'inactive');
   await page.getByRole('button', { name: 'Archive academy', exact: true }).click(); await page.getByRole('status').filter({ hasText: 'Academy archived' }).waitFor();

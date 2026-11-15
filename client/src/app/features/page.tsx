@@ -35,7 +35,7 @@ const features = [
     icon: Layers,
     heading: 'FIGHTER PROFILE & BELT TRACKING',
     body: 'Profile APIs store basic athlete details. Training history, weight logs, and instructor-verified promotions still need a complete workflow. The adjacent timeline is an illustrative mockup.',
-    bullets: ['Basic profile foundation', 'Training history planned', 'No credential-verification claim'],
+    bullets: ['Saved athlete profiles', 'Private training journal and saved plans', 'No credential-verification claim'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
@@ -135,8 +135,8 @@ const features = [
     label: 'Clubs & Security',
     icon: Shield,
     heading: 'ACADEMY FINDER & STABLE APIS',
-    body: 'Academy APIs support listings and location queries. Some discovery pages remain sample directories. Authentication and ownership checks are being hardened; no certification or complete verification program is claimed.',
-    bullets: ['Listing API foundation', 'Explicit sample directories', 'Reviewed professional access'],
+    body: 'Browse published academy listings. Approved owners can edit their listing, manage private member records, record daily attendance, and review saved operational counts. Credentials and customer outcomes still need independent validation.',
+    bullets: ['Published academy directory', 'Private member and attendance tools', 'Approved professional access'],
     visual: (
       <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
@@ -192,6 +192,7 @@ export default function FeaturesPage() {
   return (
     <div className="relative min-h-screen bg-background text-text-primary overflow-hidden">
       <Navbar />
+      <main>
 
       {/* ── Hero — asymmetric, matches About/Home pattern ── */}
       <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 relative z-10">
@@ -360,6 +361,7 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+      </main>
       <Footer />
     </div>
   );
