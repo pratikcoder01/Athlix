@@ -5,23 +5,32 @@ const { connectDB, probeTransactionCapability, validateTransactionTopology, DATA
 
 const primary = { ok: 1, isWritablePrimary: true, setName: 'fixture-rs', logicalSessionTimeoutMinutes: 30, maxWireVersion: 25 };
 let databaseDescriptor;
+let modelsDescriptor;
 let changedDatabase = false;
 afterEach(() => {
   mock.restoreAll();
   if (changedDatabase) {
     if (databaseDescriptor) Object.defineProperty(mongoose.connection, 'db', databaseDescriptor);
     else delete mongoose.connection.db;
+    if (modelsDescriptor) Object.defineProperty(mongoose.connection, 'models', modelsDescriptor);
+    else delete mongoose.connection.models;
     changedDatabase = false;
   }
 });
 function fixture(reply = primary, failure) {
   const events = [];
   const command = mock.fn(async () => { events.push('hello'); if (failure) throw failure; return reply; });
+  const indexes = mock.fn(async () => [{ key: { _id: 1 }, name: '_id_' }, { key: { ownerId: 1, requestId: 1 }, unique: true }]);
+  const runCursorCommand = mock.fn(() => { events.push('indexes'); return { toArray: indexes }; });
   databaseDescriptor = Object.getOwnPropertyDescriptor(mongoose.connection, 'db'); changedDatabase = true;
-  Object.defineProperty(mongoose.connection, 'db', { configurable: true, value: { admin: () => ({ command }) } });
+  modelsDescriptor = Object.getOwnPropertyDescriptor(mongoose.connection, 'models');
+  Object.defineProperty(mongoose.connection, 'db', { configurable: true, value: { admin: () => ({ command }), runCursorCommand } });
+  Object.defineProperty(mongoose.connection, 'models', { configurable: true, value: {
+    RequiredRecord: { collection: { name: 'requiredrecords' }, schema: { indexes: () => [[{ ownerId: 1, requestId: 1 }, { unique: true }]] } },
+  } });
   const connect = mock.method(mongoose, 'connect', async () => { events.push('connect'); return mongoose; });
   const disconnect = mock.method(mongoose, 'disconnect', async () => { events.push('disconnect'); });
-  return { command, connect, disconnect, events };
+  return { command, connect, disconnect, indexes, runCursorCommand, events };
 }
 const production = { NODE_ENV: 'production', MONGO_URI: 'mongodb://fixture.invalid/review-only' };
 
@@ -58,10 +67,39 @@ test('probe failure or missing connection throws a generic error without raw ser
   await assert.rejects(probeTransactionCapability({ db: undefined }), /startup validation failed/);
   assert.equal(f.disconnect.mock.callCount(), 0);
 });
-test('production startup connects and validates before reporting success without a data write', async () => {
+test('production startup disables schema writes and validates topology plus required indexes before success', async () => {
   const f = fixture(); await connectDB(production);
-  assert.deepEqual(f.events, ['connect', 'hello']); assert.equal(f.disconnect.mock.callCount(), 0);
-  assert.deepEqual(f.connect.mock.calls[0].arguments, [production.MONGO_URI, { serverSelectionTimeoutMS: 10000, maxPoolSize: 20 }]);
+  assert.deepEqual(f.events, ['connect', 'hello', 'indexes']); assert.equal(f.disconnect.mock.callCount(), 0);
+  assert.deepEqual(f.connect.mock.calls[0].arguments, [production.MONGO_URI, { serverSelectionTimeoutMS: 10000, maxPoolSize: 20, autoCreate: false, autoIndex: false }]);
+});
+
+test('startup cannot report success while required index inspection is pending', async () => {
+  const f = fixture(); const validIndexes = await f.indexes(); let release;
+  f.indexes.mock.mockImplementation(() => new Promise(resolve => { release = resolve; }));
+  let finished = false; const pending = connectDB(production).then(() => { finished = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(f.events, ['connect', 'hello', 'indexes']); assert.equal(finished, false);
+  release(validIndexes); await pending; assert.equal(finished, true);
+});
+
+test('missing or failed required index inspection disconnects and sanitizes the startup failure', async () => {
+  const f = fixture(); f.indexes.mock.mockImplementation(async () => { throw Error('mongodb://private:secret@private-host/private-db'); });
+  await assert.rejects(connectDB(production), error => {
+    assert.match(error.message, /required indexes/); assert.doesNotMatch(error.message, /secret|private-host|private-db/); return true;
+  });
+  assert.deepEqual(f.events, ['connect', 'hello', 'indexes', 'disconnect']);
+});
+
+test('production rejects a missing required index and disconnects before success', async () => {
+  const f = fixture(); f.indexes.mock.mockImplementation(async () => [{ key: { _id: 1 }, name: '_id_' }]);
+  await assert.rejects(connectDB(production), /required indexes/);
+  assert.deepEqual(f.events, ['connect', 'hello', 'indexes', 'disconnect']);
+});
+
+test('production rejects an empty model catalog rather than skipping the index gate', async () => {
+  const f = fixture(); Object.defineProperty(mongoose.connection, 'models', { configurable: true, value: {} });
+  await assert.rejects(connectDB(production), /required indexes/);
+  assert.deepEqual(f.events, ['connect', 'hello', 'disconnect']);
 });
 test('production rejects a standalone target and disconnects before returning the startup failure', async () => {
   const { setName, ...standalone } = primary;
@@ -85,6 +123,8 @@ test('development standalone remains available without pretending transaction jo
   const f = fixture(); await connectDB({ NODE_ENV: 'development' });
   assert.deepEqual(f.events, ['connect']); assert.equal(f.command.mock.callCount(), 0);
   assert.equal(f.connect.mock.calls[0].arguments[0], 'mongodb://127.0.0.1:27017/athlix');
+  assert.deepEqual(f.connect.mock.calls[0].arguments[1], { serverSelectionTimeoutMS: 10000, maxPoolSize: 20 });
+  assert.equal(f.runCursorCommand.mock.callCount(), 0);
 });
 test('production missing URI fails before attempting connection or a capability probe', async () => {
   const f = fixture(); await assert.rejects(connectDB({ NODE_ENV: 'production' }), /MONGO_URI is required/);

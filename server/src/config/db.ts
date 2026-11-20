@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
+import { verifyRequiredIndexes } from './indexes';
 
 export const DATABASE_CAPABILITY_TIMEOUT_MS = 5_000;
-const startupFailure = 'Database startup validation failed. Production requires a writable replica set or mongos with transaction and logical-session support.';
+const startupFailure = 'Database startup validation failed. Production requires a writable replica set or mongos with transaction and logical-session support, plus reviewed collections and required indexes.';
 
 /** A read-only deployment capability check, not a transaction or permission probe. */
 export function validateTransactionTopology(hello: unknown): 'replica_set' | 'mongos' {
@@ -41,10 +42,15 @@ export const connectDB = async (environment: NodeJS.ProcessEnv = process.env) =>
   // Fail promptly rather than buffering requests against an unavailable database.
   mongoose.set('bufferCommands', false);
   try {
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 10_000, maxPoolSize: 20 });
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 10_000, maxPoolSize: 20,
+      ...(production ? { autoCreate: false, autoIndex: false } : {}),
+    });
     // index.ts awaits this before server.listen: an unsupported production
     // topology must never advertise a ready API with unusable write journeys.
-    if (production) await probeTransactionCapability();
+    if (production) {
+      await probeTransactionCapability();
+      await verifyRequiredIndexes();
+    }
   } catch {
     try { await mongoose.disconnect(); } catch { /* Preserve the safe startup failure. */ }
     throw new Error(startupFailure);

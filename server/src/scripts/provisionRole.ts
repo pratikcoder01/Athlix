@@ -83,19 +83,25 @@ export const provisionRole = async (input: RoleProvisioningOptions) => {
   return result;
 };
 
+export const runRoleProvisioning = async (args: string[], environment: NodeJS.ProcessEnv = process.env) => {
+  const options = parseRoleProvisioningArgs(args);
+  if (!environment.MONGO_URI) throw new Error('MONGO_URI must explicitly identify the reviewed target database');
+  try {
+    // Neither dry-run nor apply is permission to change collection/index policy.
+    await mongoose.connect(environment.MONGO_URI, { serverSelectionTimeoutMS: 10_000, autoCreate: false, autoIndex: false });
+    return await provisionRole(options);
+  } finally {
+    await mongoose.disconnect();
+  }
+};
+
 const main = async () => {
   // Load server/.env only for explicit CLI execution, never when imported in tests.
   const { config } = await import('dotenv');
   config();
-  const options = parseRoleProvisioningArgs(process.argv.slice(2));
-  if (!process.env.MONGO_URI) throw new Error('MONGO_URI must explicitly identify the reviewed target database');
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log(JSON.stringify(await provisionRole(options)));
-    if (!options.apply) console.log('Dry run only. Re-run the reviewed command with --apply to commit the role change and audit entry.');
-  } finally {
-    await mongoose.disconnect();
-  }
+  const result = await runRoleProvisioning(process.argv.slice(2));
+  console.log(JSON.stringify(result));
+  if (!result.applied) console.log('Dry run only. Re-run the reviewed command with --apply to commit the role change and audit entry.');
 };
 
 if (require.main === module) {

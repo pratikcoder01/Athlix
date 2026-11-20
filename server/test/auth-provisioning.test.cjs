@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { User } = require('../dist/models/User.js');
 const { CoachProfile } = require('../dist/models/CoachProfile.js');
 const { RoleChangeAudit } = require('../dist/models/RoleChangeAudit.js');
-const { parseRoleProvisioningArgs, provisionRole } = require('../dist/scripts/provisionRole.js');
+const { parseRoleProvisioningArgs, provisionRole, runRoleProvisioning } = require('../dist/scripts/provisionRole.js');
 
 afterEach(() => mock.restoreAll());
 const options = {
@@ -45,6 +45,27 @@ test('dry run reads only matching active account and makes no writes or sessions
   assert.deepEqual(find.mock.calls[0].arguments[0], { _id: options.userId, role: 'athlete', isActive: true });
   assert.equal(start.mock.callCount(), 0);
   assert.equal(update.mock.callCount(), 0);
+});
+
+test('role CLI dry run disables automatic collection and index writes before connecting', async () => {
+  const connect = mock.method(mongoose, 'connect', async () => mongoose);
+  const disconnect = mock.method(mongoose, 'disconnect', async () => {});
+  mock.method(User, 'findOne', async () => ({ _id: options.userId, role: options.expectedRole }));
+  const start = mock.method(mongoose, 'startSession', async () => { throw Error('Dry run must not start a transaction'); });
+  const result = await runRoleProvisioning(args, { MONGO_URI: 'mongodb://fixture.invalid/reviewed-target' });
+  assert.equal(result.applied, false);
+  assert.deepEqual(connect.mock.calls[0].arguments, ['mongodb://fixture.invalid/reviewed-target', {
+    serverSelectionTimeoutMS: 10000, autoCreate: false, autoIndex: false,
+  }]);
+  assert.equal(disconnect.mock.callCount(), 1); assert.equal(start.mock.callCount(), 0);
+});
+
+test('role CLI requires its explicit target and disconnects after connection failure', async () => {
+  const connect = mock.method(mongoose, 'connect', async () => { throw Error('Fixture connection failure'); });
+  const disconnect = mock.method(mongoose, 'disconnect', async () => {});
+  await assert.rejects(runRoleProvisioning(args, {}), /MONGO_URI/); assert.equal(connect.mock.callCount(), 0);
+  await assert.rejects(runRoleProvisioning(args, { MONGO_URI: 'mongodb://fixture.invalid/reviewed-target' }), /Fixture connection failure/);
+  assert.equal(disconnect.mock.callCount(), 1);
 });
 
 test('provisioning inactive, missing or changed accounts makes no writes', async () => {
