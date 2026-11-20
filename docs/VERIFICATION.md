@@ -1,5 +1,29 @@
 # Verification record
 
+## Release-safety increment (2026-11-21)
+
+Local checks for the current source additions passed **18 client + 425 server
+tests (443 total)**, with nine service-dependent suites explicitly skipped.
+Python passed **37 tests**. Both builds passed; the client build included lint
+and TypeScript checking. The policy pages were added to browser acceptance:
+**30 dark/light route cases** passed automated accessibility, four viewport
+widths, draft-banner/inactive-email checks and drawer keyboard behavior using
+the actual compiled assets through listener-free interception.
+
+New CI checks perform an actual synthetic Mongo archive/restore into a separate
+disposable deployment, real production index-gate acceptance before/after
+explicit fixture provisioning, and an opt-in Render-style model image build
+followed by single-CPU native inference with no host model mount or network.
+Their new remote outcomes must be observed; local guards and fixture checks
+alone are not reported as real Docker/Mongo acceptance.
+
+Read-only hosting discoveries and the concrete review-before-rollout steps are
+recorded in [HOST_ROLLOUT_REVIEW.md](HOST_ROLLOUT_REVIEW.md). They identify an old
+live backend revision and configuration gaps without claiming a diagnosed
+outage, successful live login or authorization for production changes.
+The owner's requested sample policy details are explicitly labeled and inert;
+they do not establish an approved legal policy.
+
 ## Vercel backend-origin compatibility (2026-11-15)
 
 The owner's Vercel log at `5f7376e` confirms that the missing `AUTH_API_ORIGIN`

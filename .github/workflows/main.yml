@@ -168,7 +168,7 @@ jobs:
           set -euo pipefail
           image_id=$(docker compose -p athlix-cv-ci -f compose.yaml images -q cv)
           test -n "$image_id"
-          docker run --rm --network none --user 10001:10001 --read-only --cap-drop ALL --security-opt no-new-privileges:true --memory 1536m --cpus 2 --pids-limit 64 --tmpfs /tmp:rw,nosuid,noexec,size=160m,mode=0700,uid=10001,gid=10001 "$image_id" python native_smoke.py
+          docker run --rm --network none --user 10001:10001 --read-only --cap-drop ALL --security-opt no-new-privileges:true --memory 1536m --cpus 1 --pids-limit 64 --tmpfs /tmp:rw,nosuid,noexec,size=160m,mode=0700,uid=10001,gid=10001 "$image_id" python native_smoke.py
       - name: Verify container isolation, native job and restart persistence
         timeout-minutes: 7
         run: python container_smoke.py
