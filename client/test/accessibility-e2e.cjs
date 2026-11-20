@@ -16,7 +16,7 @@ let browser;
     const page = await context.newPage();
     page.on('request', request => { if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(request.url())) externalFontRequests.push(request.url()); });
     page.on('pageerror', error => errors.push({ theme, message: error.message }));
-    for (const path of ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/coaches', '/academies', '/tournaments', '/training', '/clients', '/notifications', '/feed', '/settings']) {
+    for (const path of ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/coaches', '/academies', '/tournaments', '/training', '/clients', '/notifications', '/feed', '/settings', '/privacy', '/terms']) {
       const response = await page.goto(base + path, { waitUntil: 'networkidle', timeout: 60000 });
       assert.equal(response.status(), 200, `Unexpected server response at ${path} (${theme})`);
       await page.waitForFunction(theme => document.documentElement.style.colorScheme === theme, theme);
@@ -24,6 +24,11 @@ let browser;
       assert.equal(await page.getByRole('heading', { level: 1 }).count(), 1, `Expected one page heading at ${path} (${theme})`);
       assert.equal(await page.locator('a button, a [role="button"], a [tabindex="0"]').count(), 0,
         `Links must have a single keyboard target at ${path} (${theme})`);
+      if (['/privacy', '/terms'].includes(path)) {
+        await page.getByText(/Legal review pending/i).first().waitFor();
+        assert.equal(await page.locator('a[href^="mailto:"][href*=".example"]').count(), 0,
+          'Sample policy email addresses must remain inactive');
+      }
       const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
       const violations = results.violations.map(rule => ({ id: rule.id, impact: rule.impact,
         nodes: rule.nodes.map(node => ({ target: node.target, failureSummary: node.failureSummary })) }));
