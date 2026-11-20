@@ -1,101 +1,86 @@
-import fetch from 'node-fetch';
+const MAX_RESPONSE_BYTES = 512 * 1024;
+const REQUEST_TIMEOUT_MS = 15_000;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const unavailable = () => Object.assign(new Error('AI service unavailable. Please try again later.'), { statusCode: 503 });
+
+/** Read an upstream response with a hard byte budget, including chunked bodies. */
+const readJson = async (response: Response): Promise<unknown> => {
+  if (!response.body) throw unavailable();
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw unavailable();
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+};
 
 /**
- * Shared utility helper for interacting with the OpenAI-compatible Featherless.ai Messages API.
- * Leverages the model configured via FEATHERLESS_MODEL environment variable (defaults to deepseek-ai/DeepSeek-V3.2).
- * Enforces JSON output and strips markdown fences cleanly.
+ * Native Node fetch; configured providers are attempted in a deterministic order.
+ * Callers must validate the domain-specific structure of the returned JSON object.
  */
 export async function askFeatherlessJSON<T>(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number = 4000
 ): Promise<T> {
-  const featherlessKey = process.env.FEATHERLESS_API_KEY;
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
-
-  if (!featherlessKey && !openRouterKey) {
-    throw new Error('At least one of FEATHERLESS_API_KEY or OPENROUTER_API_KEY environment variables must be set');
+  if (!Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > 4000) {
+    throw new Error('AI token budget must be an integer between 1 and 4000');
   }
-
-  // System instruction to strictly demand JSON formatting
-  const enrichedSystem = `${systemPrompt}\nReturn ONLY a valid JSON object. Do NOT wrap it in markdown block quotes (no \`\`\`json code blocks). Do NOT output any preamble, extra text, or conversation context. Return pure parsable JSON text.`;
-
-  // Define providers
-  const providers = [];
-  
-  if (featherlessKey) {
-    providers.push({
-      name: 'Featherless',
-      url: 'https://api.featherless.ai/v1/chat/completions',
-      key: featherlessKey,
-      model: process.env.FEATHERLESS_MODEL || 'deepseek-ai/DeepSeek-V3.2'
-    });
-  }
-
-  if (openRouterKey) {
-    providers.push({
-      name: 'OpenRouter',
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      key: openRouterKey,
-      model: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat'
-    });
-  }
-
-  // Shuffle providers for basic load distribution if both exist
-  if (providers.length > 1 && Math.random() > 0.5) {
-    providers.reverse();
-  }
-
-  let lastError: Error | null = null;
+  const providers = [
+    { name: 'Featherless', url: 'https://api.featherless.ai/v1/chat/completions', key: process.env.FEATHERLESS_API_KEY, model: process.env.FEATHERLESS_MODEL || 'deepseek-ai/DeepSeek-V3.2' },
+    { name: 'OpenRouter', url: 'https://openrouter.ai/api/v1/chat/completions', key: process.env.OPENROUTER_API_KEY, model: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat' },
+  ].filter((provider) => provider.key);
+  if (!providers.length) throw unavailable();
+  const enrichedSystem = `${systemPrompt}\nReturn ONLY a valid JSON object. Do not wrap it in markdown or include a preamble.`;
 
   for (const provider of providers) {
     try {
       const response = await fetch(provider.url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${provider.key}`,
-          ...(provider.name === 'OpenRouter' && {
-            'HTTP-Referer': 'https://athlix.com',
-            'X-Title': 'Athlix Premium',
-          })
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.key}` },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        redirect: 'error',
         body: JSON.stringify({
           model: provider.model,
           max_tokens: maxTokens,
           temperature: 0.1,
-          messages: [
-            { role: 'system', content: enrichedSystem },
-            { role: 'user', content: userPrompt },
-          ],
-          response_format: { type: "json_object" }
+          messages: [{ role: 'system', content: enrichedSystem }, { role: 'user', content: userPrompt }],
+          response_format: { type: 'json_object' },
         }),
       });
-
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`${provider.name} API Error (Status ${response.status}): ${errorText}`);
+        await response.body?.cancel();
+        throw unavailable();
       }
-
-      const data = (await response.json()) as any;
-      let content = data.choices?.[0]?.message?.content || '';
-
-      // Strip out markdown code block fences if returned
-      content = content.replace(/^```json\s*/i, '');
-      content = content.replace(/^```\s*/i, '');
-      content = content.replace(/\s*```$/i, '');
-      content = content.trim();
-
-      const parsedJson = JSON.parse(content) as T;
-      return parsedJson;
-    } catch (error: any) {
-      console.warn(`⚠️ [${provider.name}] Attempt Failed:`, error.message);
-      lastError = error;
-      // If there's another provider in the array, it will try the next one automatically!
+      const data = await readJson(response);
+      const choice = isRecord(data) && Array.isArray(data.choices) ? data.choices[0] : undefined;
+      const message = isRecord(choice) && isRecord(choice.message) ? choice.message : undefined;
+      if (!message || typeof message.content !== 'string' || message.content.length > 64 * 1024) {
+        throw unavailable();
+      }
+      const content = message.content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      const parsed: unknown = JSON.parse(content);
+      if (!isRecord(parsed)) throw unavailable();
+      return parsed as T;
+    } catch {
+      // Provider bodies may contain private prompts or credentials. Never log them.
+      console.warn(`[${provider.name}] AI request failed`);
     }
   }
-
-  // If all providers failed, throw the last error
-  console.error('💥 All AI Providers Failed. Last Error:', lastError?.message);
-  throw lastError || new Error('AI Providers unavailable');
+  throw unavailable();
 }

@@ -1,6 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
+  initializeAuth,
   getAuth,
+  inMemoryPersistence,
+  browserPopupRedirectResolver,
   connectAuthEmulator,
 } from 'firebase/auth';
 
@@ -26,7 +29,11 @@ const firebaseConfig = {
 // Guard against hot-reload double-initialisation in Next.js
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+// Firebase is the sign-in step; persistent ATHLIX sessions use the API's
+// HttpOnly refresh cookie. Do not retain a second long-lived browser token.
+export const auth = typeof window === 'undefined' ? getAuth(app) : initializeAuth(app, {
+  persistence: inMemoryPersistence, popupRedirectResolver: browserPopupRedirectResolver,
+});
 
 // Connect to Firebase Auth Emulator in local development
 if (

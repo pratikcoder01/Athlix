@@ -1,41 +1,34 @@
 import { Response, NextFunction } from 'express';
+import { PipelineStage } from 'mongoose';
+import { directoryObjectId, literalSearch, profileQuerySchema, profileUpdateSchema } from '../utils/directoryPolicy';
 import { User } from '../models/User';
 import { Profile } from '../models/Profile';
 import { CoachProfile } from '../models/CoachProfile';
 import { AuthenticatedRequest } from '../types';
+import { BookingPolicyError, coachSettingsSchema, validatePublishedCoach } from '../utils/bookingPolicy';
+import { withScheduleTransaction } from '../utils/bookingTransaction';
 
 // @desc    Get all user profiles (with search & discipline filters)
 // @route   GET /api/profiles
 // @access  Private
 export const getProfiles = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { search, discipline, role } = req.query;
-    
-    // Find matching users if role is filtered
-    const userQuery: any = {};
-    if (role) userQuery.role = role;
-    if (search) {
-      userQuery.name = { $regex: search, $options: 'i' };
-    }
-    
-    const users = await User.find(userQuery).select('_id name role');
-    const userIds = users.map(u => u._id);
-
-    const profileQuery: any = { userId: { $in: userIds } };
-    if (discipline) profileQuery.discipline = discipline;
-
-    const profiles = await Profile.find(profileQuery)
-      .populate('userId', 'name role')
-      .exec();
-
-    res.status(200).json({
-      success: true,
-      count: profiles.length,
-      profiles,
-    });
-  } catch (error) {
-    next(error);
-  }
+    const parsed = profileQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, message: 'Invalid profile filters or pagination' });
+    const { search, discipline, role, page, limit } = parsed.data;
+    const pipeline: PipelineStage[] = [
+      ...(discipline ? [{ $match: { discipline } } as PipelineStage] : []),
+      { $lookup: { from: User.collection.name, localField: 'userId', foreignField: '_id', as: 'account' } },
+      { $unwind: '$account' },
+      { $match: { 'account.isActive': true, 'account.role': role || { $ne: 'admin' },
+        ...(search ? { 'account.name': { $regex: literalSearch(search), $options: 'i' } } : {}) } },
+      { $sort: { 'account.name': 1, _id: 1 } }, { $skip: (page - 1) * limit }, { $limit: limit + 1 },
+      { $project: { _id: 1, userId: { _id: '$account._id', name: '$account.name', role: '$account.role' },
+        bio: 1, discipline: 1, beltRank: 1, achievements: 1, location: 1, socialLinks: 1, profileImage: 1 } },
+    ];
+    const profiles = await Profile.aggregate(pipeline).exec();
+    return res.status(200).json({ success: true, count: Math.min(profiles.length, limit), page, hasMore: profiles.length > limit, profiles: profiles.slice(0, limit) });
+  } catch (error) { next(error); }
 };
 
 // @desc    Get detailed profile card by user ID
@@ -44,17 +37,20 @@ export const getProfiles = async (req: AuthenticatedRequest, res: Response, next
 export const getProfileById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { userId } = req.params;
-
-    const user = await User.findById(userId).select('-password');
+    if (!directoryObjectId.safeParse(userId).success) return res.status(400).json({ success: false, message: 'Invalid user identifier' });
+    // Public profile responses never expose email, phone, Firebase UID or account controls.
+    const user = await User.findOne({ _id: userId, isActive: true }).select('_id name role');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const profile = await Profile.findOne({ userId });
+    const profile = await Profile.findOne({ userId }).select('userId bio discipline beltRank achievements location socialLinks profileImage');
     
     let coachInfo = null;
     if (user.role === 'coach') {
-      coachInfo = await CoachProfile.findOne({ userId });
+      const canViewDraft = req.user?.role === 'admin' || String(req.user?._id) === userId.toLowerCase();
+      coachInfo = await CoachProfile.findOne({ userId, ...(canViewDraft ? {} : { active: true }) })
+        .select('certifications experienceYears pricingPerHour currency availability availabilityTimezone active autoConfirm');
     }
 
     res.status(200).json({
@@ -76,29 +72,12 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response, ne
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
+    const parsed = profileUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, message: 'Invalid profile details', errors: parsed.error.issues });
     const userId = req.user._id;
-    const { bio, discipline, beltRank, achievements, location, socialLinks, profileImage } = req.body;
-
-    let profile = await Profile.findOne({ userId });
-    if (!profile) {
-      profile = new Profile({ userId });
-    }
-
-    if (bio !== undefined) profile.bio = bio;
-    if (discipline !== undefined) profile.discipline = discipline;
-    if (beltRank !== undefined) profile.beltRank = beltRank;
-    if (achievements !== undefined) profile.achievements = achievements;
-    if (location !== undefined) profile.location = location;
-    if (profileImage !== undefined) profile.profileImage = profileImage;
-    
-    if (socialLinks !== undefined) {
-      profile.socialLinks = {
-        ...profile.socialLinks,
-        ...socialLinks,
-      };
-    }
-
-    await profile.save();
+    const profile = await Profile.findOneAndUpdate({ userId }, {
+      $set: parsed.data, $setOnInsert: { userId },
+    }, { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true });
 
     res.status(200).json({
       success: true,
@@ -118,22 +97,18 @@ export const updateCoachProfile = async (req: AuthenticatedRequest, res: Respons
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ success: false, message: 'Access denied: Coaches only' });
     }
+    const parsed = coachSettingsSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, message: 'Invalid coach settings', errors: parsed.error.issues });
     const userId = req.user._id;
-    const { certifications, experienceYears, pricingPerHour, availability, active, autoConfirm } = req.body;
-
-    let coachProfile = await CoachProfile.findOne({ userId });
-    if (!coachProfile) {
-      coachProfile = new CoachProfile({ userId });
-    }
-
-    if (certifications !== undefined) coachProfile.certifications = certifications;
-    if (experienceYears !== undefined) coachProfile.experienceYears = experienceYears;
-    if (pricingPerHour !== undefined) coachProfile.pricingPerHour = pricingPerHour;
-    if (availability !== undefined) coachProfile.availability = availability;
-    if (active !== undefined) coachProfile.active = active;
-    if (autoConfirm !== undefined) coachProfile.autoConfirm = autoConfirm;
-
-    await coachProfile.save();
+    const coachProfile = await withScheduleTransaction([String(userId)], async (session) => {
+      const current = await CoachProfile.findOne({ userId }).session(session);
+      const settings = { ...current?.toObject(), ...parsed.data };
+      if (settings.active === true) validatePublishedCoach(settings);
+      const updated = await CoachProfile.findOneAndUpdate({ userId },
+        { $set: parsed.data, $setOnInsert: { userId } }, { new: true, upsert: true, runValidators: true, session });
+      if (!updated) throw new Error('Coach profile update did not commit');
+      return updated;
+    });
 
     res.status(200).json({
       success: true,
@@ -141,6 +116,10 @@ export const updateCoachProfile = async (req: AuthenticatedRequest, res: Respons
       coachProfile,
     });
   } catch (error) {
+    if (error instanceof BookingPolicyError) return res.status(error.statusCode).json({ success: false, message: error.message });
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 20) {
+      return res.status(503).json({ success: false, message: 'Coach settings require a transaction-capable MongoDB deployment' });
+    }
     next(error);
   }
 };

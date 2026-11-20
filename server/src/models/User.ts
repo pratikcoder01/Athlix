@@ -8,6 +8,7 @@ export interface IUserDocument extends IUser, Document {
 
 const UserSchema = new Schema<IUserDocument>(
   {
+    sessionVersion: { type: Number, default: 0, min: 0, select: true },
     name: {
       type: String,
       required: [true, 'Name is required'],

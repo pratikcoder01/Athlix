@@ -41,4 +41,5 @@ const NotificationSchema = new Schema<INotificationDocument>(
   }
 );
 
+NotificationSchema.index({ recipientId: 1, read: 1, createdAt: -1, _id: -1 });
 export const Notification = model<INotificationDocument>('Notification', NotificationSchema);

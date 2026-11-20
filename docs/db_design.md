@@ -1,6 +1,11 @@
 # ATHLIX - MongoDB Schema Design
 
-This document details the production-grade MongoDB schema design and relationships built for **ATHLIX**.
+This document describes the original MongoDB schema design for **ATHLIX**.
+Current models under `server/src/models` are authoritative: account identity is
+optional by provider, coaching uses explicit currency/UTC publication, bookings
+use participant schedule locks and cancellation, and role changes have audit
+records. See [feature status](FEATURE_STATUS.md) for current limits; this diagram
+is not a claim of production qualification.
 
 ---
 

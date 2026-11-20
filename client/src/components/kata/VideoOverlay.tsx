@@ -114,7 +114,7 @@ export const VideoOverlay: React.FC<VideoOverlayProps> = ({
     const flaggedJoints = new Set<number>();
     
     if (metrics && metrics.angles) {
-      const { left_knee, right_knee, left_elbow, right_elbow, left_hip, right_hip } = metrics.angles;
+      const { left_knee, right_knee } = metrics.angles;
       
       // Rule 1: Front Stance knee checks
       if (activeStance.includes("Left Front Stance")) {
@@ -215,7 +215,7 @@ export const VideoOverlay: React.FC<VideoOverlayProps> = ({
         { id: 26, val: metrics.angles.right_knee, label: 'R Knee' }
       ];
 
-      angleCoords.forEach(({ id, val, label }) => {
+      angleCoords.forEach(({ id, val }) => {
         const lm = landmarks[id];
         if (lm.visibility > 0.4) {
           const p = getCoords(lm);

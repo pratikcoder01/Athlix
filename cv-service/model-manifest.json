@@ -1,0 +1,11 @@
+{
+  "name": "MediaPipe Pose Landmarker Heavy",
+  "version": "float16/1",
+  "url": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
+  "sha256": "64437af838a65d18e5ba7a0d39b465540069bc8aae8308de3e318aad31fcbc7b",
+  "bytes": 30664242,
+  "source": "https://github.com/google-ai-edge/mediapipe-samples-web/blob/main/src/tasks/pose-landmarker.ts",
+  "modelCard": "https://developers.google.com/static/ml-kit/images/vision/pose-detection/pose_model_card.pdf",
+  "licenseAsStatedInModelCard": "Apache-2.0",
+  "qualification": "Pinned upstream asset for reproducible runtime tests; no ATHLIX accuracy or domain-validity claim. Operator release and legal approval remain separate."
+}

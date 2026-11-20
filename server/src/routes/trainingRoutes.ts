@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import protect from '../middleware/authMiddleware';
+import { createTrainingEntry, listTrainingEntries, updateTrainingEntry, removeTrainingEntry, listTrainingPlans, getTrainingPlan } from '../controllers/trainingController';
+const router = Router();
+router.use(protect);
+router.get('/entries', listTrainingEntries);
+router.post('/entries', createTrainingEntry);
+router.patch('/entries/:id', updateTrainingEntry);
+router.delete('/entries/:id', removeTrainingEntry);
+router.get('/plans', listTrainingPlans);
+router.get('/plans/:id', getTrainingPlan);
+export default router;

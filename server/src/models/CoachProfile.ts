@@ -57,7 +57,11 @@ const CoachProfileSchema = new Schema<ICoachProfileDocument>(
       type: Number,
       default: 0,
       min: [0, 'Pricing per hour cannot be negative'],
+      max: [1000000, 'Rate is too large'],
     },
+    currency: { type: String, enum: ['INR', 'USD'] },
+    // No default: legacy schedules must be explicitly reviewed and published.
+    availabilityTimezone: { type: String, enum: ['UTC'] },
     availability: [AvailabilitySchema],
     ratings: {
       type: Number,
@@ -67,7 +71,7 @@ const CoachProfileSchema = new Schema<ICoachProfileDocument>(
     },
     active: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     autoConfirm: {
       type: Boolean,

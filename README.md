@@ -1,7 +1,15 @@
 # ATHLIX 🥋
-> Premium Next-Gen Sports-Tech Platform for Combat Sports Athletes, Coaches, Academies, and Tournament Organizers.
+> A development project for combat-sports clubs, local events, and experimental 2D kata feedback.
 
-ATHLIX is a production-grade, startup-ready MERN platform connecting martial artists and combat sports enthusiasts in one unified workspace. The platform blends professional coaching bookings, real-time social feeds, geospatial academy discovery, and digital tournament bracket registries.
+ATHLIX combines a Next.js client, Express/MongoDB API, authenticated realtime channels, and a Python pose-analysis service. It is **not yet production-ready**. Some screens contain sample content, several workflows remain incomplete, and configured infrastructure is required to exercise real account and event flows. Paid checkout, subscriptions, and settlement reporting are not implemented.
+
+The proposed first pilot is karate academies and local tournament organizers; demand and geography remain hypotheses. Review the [product audit](docs/PRODUCT_AUDIT.md), [roadmap](docs/ROADMAP.md), and [investor-readiness disclosure](docs/pitch/INVESTOR_READINESS.md) before presenting the build. No user counts, customer reviews, partnerships, security certifications, revenue, or independently measured model accuracy are claimed.
+
+Current implementation and evidence: [feature status](docs/FEATURE_STATUS.md),
+[verification record](docs/VERIFICATION.md), [setup](docs/setup_guide.md), and
+[operations/rollback](docs/OPERATIONS.md). Local test passes are distinguished
+from disposable-service CI and unverified live-host/provider acceptance.
+The [architecture overview](docs/ARCHITECTURE.md) explains the trust boundaries.
 
 ---
 
@@ -9,14 +17,14 @@ ATHLIX is a production-grade, startup-ready MERN platform connecting martial art
 
 ```text
 athlix/
-├── .github/                       # Pull Request and Issue templates
+├── .github/                       # CI, Pull Request and Issue templates
 ├── client/                        # Next.js 15 + React 19 + TypeScript Frontend
 ├── server/                        # Express + TypeScript API Backend
+├── cv-service/                    # Internal FastAPI pose-analysis worker
 ├── docs/                          # Architecture design and deployment details
 │   ├── db_design.md               # MongoDB collection structure and ERD
 │   ├── api_map.md                 # Route endpoint map & Socket.io channels
 │   └── setup_guide.md             # Local environment & production deployments
-├── vercel.json                    # Root Vercel zero-config deploy schema
 ├── CONTRIBUTING.md                # Scoped branch workflows & commit style
 └── package.json                   # Root monorepo workspace coordinator
 ```
@@ -37,7 +45,7 @@ athlix/
 - **Secondary Accent**: `#FF8A3D` (Belt Orange - rank achievements)
 - **Gold Accent**: `#F7B500` (Belt Gold - achievement badges)
 - **Success Accent**: `#22C55E` (Emerald Green - approved states)
-- **Typography**: `Bebas Neue` (Accent Headers), `Clash Display` (Sleek UI Headers), `Inter` (Body Text)
+- **Typography**: self-hosted `Space Grotesk` (headings), `Sora` (numbers), `Inter` (body) and `JetBrains Mono` (mono)
 
 ---
 
@@ -52,7 +60,9 @@ athlix/
 
 ## ⚙️ Initial Setup & Commands
 
-To install all dependencies across the entire monorepo:
+First configure the frontend backend origin, `NEXT_PUBLIC_API_URL` and optional
+server-only `AUTH_API_ORIGIN` override, using the [Setup Guide](docs/setup_guide.md). To install all
+dependencies across the entire monorepo:
 ```bash
 npm run install-all
 ```
@@ -65,9 +75,9 @@ npm run dev
 * **Frontend Client (Next.js)**: `http://localhost:3000`
 * **Backend Server (Express)**: `http://localhost:5000`
 
-For full configuration keys and cloud deployment setup guides, refer to the [Setup Guide](file:///docs/setup_guide.md).
-For database design details, see [Database Design](file:///docs/db_design.md).
-For API maps and Socket channels, see [API Route Map](file:///docs/api_map.md).
+For configuration and deployment preparation, refer to the [Setup Guide](docs/setup_guide.md).
+For database design details, see [Database Design](docs/db_design.md).
+For API maps and Socket channels, see [API Route Map](docs/api_map.md).
 
 ---
 
@@ -77,16 +87,19 @@ The Kata Analyzer feature uses **2D monocular pose estimation** (MediaPipe) and 
 
 ### 🟢 What It Does Measure (Real, Calculated Metrics)
 - **Joint Angles**: Elbow, knee, hip, and shoulder angles using vector dot product math
-- **Center of Mass (COM)**: Weighted average of hip and shoulder landmark positions
-- **Stability**: Frame-to-frame variance in COM position (lower variance = more stable)
+- **Body-Center Proxy**: Weighted average of hip and shoulder landmark positions; not a measured physical center of mass
+- **Stability Heuristic**: Lateral displacement of that body-center proxy from the ankle midpoint
 - **Symmetry**: Comparison of left vs. right joint angles during stances
 - **Guard Position**: How often hands stay above hip level when not performing techniques
 - **Movement Velocity**: Frame-to-frame displacement of wrists/ankles divided by time
 - **Stance Width**: Normalized distance between ankles (relative to shoulder width)
 
-### 🟢 What It Actually Detects
-- **Broad Stances**: Natural Stance, Front Stance, Horse Stance, Back Stance
-- **Broad Techniques**: Arm Strike, Leg Strike, Block (no fine-grained technique classification)
+### 🟢 Heuristic Labels
+- **Broad Stance Rules**: Natural Stance, Front Stance, Horse Stance, Back Stance
+- **Broad Movement Rules**: Arm Strike, Leg Strike, Block
+
+These labels come from angle/distance/speed thresholds. Their recognition
+accuracy has not been measured against a permissioned combat-sports dataset.
 
 ### 🔴 What It Does NOT Measure
 - **True 3D Position**: Uses approximate world coordinates from MediaPipe, not true 3D tracking
@@ -97,9 +110,13 @@ The Kata Analyzer feature uses **2D monocular pose estimation** (MediaPipe) and 
 - **Weight Distribution**: Cannot accurately tell how much weight is on each foot
 
 ### Composite Score Formula
-The overall score is a weighted sum of calculated metrics:
+The overall score normalizes the configured weights over observed components:
 ```
-Overall Score = (Stability × 0.25) + (Guard × 0.15) + (Precision × 0.25) + (Symmetry × 0.20) + (Velocity × 0.15)
+Overall Score = sum(observed score × configured weight) / sum(observed weights)
+Configured weights: stability .25, guard .15, precision .25, symmetry .20, velocity .15
 ```
 
-All scores are calculated directly from pose landmark data and are displayed with full transparency.
+Unobserved guard/precision components are null and excluded, rather than assigned
+a plausible default. Scores are pose-derived heuristics, not official judging,
+physical force, medical advice or validated coaching outcomes. See the
+[evaluation protocol](docs/AI_EVALUATION.md) and [actual verification](docs/VERIFICATION.md).

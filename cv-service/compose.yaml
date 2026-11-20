@@ -1,0 +1,36 @@
+# Local/review template only. No container or paid hosted service is started by
+# adding this file. Provision the pinned model separately before starting.
+services:
+  cv:
+    build:
+      context: .
+      args:
+        CV_BUILD_PROVISION_MODEL: ${CV_BUILD_PROVISION_MODEL:-false}
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1536m
+    cpus: 2.0
+    pids_limit: 64
+    stop_grace_period: 20s
+    restart: "on-failure:3"
+    ports: ["127.0.0.1:8000:8000"]
+    environment:
+      CV_SERVICE_API_KEY: ${CV_SERVICE_API_KEY:?Set the server-only service credential}
+      CV_STATE_DIR: /var/lib/athlix-cv
+      CV_TEMP_DIR: /tmp/athlix-cv
+      CV_MODEL_PATH: /models/pose.task
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=160m,mode=0700,uid=10001,gid=10001
+    volumes:
+      - type: volume
+        source: cv-state
+        target: /var/lib/athlix-cv
+      - type: bind
+        source: ${CV_MODEL_HOST_PATH:?Set the absolute path to the provisioned pinned model}
+        target: /models/pose.task
+        read_only: true
+volumes:
+  cv-state:

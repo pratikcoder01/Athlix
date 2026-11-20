@@ -1,283 +1,156 @@
 'use client';
 
-import React, { useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, CheckCircle2, ChevronRight, DollarSign, Star, Shield } from 'lucide-react';
+import { ArrowRight, CalendarDays, RefreshCw } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
-import { GlassCard } from '../../components/shared/GlassCard';
-import MagneticButton from '../../components/shared/MagneticButton';
-import { AnimatedBadge } from '../../components/shared/AnimatedBadge';
-import { AnimatedText } from '../../components/shared/AnimatedText';
 import { useSocket } from '../../context/SocketContext';
 import { useAuthStore } from '../../store/authStore';
+import {
+  Coach, Session, changeSessionStatus, formatPrice, loadCoaches, loadSessions,
+  participantId, participantName, requestSession, sessionQuote,
+} from '../../lib/bookingApi';
 
-const slots = [
-  '09:00 AM – 10:30 AM',
-  '10:00 AM – 11:30 AM',
-  '02:00 PM – 03:30 PM',
-  '04:30 PM – 06:00 PM',
-];
+const control = 'rounded-xl border border-border bg-surface px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50';
+const statusStyle: Record<Session['status'], string> = {
+  pending: 'border-amber-400/30 text-text-primary', accepted: 'border-green-400/30 text-text-primary',
+  rejected: 'border-red-400/30 text-text-primary', cancelled: 'border-border text-text-secondary', completed: 'border-blue-400/30 text-text-primary',
+};
+const dateLabel = (value: string) => new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 export default function BookingsPage() {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [selectedDate, setSelectedDate] = useState('2026-06-25');
-  const [selectedSlot, setSelectedSlot] = useState(slots[1]);
-  const [coachName] = useState('Prof. Thiago Valente');
-  const [bookingStatus, setBookingStatus] = useState('pending');
-  const coachAvatar = '/images/avatars/thiago-valente.png';
-  const coachRank = 'BJJ Black Belt · 3rd Degree';
-  const coachRate = '$90';
+  const { token, user } = useAuthStore();
+  const { bookingUpdates, clearBookingUpdates, socket } = useSocket();
+  const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [coachId, setCoachId] = useState('');
+  const [coachLoading, setCoachLoading] = useState(false);
+  const [coachError, setCoachError] = useState('');
+  const [start, setStart] = useState('');
+  const [duration, setDuration] = useState(60);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [bookings, setBookings] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [listError, setListError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busyId, setBusyId] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  const [timezone, setTimezone] = useState('your device’s time zone');
+  const coach = coaches.find(item => item.id === coachId);
+  const quote = coach ? sessionQuote(coach.pricingPerHour, duration) : 0;
+  const chosenStart = start ? new Date(start) : null;
 
-  const { bookingUpdates, clearBookingUpdates } = useSocket();
+  useEffect(() => {
+    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'your device’s time zone');
+  }, []);
 
-  React.useEffect(() => {
-    if (bookingUpdates && bookingUpdates.length > 0) {
-      const latest = bookingUpdates[0];
-      if (latest.type === 'status_changed') {
-        setBookingStatus(latest.booking.status as string);
-      }
-      clearBookingUpdates();
-    }
+  useEffect(() => {
+    setCoaches([]); setCoachId('');
+    if (!token || user?.role !== 'athlete') return;
+    const controller = new AbortController();
+    const requested = new URLSearchParams(window.location.search).get('coachId') || '';
+    if (requested && !/^[a-f\d]{24}$/i.test(requested)) { setCoachError('The selected coach link is invalid. Choose a coach from discovery.'); return; }
+    setCoachLoading(true); setCoachError('');
+    loadCoaches(token, requested ? { coachId: requested } : {}, controller.signal)
+      .then(data => { setCoaches(data.coaches); setCoachId(requested || data.coaches[0]?.id || ''); })
+      .catch(error => { if (!controller.signal.aborted) setCoachError(error instanceof Error ? error.message : 'Unable to load coaches'); })
+      .finally(() => { if (!controller.signal.aborted) setCoachLoading(false); });
+    return () => controller.abort();
+  }, [token, user?.role]);
+
+  useEffect(() => {
+    setBookings([]);
+    if (!token) return;
+    const controller = new AbortController();
+    setLoading(true); setListError('');
+    loadSessions(token, page, controller.signal)
+      .then(data => { setBookings(data.bookings); setHasMore(data.hasMore); })
+      .catch(error => { if (!controller.signal.aborted) setListError(error instanceof Error ? error.message : 'Unable to load sessions'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [token, page, refresh]);
+
+  useEffect(() => {
+    if (bookingUpdates.length > 0) { setRefresh(value => value + 1); clearBookingUpdates(); }
   }, [bookingUpdates, clearBookingUpdates]);
 
-  const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const refreshList = () => setRefresh(value => value + 1);
+    window.addEventListener('focus', refreshList);
+    socket?.on('connect', refreshList);
+    return () => { window.removeEventListener('focus', refreshList); socket?.off('connect', refreshList); };
+  }, [socket]);
+
+  async function book(event: FormEvent) {
+    event.preventDefault(); setFormError(''); setSuccess('');
+    if (!token || !coach || !start) { setFormError('Choose a published coach and session start time.'); return; }
+    const scheduledTime = new Date(start);
+    if (!Number.isFinite(scheduledTime.getTime())) { setFormError('Enter a valid session start time.'); return; }
+    setSubmitting(true);
     try {
-      const token = useAuthStore.getState().token;
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const result = await requestSession(token, { coachId: coach.id, scheduledTime: scheduledTime.toISOString(), durationMinutes: duration, quotedPrice: quote, quotedCurrency: coach.currency });
+      setSuccess(`${result.message}. ${dateLabel(result.booking.scheduledTime)} · ${formatPrice(result.booking.price, result.booking.currency || coach.currency)}`);
+      setStart(''); setPage(1);
+    } catch (error) { setFormError(error instanceof Error ? error.message : 'We could not confirm the request. Refresh your sessions before retrying.'); }
+    finally { setSubmitting(false); setRefresh(value => value + 1); }
+  }
 
-      const res = await fetch(`${API_URL}/api/bookings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          coachId: '6584282f1f5139c27b0c3a2f',
-          scheduledTime: new Date(selectedDate),
-          durationMinutes: 90,
-          price: 90.00,
-        }),
-      });
-
-      if (res.ok) {
-        setBookingStatus('pending');
-        setStep(2);
-      }
-    } catch (err) {
-      console.error('Failed to create booking:', err);
-      setStep(2);
-    }
-  };
+  async function updateStatus(booking: Session, status: Session['status']) {
+    if (!token) return;
+    setBusyId(booking._id); setActionError('');
+    try {
+      await changeSessionStatus(token, booking._id, status);
+      setRefresh(value => value + 1);
+    } catch (error) { setActionError(error instanceof Error ? error.message : 'Unable to update this session'); setRefresh(value => value + 1); }
+    finally { setBusyId(''); }
+  }
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
       <Navbar />
-
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-4 inline-flex">
-            <AnimatedBadge variant="accent" glow>
-              <CalendarIcon className="w-3 h-3 mr-1.5" /> Private Session
-            </AnimatedBadge>
-          </motion.div>
-          <AnimatedText
-            text="Book a Session"
-            className="text-3xl md:text-4xl font-black tracking-tight mb-2"
-            delay={0.1}
-          />
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-text-secondary"
-          >
-            Schedule private training with a verified instructor.
-          </motion.p>
-        </div>
-
-        {/* Step indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center justify-center gap-3 mb-10"
-        >
-          {[1, 2].map(s => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all ${
-                step >= s ? 'bg-accent text-black border-accent' : 'border-border text-text-tertiary'
-              }`}>
-                {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
-              </div>
-              <span className={`text-xs font-semibold ${step >= s ? 'text-text-primary' : 'text-text-tertiary'}`}>
-                {s === 1 ? 'Select Slot' : 'Confirmed'}
-              </span>
-              {s === 1 && <div className={`w-12 h-0.5 rounded-full ${step >= 2 ? 'bg-accent' : 'bg-border'}`} />}
-            </div>
-          ))}
-        </motion.div>
-
-        <AnimatePresence mode="wait">
-          {step === 1 ? (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <GlassCard variant="glow" padding="lg">
-                <form onSubmit={handleBooking} className="flex flex-col gap-6">
-                  {/* Coach info */}
-                  <div>
-                    <p className="text-xs font-black text-text-tertiary uppercase tracking-widest mb-3">Selected Instructor</p>
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-border">
-                      <div className="w-14 h-14 rounded-2xl overflow-hidden bg-background border border-border shrink-0">
-                        <img
-                          src={coachAvatar}
-                          alt={coachName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const el = e.target as HTMLImageElement;
-                            el.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-accent/20 text-accent font-black text-xl">T</div>';
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-black text-base">{coachName}</p>
-                        <p className="text-text-secondary text-xs mt-0.5">{coachRank}</p>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span className="text-xs font-bold">5.0</span>
-                          </div>
-                          <span className="text-xs text-text-tertiary">(88 reviews)</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-black text-accent">{coachRate}</p>
-                        <p className="text-[10px] text-text-tertiary">/ 90 min</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Date & Price row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-black text-text-tertiary uppercase tracking-widest mb-2">Date</p>
-                      <div className="relative">
-                        <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-                        <input
-                          type="date"
-                          value={selectedDate}
-                          onChange={e => setSelectedDate(e.target.value)}
-                          className="w-full bg-surface border border-border rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-text-tertiary uppercase tracking-widest mb-2">Session Rate</p>
-                      <div className="relative">
-                        <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-                        <input
-                          type="text"
-                          value="90.00 / 90 minutes"
-                          disabled
-                          className="w-full bg-surface border border-border rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold cursor-default opacity-70"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Time Slots */}
-                  <div>
-                    <p className="text-xs font-black text-text-tertiary uppercase tracking-widest mb-3">Available Time Slots</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {slots.map(slot => (
-                        <button
-                          key={slot}
-                          type="button"
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`p-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 border transition-all ${
-                            selectedSlot === slot
-                              ? 'border-accent bg-accent/10 text-accent ring-1 ring-accent/30'
-                              : 'border-border text-text-secondary hover:border-accent/40 hover:text-text-primary'
-                          }`}
-                        >
-                          <Clock className="w-4 h-4" /> {slot}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <MagneticButton type="submit" variant="premium" className="w-full justify-center mt-2">
-                    Confirm Appointment <ChevronRight className="w-4 h-4 ml-1" />
-                  </MagneticButton>
-                </form>
-              </GlassCard>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="confirmation"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.4 }}
-            >
-              <GlassCard variant="glow" padding="lg" className="text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent pointer-events-none" />
-                <div className="relative z-10 flex flex-col items-center">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                  >
-                    <CheckCircle2 className="w-16 h-16 text-success mb-6" />
-                  </motion.div>
-
-                  <h2 className="text-2xl font-black mb-2">Request Transmitted</h2>
-
-                  <AnimatedBadge variant={bookingStatus === 'confirmed' ? 'success' : 'default'} className="mb-4">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Status: {bookingStatus.charAt(0).toUpperCase() + bookingStatus.slice(1)}
-                  </AnimatedBadge>
-
-                  <p className="text-text-secondary mb-6 max-w-md">
-                    Your session with <strong className="text-text-primary">{coachName}</strong> for{' '}
-                    <strong className="text-text-primary">{selectedDate}</strong> at{' '}
-                    <strong className="text-text-primary">{selectedSlot}</strong> has been sent.
-                    Status updates live when the coach responds.
-                  </p>
-
-                  <div className="grid grid-cols-3 gap-3 w-full max-w-sm mb-6">
-                    {[
-                      { label: 'Coach', value: coachName.split(' ').slice(-1)[0] },
-                      { label: 'Date', value: new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) },
-                      { label: 'Rate', value: coachRate },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="bg-surface rounded-xl p-3 text-center">
-                        <p className="text-[10px] text-text-tertiary uppercase tracking-widest">{label}</p>
-                        <p className="text-sm font-black mt-0.5">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Link href="/dashboard">
-                    <MagneticButton variant="premium">
-                      Back to Console <ChevronRight className="w-4 h-4 ml-1" />
-                    </MagneticButton>
-                  </Link>
-                </div>
-              </GlassCard>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-8"><div><p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-accent">Make time for progress</p><h1 className="font-display text-4xl font-bold sm:text-5xl">Your training sessions.</h1><p className="mt-4 text-text-secondary">Request, manage and review sessions with real persisted booking status.</p></div><Link className={`${control} inline-flex items-center gap-2`} href={user?.role === 'coach' ? '/coach-settings' : '/coaches'}>{user?.role === 'coach' ? 'Coaching settings' : 'Discover coaches'} <ArrowRight className="h-4 w-4" /></Link></div>
+        {!token ? <section className="rounded-2xl border border-border bg-surface p-8 text-center"><h2 className="text-xl font-semibold">Sign in to manage your sessions</h2><Link href="/login" className="mt-5 inline-block rounded-full bg-accent px-6 py-3 font-semibold text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Sign in</Link></section> : (
+          <div className={`grid items-start gap-8 ${user?.role === 'athlete' ? 'lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]' : ''}`}>
+            {user?.role === 'athlete' && <section className="rounded-2xl border border-border bg-surface p-5 sm:p-7"><h2 className="flex items-center gap-2 text-xl font-bold"><CalendarDays className="h-5 w-5 text-accent" /> Request a session</h2><p className="mt-2 text-sm leading-relaxed text-text-secondary">Times below use {timezone}. The coach’s weekly schedule is published in UTC.</p>
+              {coachLoading && <p role="status" className="mt-6">Loading coaches…</p>}
+              {coachError && <p role="alert" className="mt-6 text-text-primary">{coachError}</p>}
+              {!coachLoading && !coachError && coaches.length === 0 && <p className="mt-6 text-text-secondary">No published coach is available for this selection. <Link className="text-accent underline" href="/coaches">Browse coaches</Link>.</p>}
+              {!coachLoading && coaches.length > 0 && <form onSubmit={book} className="mt-6 space-y-5">
+                <div><label htmlFor="session-coach" className="mb-2 block text-sm font-medium">Coach</label><select id="session-coach" required className={`${control} w-full`} value={coachId} onChange={event => { setCoachId(event.target.value); setSuccess(''); }}>{coaches.map(item => <option key={item.id} value={item.id}>{item.name} · {item.discipline}</option>)}</select></div>
+                {coach && <div className="rounded-xl border border-border bg-background/50 p-4"><p className="mb-2 text-sm font-semibold">Weekly availability · UTC</p><ul className="space-y-1 text-sm text-text-secondary">{coach.availability.map((window, index) => <li key={index}>{window.dayOfWeek} {window.startTime}–{window.endTime}</li>)}</ul><p className="mt-3 text-xs text-text-tertiary">Availability is checked when you submit. Pending requests also reserve time.</p></div>}
+                <div><label htmlFor="session-start" className="mb-2 block text-sm font-medium">Start time · {timezone}</label><input id="session-start" className={`${control} w-full`} type="datetime-local" required step={900} value={start} onChange={event => setStart(event.target.value)} /><p className="mt-2 text-xs text-text-tertiary">Choose a 15-minute boundary within the next 90 days.</p>{chosenStart && Number.isFinite(chosenStart.getTime()) && <p className="mt-2 text-xs text-accent">UTC equivalent: {chosenStart.toISOString().replace('T', ' ').replace('.000Z', ' UTC')}</p>}</div>
+                <div><label htmlFor="session-duration" className="mb-2 block text-sm font-medium">Duration</label><select id="session-duration" className={`${control} w-full`} value={duration} onChange={event => setDuration(Number(event.target.value))}>{[15, 30, 45, 60, 90, 120, 180, 240].map(value => <option key={value} value={value}>{value} minutes</option>)}</select></div>
+                {coach && <div className="border-t border-border pt-4"><div className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm text-text-secondary">Session price</span><strong className="text-xl text-accent">{formatPrice(quote, coach.currency)}</strong></div><p className="mt-2 text-xs text-text-tertiary">{formatPrice(coach.pricingPerHour, coach.currency)} per hour. Scheduling only; no online payment is collected.</p></div>}
+                {formError && <p role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm text-text-primary">{formError}</p>}
+                <button disabled={submitting || !coach} type="submit" className="w-full rounded-full bg-accent px-5 py-3 font-semibold text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent disabled:opacity-50">{submitting ? 'Submitting…' : coach?.autoConfirm ? 'Book session' : 'Send session request'}</button>
+              </form>}
+              {success && <p role="status" className="mt-5 rounded-xl border border-green-400/30 bg-green-400/10 p-4 text-sm text-text-primary">{success}</p>}
+            </section>}
+            <section aria-labelledby="sessions-heading"><div className="mb-5 flex items-center justify-between gap-4"><h2 id="sessions-heading" className="text-xl font-bold">Session history</h2><button disabled={loading} className={`${control} inline-flex items-center gap-2`} onClick={() => setRefresh(value => value + 1)}><RefreshCw aria-hidden className="h-4 w-4" /> Refresh</button></div><p className="mb-5 text-xs text-text-tertiary">Newest scheduled date first. Dates and times use {timezone}.</p>
+              {loading && <p role="status" className="rounded-xl border border-border p-6 text-text-secondary">Loading your sessions…</p>}
+              {listError && <p role="alert" className="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-text-primary">{listError}</p>}
+              {actionError && <p role="alert" className="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-text-primary">{actionError}</p>}
+              {!loading && !listError && bookings.length === 0 && <div className="rounded-2xl border border-border bg-surface p-8"><h3 className="font-semibold">No sessions on this page</h3><p className="mt-2 text-sm text-text-secondary">Your session requests and status history will appear here.</p></div>}
+              <div className="space-y-4">{bookings.map(booking => {
+                const ownsCoach = user?.id === participantId(booking.coachId);
+                const future = Date.parse(booking.scheduledTime) > Date.now();
+                const ended = Date.parse(booking.scheduledTime) + booking.durationMinutes * 60000 <= Date.now();
+                const mutable = booking.status === 'pending' || booking.status === 'accepted';
+                return <article key={booking._id} className="rounded-2xl border border-border bg-surface p-5"><div className="mb-3 flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold">{ownsCoach ? `Athlete: ${participantName(booking.athleteId)}` : `Coach: ${participantName(booking.coachId)}`}</h3><p className="mt-1 text-sm text-text-secondary">{dateLabel(booking.scheduledTime)} · {booking.durationMinutes} min</p></div><span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusStyle[booking.status]}`}>{booking.status}</span></div><p className="text-sm">{booking.currency ? formatPrice(booking.price, booking.currency) : `${booking.price.toFixed(2)} · currency not recorded`}</p><p className="mt-2 break-words text-xs text-text-tertiary">UTC: {new Date(booking.scheduledTime).toISOString().replace('T', ' ').replace('.000Z', '')}</p>
+                  {mutable && <div className="mt-4 flex flex-wrap gap-2">{ownsCoach && user?.role === 'coach' && booking.status === 'pending' && <>{future && <button className={`${control} border-green-400/30 text-text-primary`} disabled={!!busyId} onClick={() => updateStatus(booking, 'accepted')}>Accept</button>}<button className={`${control} text-text-primary`} disabled={!!busyId} onClick={() => updateStatus(booking, 'rejected')}>Decline</button></>}{ownsCoach && user?.role === 'coach' && booking.status === 'accepted' && ended && <button className={control} disabled={!!busyId} onClick={() => updateStatus(booking, 'completed')}>Mark completed</button>}{future && <button className={control} disabled={!!busyId} onClick={() => updateStatus(booking, 'cancelled')}>Cancel session</button>}</div>}
+                  {busyId === booking._id && <p role="status" className="mt-3 text-sm text-text-secondary">Updating session…</p>}
+                </article>;
+              })}</div>
+              <div className="mt-6 flex items-center justify-between gap-3"><button className={control} disabled={page === 1 || loading} onClick={() => setPage(value => value - 1)}>Previous</button><span className="text-sm text-text-secondary">Page {page}</span><button className={control} disabled={!hasMore || loading || !!listError} onClick={() => setPage(value => value + 1)}>Next</button></div>
+            </section>
+          </div>
+        )}
       </main>
-
       <Footer />
     </div>
   );
