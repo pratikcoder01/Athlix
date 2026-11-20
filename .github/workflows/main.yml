@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --detach --rm --name athlix-ci-mongo -p 127.0.0.1:27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
+          docker run --detach --rm --name athlix-ci-mongo --label "com.athlix.ci-run=$GITHUB_RUN_ID" -p 127.0.0.1:27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
           ready=0
           for attempt in {1..30}; do
             if docker exec athlix-ci-mongo mongosh --quiet --eval 'if (!db.adminCommand({ping:1}).ok) quit(1)' > /dev/null 2>&1; then
@@ -72,6 +72,11 @@ jobs:
           GCLOUD_PROJECT: demo-athlix
       - name: Build client and server
         run: npm run build
+      - name: Restore a synthetic Mongo backup into a separate disposable deployment
+        timeout-minutes: 4
+        run: node server/test/backup-restore.ci.cjs
+        env:
+          TEST_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
       - name: Install browser for isolated UI smoke tests
         id: install_browser
         run: npx playwright install --with-deps chromium
@@ -111,9 +116,9 @@ jobs:
           name: npm-audit
           path: npm-audit.json
           if-no-files-found: ignore
-      - name: Stop disposable MongoDB
+      - name: Stop MongoDB containers owned by this disposable CI run
         if: always()
-        run: docker stop athlix-ci-mongo || true
+        run: docker ps --quiet --filter "label=com.athlix.ci-run=$GITHUB_RUN_ID" | xargs --no-run-if-empty docker stop
 
   python:
     runs-on: ubuntu-latest

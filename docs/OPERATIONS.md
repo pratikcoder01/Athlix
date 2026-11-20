@@ -142,6 +142,40 @@ and [Mongoose connection state](https://mongoosejs.com/docs/api/connection.html)
 Signal draining is unit tested through injected lifecycle operations; a real
 host rolling restart remains a staging check.
 
+## Disposable backup/restore drill
+
+CI runs `server/test/backup-restore.ci.cjs` against its isolated MongoDB 8 replica
+set, using synthetic records only. The script requires GitHub Actions, an
+explicit loopback test URI and a source container labeled for the current CI
+run. It ignores `MONGO_URI`, rejects credentials and database paths, and never
+loads customer data. All application model collections/indexes are initialized in a
+fresh generated namespace, including private-field, archive and typed BSON
+fixtures.
+
+The drill creates an in-memory compressed binary archive with `mongodump`, then
+uses `mongorestore` in a **separate newly created disposable Mongo container**.
+It does not overwrite the source or use `--drop`. It compares every collection,
+document, collection option and index policy, preserving compound key order.
+It also observes the restored unique draft constraint rejecting a duplicate,
+an academy proximity query using the restored geospatial index, and the restored
+session TTL index deleting an expired synthetic session. It checks
+both retained restored data and unchanged source data afterward. The generated
+source namespace and owned restore container are cleaned up; a workflow cleanup
+also stops this run's labeled containers after failures/timeouts.
+
+Local guard regressions are separate from actual dump/restore execution. Check
+the exact commit's CI output for `backup_restore_drill: passed`; adding this
+script is not evidence that it ran. No archive or document contents are retained
+as CI artifacts; output contains only aggregate results and an archive checksum.
+
+This validates the application's schema/data/index restore path on disposable
+MongoDB. It does **not** accept production backups, Atlas snapshot permissions,
+encryption, retention, off-site storage, recovery times or a live rollback.
+Those require a separately approved restore into the actual staging environment
+and operator ownership before launch. MongoDB documents the binary archive and
+index behavior in [mongodump](https://www.mongodb.com/docs/database-tools/mongodump/)
+and [mongorestore](https://www.mongodb.com/docs/database-tools/mongorestore/).
+
 ## Review before deployment
 
 1. Select an immutable reviewed commit/artifact. Run root locked install, both
@@ -169,8 +203,9 @@ host rolling restart remains a staging check.
    do not silently apply destructive migrations.
 6. Assign operators for readiness/error monitoring, alerts, backups, moderation,
    member privacy/retention and incidents.
-   Test a backup restore into a separate environment. No such drill or provider
-   alert configuration is claimed by this source-code change.
+   Test a real hosted backup restore into a separate approved environment. The
+   disposable synthetic CI drill above does not replace that acceptance; no
+   provider alert configuration is claimed by this source-code change.
 7. Obtain explicit approval for the concrete deployment and any production data
    or configuration changes. A green PR never authorizes merge/deployment alone.
    Inspect Vercel/Render branch auto-deploy settings before a merge; a merge to a
@@ -207,5 +242,5 @@ MediaPipe dependency; the local Docker daemon is not an observed container
 runtime. Expanded real database/emulator/native/container suites must be observed
 in their CI environment, independently of local unit/fixture checks or an older
 green commit. A generated-video runtime smoke is not a permissioned athlete
-benchmark. No production load test, host drain drill, restored backup, external alert delivery,
+benchmark. No production load test, host drain drill, restored hosted backup, external alert delivery,
 payment settlement or regulatory/security certification was performed.
