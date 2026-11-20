@@ -17,6 +17,13 @@ COPY requirements.txt constraints.txt ./
 RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
 COPY --chown=10001:10001 main.py task_store.py video_safety.py ./
 COPY --chown=10001:10001 native_smoke.py provision_model.py model-manifest.json ./
+ARG CV_BUILD_PROVISION_MODEL=false
+# Explicit build-time opt-in only; the runtime never downloads model weights.
+RUN case "$CV_BUILD_PROVISION_MODEL" in \
+      true) python provision_model.py --output /models/pose.task ;; \
+      false) ;; \
+      *) echo "CV_BUILD_PROVISION_MODEL must be true or false" >&2; exit 1 ;; \
+    esac
 COPY --chown=10001:10001 cv ./cv
 COPY --chown=10001:10001 ai ./ai
 USER 10001:10001

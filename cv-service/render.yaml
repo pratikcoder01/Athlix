@@ -15,8 +15,12 @@ services:
     envVars:
       - key: CV_SERVICE_API_KEY
         sync: false
+      # Render forwards this public setting as a Docker build argument. The
+      # image build verifies the manifest-pinned bytes; no runtime download.
+      - key: CV_BUILD_PROVISION_MODEL
+        value: "true"
       - key: CV_MODEL_PATH
-        sync: false
+        value: /models/pose.task
       - key: CV_STATE_DIR
         value: /var/lib/athlix-cv
       - key: CV_TEMP_DIR

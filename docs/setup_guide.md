@@ -116,8 +116,11 @@ available without AI. No provider acceptance is established by mock tests.
 Follow [video worker setup](../cv-service/README.md) for Python requirements and
 the pinned model manifest/provisioner. Set the same protected `CV_SERVICE_API_KEY`
 on Express/Python and a reviewed internal `CV_SERVICE_URL` on Express. Provision
-the manifest-pinned `.task` separately, record its hash/license/release approval,
-and set `CV_MODEL_PATH`. Customer uploads never download a model.
+the manifest-pinned `.task` separately for a manual mount, or explicitly opt in
+to the verified image-build path with `CV_BUILD_PROVISION_MODEL=true`. The Render
+template selects that build-time path and `/models/pose.task`; it cannot use a
+file mounted from the operator's local computer. Record the model's
+hash/license/release approval. Customer uploads never download a model.
 
 Run exactly one instance/worker. Set `CV_STATE_DIR` to a private persistent local
 volume for completed results to survive restarts until their original 15-minute

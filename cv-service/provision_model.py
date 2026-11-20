@@ -1,4 +1,4 @@
-"""Explicit operator/CI provisioning; never called by a customer request."""
+"""Explicit operator/CI/opt-in image-build provisioning; never called by a customer request."""
 import argparse
 import hashlib
 import json

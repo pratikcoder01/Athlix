@@ -126,6 +126,7 @@ jobs:
     env:
       CV_SERVICE_API_KEY: athlix-ci-only-0123456789abcdef-not-a-production-credential
       CV_MODEL_HOST_PATH: /tmp/athlix-pose-landmarker-heavy.task
+      CV_BUILD_PROVISION_MODEL: 'true'
     defaults:
       run:
         working-directory: cv-service
@@ -160,6 +161,14 @@ jobs:
       - name: Build and start isolated resource-limited video container
         timeout-minutes: 10
         run: docker compose -p athlix-cv-ci -f compose.yaml up --build --detach
+      - name: Verify Render image model and native inference without a host model mount
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_id=$(docker compose -p athlix-cv-ci -f compose.yaml images -q cv)
+          test -n "$image_id"
+          docker run --rm --network none --user 10001:10001 --read-only --cap-drop ALL --security-opt no-new-privileges:true --memory 1536m --cpus 2 --pids-limit 64 --tmpfs /tmp:rw,nosuid,noexec,size=160m,mode=0700,uid=10001,gid=10001 "$image_id" python native_smoke.py
       - name: Verify container isolation, native job and restart persistence
         timeout-minutes: 7
         run: python container_smoke.py

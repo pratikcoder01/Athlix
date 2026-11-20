@@ -100,18 +100,38 @@ claim that native inference or model quality was evaluated.
 
 ## Container and hosting template
 
-`Dockerfile` runs as UID/GID 10001 with one worker, pinned Python requirements and
-no model download. Provision the manifest-pinned model with `provision_model.py`
-outside the image, then supply its absolute path as `CV_MODEL_HOST_PATH` and a
-server-only `CV_SERVICE_API_KEY` to the Compose template. The model is mounted
+`Dockerfile` runs as UID/GID 10001 with one worker and pinned Python requirements.
+By default, the image contains no model and does not download one. Provision the
+manifest-pinned model with `provision_model.py` outside the image, then supply its
+absolute path as `CV_MODEL_HOST_PATH` and a server-only `CV_SERVICE_API_KEY` to the
+Compose template. The model is mounted
 read-only; SQLite uses a named volume. Root filesystem writes are disabled;
 temporary media uses a 160 MiB private tmpfs. Verify mounted state ownership for
 UID 10001 before accepting traffic. These files do not start a service themselves.
 
+For hosts that cannot mount an operator's local model file, the image has an
+explicit build-time option:
+
+```sh
+docker build --build-arg CV_BUILD_PROVISION_MODEL=true -t athlix-cv:review ./cv-service
+docker run --rm --network none athlix-cv:review python native_smoke.py
+```
+
+Run these commands from the repository root. The opt-in downloads only the
+versioned URL in `model-manifest.json`, verifies its exact size and SHA-256,
+and includes the public weights at `/models/pose.task`, readable by UID 10001.
+Unknown flag values fail the build. A download or checksum failure also fails
+the build; no replacement or request-time fallback occurs. Review the recorded
+model source, model-card license statement and release approval before opting in;
+the manifest does not establish legal approval or ATHLIX accuracy. Builds contact
+the upstream model host for public weights; athlete media is never involved.
+
 The Render template sets auto-deploy **off**, one instance, Docker runtime and a
-1 GiB persistent disk. Its model must be provisioned separately at a reviewed
-readable path before `/ready` succeeds; never download one during a request. The
-declared `1c-2g` compute plan is a deployment template, not an approved purchase.
+1 GiB persistent disk. It explicitly enables this build option and fixes
+`CV_MODEL_PATH=/models/pose.task`, so `/ready` does not depend on a file on the
+operator's computer. Render forwards the flag from `envVars` to the Docker build
+argument. The flag is public configuration; do not put secrets in build arguments.
+The declared `1c-2g` compute plan is a deployment template, not an approved purchase.
 Render's persistent disk prevents horizontal scaling and zero-downtime deploys;
 expect and test a restart interruption rather than advertising seamless recovery.
 Render's platform resource limits replace Compose-specific limits on that host.
@@ -119,6 +139,7 @@ Render's platform resource limits replace Compose-specific limits on that host.
 Configuration references checked during this change:
 [Docker Compose service resource/security options](https://docs.docker.com/reference/compose-file/services/),
 [Render Blueprint fields](https://render.com/docs/blueprint-spec),
+[Render Docker environment/build-argument mapping](https://render.com/docs/docker),
 [Render persistent-disk limitations](https://render.com/docs/disks), and
 [Render compute-plan identifiers](https://render.com/docs/compute-plans).
 
@@ -129,7 +150,7 @@ recognize a kata, measure physical force, diagnose injury or establish model
 accuracy. Camera geometry and the heuristic scoring formulas still need a
 permissioned evaluation dataset and domain-expert review.
 
-Verification updated 2026-11-15: the current local suite passes 32 Python
+Verification updated 2026-11-21: the current local suite passes 37 Python
 API/ownership/resource-policy/scoring/provisioning tests. Express proxy tests
 use a mocked upstream. Windows Application Control blocks a native dependency
 DLL locally; that policy was not bypassed. At pushed commit `8bea3de`, both remote
@@ -140,6 +161,8 @@ and persisted results after restart. See the linked runs in
 [verification](../docs/VERIFICATION.md). These synthetic/runtime checks do not
 establish a permissioned human-video accuracy or usefulness benchmark, and do not
 prove acceptance on the intended live Render service.
+The opt-in image-build provisioning and mount-free native smoke path require a
+fresh CI run; they have not run locally because no Docker daemon is available.
 The SQLite tests additionally exercise concurrent independent connections,
 idempotency, TTL after reopening, result-size/nonfinite rejection, secure-delete
 payload removal, startup recovery and an actual killed-process lock release.
