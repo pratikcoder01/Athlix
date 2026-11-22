@@ -3,7 +3,11 @@
 Update 2026-11-22: the owner subsequently authorized live recovery and release
 work. A new free Render backend and the production Vercel frontend were deployed
 at `8ded4414`; actual cookie/Firebase acceptance then identified a profile
-projection issue, now corrected in source. Current evidence and remaining
+projection issue. Both hosts now run the corrected `24aafcc` application. Actual
+HTTPS browser login, cookie renewal, logout and password-reset UI passed,
+including rejection of old sessions/passwords. These used temporary QA accounts
+and a generated reset link; real email/SMS delivery and Google/phone acceptance
+remain unqualified. The email template was not changed. Current evidence and remaining
 qualification are in [HOST_ROLLOUT_REVIEW.md](HOST_ROLLOUT_REVIEW.md). The dated
 read-only discovery below is retained as history, not current release status.
 

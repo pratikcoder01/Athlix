@@ -1,10 +1,26 @@
 # ATHLIX execution roadmap
 
-Updated 2026-11-15. Work proceeds on `codex/athlix-market-ready`; no merge or production deployment is implied.
+Updated 2026-11-22. Work proceeds on `codex/athlix-market-ready`; `main` remains
+unmerged. The owner-approved pilot frontend and replacement free backend run
+application revision `24aafcc`.
 
-Latest verification: 2026-11-15. See [VERIFICATION.md](VERIFICATION.md) and
+Latest verification: 2026-11-22. See [VERIFICATION.md](VERIFICATION.md) and
 [FEATURE_STATUS.md](FEATURE_STATUS.md). Initial priorities below are retained as
 the release roadmap, not a claim that every phase is complete.
+
+Current evidence supersedes the dated discovery and milestone entries below:
+both application CI runs passed 506 JavaScript and 37 Python tests, builds,
+lint/types and browser/accessibility/hydration checks. Approved encrypted backup,
+additive catalog provisioning, restricted runtime access and database ingress
+are complete. Hosted browser login/reload/logout and actual password-reset UI
+with old-credential/session rejection passed using temporary QA identities;
+no recovery email or SMS was sent. The live feature-journey scope and cleanup
+are recorded in [HOST_ROLLOUT_REVIEW.md](HOST_ROLLOUT_REVIEW.md).
+
+Remaining launch work depends on owner/operator inputs: real delivery/provider
+qualification, reviewed policy/support/moderation ownership, off-device backup
+and an isolated full restore, and optional CV hosting/domain evaluation. Checkout
+remains disabled until prices are decided; policy examples remain review drafts.
 
 ## Reviewable milestones
 

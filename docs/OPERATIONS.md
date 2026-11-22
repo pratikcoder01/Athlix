@@ -92,8 +92,10 @@ against the actual managed database; ordinary readiness is insufficient.
 Legacy bracket conversion uses the restricted [review tool](MIGRATION_REVIEW.md):
 explicit server/database/tournament/operator/reason, dry-run default, then approved
 source hash/version before apply. It refuses ambiguous/incomplete trees and
-commits exact-source CAS and audit together. No production conversion, role
-change, index build or account-data repair was performed by this source work.
+commits exact-source CAS and audit together. No production legacy-bracket
+conversion or retained-account repair was performed. Separately approved
+catalog provisioning and isolated QA role fixtures are recorded in
+`HOST_ROLLOUT_REVIEW.md`.
 
 ## Startup and shutdown
 
@@ -222,8 +224,10 @@ and [mongorestore](https://www.mongodb.com/docs/database-tools/mongorestore/).
   revert to the known privilege-escalation/private-room vulnerabilities merely
   because they are older. Prefer disabling an affected endpoint if no safe
   previous artifact exists.
-- These changes add models and strict policies; no production migration was
-  executed. Review documents/index compatibility before rollback. Back up and
+- These changes add models and strict policies. Separately approved additive
+  catalog provisioning was completed as recorded in `HOST_ROLLOUT_REVIEW.md`;
+  no legacy-record/bracket conversion or retained-account repair was applied.
+  Review documents/index compatibility before rollback. Back up and
   approve any data repair separately; never drop collections or force-push Git
   to achieve a rollback.
 - Preserve compatibility with session version/revocation state, protected journal/

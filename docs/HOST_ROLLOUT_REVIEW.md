@@ -1,11 +1,74 @@
 # Hosting rollout review
 
-Observed 2026-11-21, Asia/Calcutta. The owner approved controlled recovery,
+Updated 2026-11-22, Asia/Calcutta. The owner approved controlled recovery,
 backup/schema preparation, the remaining release work and the specific Vercel
 configuration replacement/production promotion. No paid service was approved.
 Source remains on `codex/athlix-market-ready`; `main` has not been merged.
 
-## Approved execution and live evidence
+## Current deployed evidence (2026-11-22)
+
+Both the production frontend at `https://athlix-client.vercel.app` and the new
+Render API at `https://athlix-api-8ded-256083.onrender.com` are deployed from
+`24aafcc7f2e70e557e30cc4014fec5c8c2a9ac32`. The service hostname retains its
+original release label; its running revision is the corrected candidate.
+
+- [PR CI 44987854947](https://github.com/pratikcoder01/Athlix/actions/runs/44987854947)
+  and [push CI 44987850735](https://github.com/pratikcoder01/Athlix/actions/runs/44987850735)
+  both passed at that exact commit: **506 JavaScript and 37 Python tests** in
+  each run, both builds, lint/types, all ten production browser suites,
+  30 accessibility cases, 63 production hydration visits and 189 development
+  visits. The local suite passed **446 JavaScript tests**, with nine explicit
+  service-dependent skips. Seven moderate dependency findings remain; the
+  high/critical gate passed.
+- The approved encrypted local backup, **10 new collections / 21 indexes** and
+  **20-model / 45-secondary-index** catalog verification are complete. The
+  restricted runtime identity has data access to the 18 API collections and
+  catalog-read privileges without schema-management privileges. The backup's
+  device/account and restore limits below still apply.
+- The owner removed the world-access entry after the narrower provider/operator
+  entries were prepared. A fresh backend process and connection pool then
+  connected successfully under the restricted network and runtime identity.
+  All five hosted preflight contracts passed again: liveness, readiness, exact
+  allowed-origin CORS, rejected untrusted-origin CORS and the frontend document.
+- Expanded actual HTTPS acceptance passed **66 assertions across 106 recorded
+  API requests**: Firebase password exchange, cookie rotation/replay and logout,
+  audited QA role/session invalidation, public-profile privacy, booking prices
+  and conflicts, accepted-booking client notes and private training/community.
+  Two temporary athletes completed division registration, bracket publication,
+  match results and event completion. Academy member permission, unique codes,
+  versioned deactivation, daily attendance and saved operational counts passed.
+  Ownership, stale-version and invalid-transition rejections remained enforced.
+- The corrected hosted browser run passed **26 session checks**, including real
+  Firebase/password login, reload/rotation, logout, cookie clearance, rejection
+  of the old cookie/access token and a signed-out reload. It also passed
+  **13 recovery UI checks** using an actual Firebase action code: visible password
+  update, removal of the one-time code from the URL and no runtime/hydration
+  errors. The expanded run's outer assertions also verified pre-reset session
+  rejection, old-password rejection and successful new-password exchange.
+  The earlier logout body could not be read through CDP; the independent HTTPS
+  JSON contract and actual browser session-state checks passed. No recovery
+  email or SMS was sent, so delivery/template acceptance is still separate.
+- The expanded run removed all **five** temporary Firebase/application identities
+  and their owned artifacts, including 12 sessions, coaching notes, the event,
+  academy, member and attendance. Three labeled role-audit rows were retained;
+  earlier role-fixture runs likewise retained their audits. A subsequent read-only
+  runtime check found only the four preexisting athlete accounts and reconfirmed
+  bounded privileges/catalogs. Original user records were preserved.
+
+After a long pause, expired temporary operator ingress prevented an initial run
+from creating any fixtures. A new four-hour narrow entry restored test access
+without restoring world access or changing other rules. A bounded public-host
+attempt after the pause also returned a failure; the subsequent five-contract
+preflight and complete authenticated run passed without application/settings
+changes. These checks do not establish continuous availability. Free-host cold
+starts and bounded session timeouts remain operational limits.
+
+The old vulnerable Render service remains suspended. Paid CV hosting, a
+permissioned video benchmark, real support/moderation ownership and completed
+release policies remain outside these results. Checkout stays disabled until
+the owner decides prices; sample policy details remain explicitly labeled drafts.
+
+## Initial approved rollout at `8ded4414` (2026-11-21)
 
 - The old Render API remains suspended. Its June build is a historical reference,
   not an approved rollback: it contains the authorization defects fixed here.
@@ -37,13 +100,14 @@ Source remains on `codex/athlix-market-ready`; `main` has not been merged.
   access were added before network restriction. The owner removed only the
   `0.0.0.0/0` rule in Atlas after single-entry CLI calls failed authentication.
   The four narrower entries were preserved exactly; a fresh operator database
-  connection passed. A fresh backend deployment/connection must also be verified.
+  connection passed. Fresh backend deployment/connection acceptance was pending
+  at this stage; the 2026-11-22 evidence above records its completion.
 
 Actual HTTPS Firebase/password and session acceptance used four new, clearly
 marked QA identities. Cookie issuance, rotation, replay rejection, role/session
 invalidation and identity checks passed before profile projection acceptance
 failed: Mongoose's `select: true` adds `sessionVersion` to an inclusion query.
-The source fix removes forced schema inclusion while retaining normal auth
+The later `24aafcc` fix removes forced schema inclusion while retaining normal auth
 selection and serializes an explicit public user DTO. Do not weaken the privacy
 assertion to accept the internal field. The failed run cleaned up all QA users
 and their owned artifacts, retaining only three labeled role-audit records;
@@ -54,13 +118,13 @@ Eight hosted public route/viewport visits passed main/heading, layout and passwo
 toggle checks with no runtime or hydration errors. The first mobile visit also
 showed a recoverable session timeout; subsequent direct/proxied no-cookie checks
 returned the expected 401 promptly. Navigation-aborted bootstrap bodies are not
-counted as successful session acceptance. The timeout copy is being made
-actionable while preserving bounded requests, error reporting and Retry.
+counted as successful session acceptance. The `24aafcc` correction makes timeout
+copy actionable while preserving bounded requests, error reporting and Retry.
 
 Operational receipts, account-bound backup, credential material and IP details
 remain in operator-private storage outside Git. Runtime secrets are never printed
 or committed. A temporary credential config used by the backup tool had verified
-user-only permissions and was removed after archive validation.
+restricted Windows permissions and was removed after archive validation.
 
 ## Initial discovery before approved recovery
 
@@ -76,7 +140,7 @@ user-only permissions and was removed after archive validation.
 | Database targeting | The stored SRV URI has credentials but no explicit database path. Do not replace it with a guessed database name. A local read-only metadata attempt failed during SRV DNS resolution; no application documents were read or changed. |
 | CV hosting | No matching ATHLIX CV service was found in the authorized Render workspace. The supplied CV template has not been deployed. |
 
-The initial inspections below were read-only. The explicitly approved execution
+The initial inspections were read-only. The explicitly approved execution
 above supersedes their live-state observations. No billing setting or email
 template was changed.
 

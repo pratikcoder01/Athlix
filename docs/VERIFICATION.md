@@ -1,5 +1,84 @@
 # Verification record
 
+## Current deployed candidate (2026-11-22)
+
+The production Vercel frontend and new free Render API both run
+`24aafcc7f2e70e557e30cc4014fec5c8c2a9ac32`. The old vulnerable API remains
+suspended; the June artifact is not an approved safe rollback.
+
+[PR run 44987854947](https://github.com/pratikcoder01/Athlix/actions/runs/44987854947)
+and [push run 44987850735](https://github.com/pratikcoder01/Athlix/actions/runs/44987850735)
+both completed successfully at that exact candidate. Each passed:
+
+- **506 JavaScript tests:** 18 client, 481 server/database and seven separate demo
+  Firebase identity/recovery tests. The server phase had one intentional emulator
+  skip before the dedicated emulator step; no failures were reported. All three
+  public-projection/auth-version/explicit-DTO regressions passed.
+- Lint/types, both builds and all ten production browser suites, including the
+  actual Next auth rewrite and HttpOnly cookie round trip. Automated accessibility
+  passed **30 dark/light cases**; delayed production hydration passed **63 visits**
+  retaining original SSR nodes; development diagnostics passed **189 visits**.
+- A real **synthetic** archive/restore across **21 collections**, with complete
+  document/index equality, unique enforcement, geospatial query, TTL expiry and
+  unchanged source. This does not establish production-backup acceptance.
+- **37 Python tests**, actual native model execution/blank-video rejection, a
+  mount-free/network-free one-CPU image smoke and full two-CPU constrained-container
+  owner isolation, retry, deletion and restart persistence. No athlete-scoring
+  accuracy or target-host CV throughput was evaluated.
+- The dependency high/critical gate; seven moderate findings remain.
+
+Local verification passed **446 JavaScript tests** (18 client / 428 server), with
+nine explicit service-dependent skips, plus client lint/type/build and server
+compilation. Local skips are not substituted for the real remote integrations.
+
+The approved live database work completed encrypted local backup/decryption/hash
+and archive dry-run validation, **10 added collections / 21 indexes** and the
+production verifier for all **20 model catalogs / 45 secondary indexes**. Runtime
+access is restricted to the 18 API collections and catalog reads, without DDL
+privileges. After removal of the world-access rule, a fresh backend process and
+connection pool succeeded. All five hosted liveness/readiness/CORS/frontend
+preflight contracts passed on 2026-11-22. The local backup still requires its
+Windows account/computer; an off-device copy and full isolated production-data
+restore have not been qualified.
+
+Expanded actual HTTPS acceptance passed **66 assertions across 106 recorded API
+requests**, covering Firebase/password, sessions, role/privacy, booking conflicts,
+private coach notes/training, community, division brackets/results and academy
+members/attendance/counts. Negative ownership, version and transition checks
+passed. All five temporary Firebase/application identities and their owned data
+were removed, including 12 sessions; three labeled role-audit records remain.
+Post-cleanup read-only verification found only the four preexisting athlete
+accounts and reconfirmed runtime privileges/catalogs. The same run passed
+**26 browser session checks**:
+actual Firebase/password login, cookie restoration/rotation, logout, cleared
+refresh cookie, rejected old cookie/access token and signed-out reload. It also
+passed **13 recovery UI checks** using a real Firebase action code, including
+visible password-update success and one-time-code removal from the URL. There
+were no runtime/hydration errors. The outer assertions also verified the HTTP
+and provider contracts: the pre-reset session was rejected, the old password
+failed and the new password signed in/exchanged successfully. The preceding
+browser-only run independently passed these browser/recovery checks and cleaned
+up its one QA identity/four sessions without creating role-audit rows.
+
+An earlier browser helper could not read an unread logout response body through
+CDP, despite observing HTTP 200. The independent actual HTTPS JSON contract and
+the browser's cookie/token/reload outcomes subsequently passed; the status alone
+was not substituted for session-state proof. No email or SMS was sent. These
+tests qualify the controlled action-code reset, not real recovery-email delivery,
+Google/phone providers or every role-workflow/browser combination.
+
+After a long pause, an expired temporary operator-network entry stopped a run
+before any QA identity/API request was created; narrow time-limited access was
+renewed without restoring world access. A bounded public preflight also failed
+after the pause, then all five contracts passed on repeat without application or
+host-setting changes. The final authenticated run passed. Free-host cold starts
+and bounded session timeouts remain limits, not continuous-availability evidence.
+
+Checkout remains disabled until the owner decides prices. Policy examples remain
+marked review drafts. Paid CV hosting and a permissioned domain evaluation have
+not been approved/completed. The dated observations below preserve earlier
+failures and their original verification scope.
+
 ## Hosted profile-boundary correction (2026-11-22)
 
 Real hosted acceptance exposed an internal session counter in a public profile
@@ -38,7 +117,8 @@ local backup/decryption/hash/archive dry run, an additive 10-collection/21-index
 operation and the production catalog verifier against all 20 model catalogs.
 The owner removed the world-access rule after narrower provider/operator rules
 were added. A fresh restricted runtime-identity connection passed without DDL
-privileges; a fresh backend process must be checked as well. See
+privileges; a fresh backend process had not yet been checked at this stage. The
+2026-11-22 deployed-candidate evidence above records that later acceptance. See
 [host rollout evidence](HOST_ROLLOUT_REVIEW.md) for the backup's account/device
 and consistency limits; this is not a full production restore claim.
 
@@ -47,8 +127,9 @@ Public assets use the new API; all five unauthenticated host contracts passed.
 Actual HTTPS QA passed 28 auth/session/privacy-boundary checks before revealing
 an internal `sessionVersion` field in the profile response. The source now uses
 an explicit public DTO and retains the original rejection assertion. This is a
-confirmed live failure followed by a source fix, not yet a passing corrected
-hosted acceptance claim. The failed run's four temporary identities/artifacts
+confirmed live failure followed by a source fix, not a passing corrected hosted
+claim at that stage. The 2026-11-22 entry above records later corrected-run
+outcomes. The failed run's four temporary identities/artifacts
 were cleaned up; three labeled role-audit entries remain as operational evidence.
 Later corrected-run/CI outcomes are tracked on PR #2.
 
