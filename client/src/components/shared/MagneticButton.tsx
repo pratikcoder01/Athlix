@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion, HTMLMotionProps } from 'framer-motion';
+import React from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 interface MagneticButtonProps extends HTMLMotionProps<'button'> {
@@ -11,110 +11,21 @@ interface MagneticButtonProps extends HTMLMotionProps<'button'> {
   as?: 'button' | 'span';
 }
 
-export const MagneticButton: React.FC<MagneticButtonProps> = ({
-  children,
-  className,
-  variant = 'premium',
-  size = 'md',
-  disabled = false,
-  as = 'button',
-  ...restProps
-}) => {
-  const props = restProps;
-  const ref = useRef<HTMLElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const reducedMotion = useReducedMotion();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  // The server has no media-query result. Use the same initial animation props
-  // for hydration, then honor the browser preference before interaction.
-  const shouldReduce = mounted && reducedMotion;
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!ref.current || shouldReduce || disabled) return;
-    const { clientX, clientY } = e;
-    const { left, top, width, height } = ref.current.getBoundingClientRect();
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
-    setPosition({ x: (clientX - centerX) * 0.3, y: (clientY - centerY) * 0.3 });
+// Retain the public component API; interaction now uses native, fixed targets.
+export const MagneticButton: React.FC<MagneticButtonProps> = ({ children, className, variant = 'premium', size = 'md', disabled = false, as = 'button', ...props }) => {
+  const sizes = { sm: 'min-h-10 px-4 py-2 text-xs', md: 'min-h-11 px-6 py-3 text-sm', lg: 'min-h-12 px-7 py-3.5 text-sm', icon: 'h-11 w-11 p-3' };
+  const primary = 'bg-accent text-[#09090B] hover:bg-[var(--accent-primary-hover)]';
+  const variants = {
+    premium: primary, primary, accent: primary,
+    outline: 'border border-border-strong bg-transparent text-text-primary hover:bg-surface-hover',
+    ghost: 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
   };
-
-  const handleMouseLeave = () => setPosition({ x: 0, y: 0 });
-
-  const sizeStyles = {
-    sm: 'px-4 py-2 text-xs',
-    md: 'px-6 py-3 text-sm',
-    lg: 'px-8 py-4 text-base',
-    icon: 'p-3',
-  };
-
-  const variantStyles = {
-    premium: 'bg-primary text-text-inverse font-semibold shadow-glow hover:shadow-xl hover:scale-105',
-    primary: 'bg-accent text-text-inverse font-bold shadow-lg hover:shadow-xl hover:shadow-glow-accent',
-    accent: 'bg-accent-light text-text-inverse font-semibold shadow-lg hover:shadow-xl',
-    outline: 'border border-border-strong text-text-primary hover:bg-surface-hover hover:border-text-secondary',
-    ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
-  };
-
-  const classes = cn(
-    'relative inline-flex items-center justify-center rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden',
-    sizeStyles[size],
-    variantStyles[variant],
-    className
-  );
-
-  const innerElement = (
-    <>
-      <span className="relative z-10">{children}</span>
-      {variant === 'premium' && (
-        <motion.div
-          className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-          initial={{ x: '-100%' }}
-          whileHover={{ x: '200%' }}
-          transition={{ duration: 0.6, ease: 'easeInOut' }}
-        />
-      )}
-    </>
-  );
-
-  const animationProps = {
-    animate: shouldReduce ? {} : { x: position.x, y: position.y },
-    whileHover: shouldReduce || disabled ? {} : { scale: 1.02 },
-    whileTap: shouldReduce || disabled ? {} : { scale: 0.95 },
-    transition: { type: 'spring' as const, stiffness: 400, damping: 25, mass: 0.5 },
-  };
-
+  const classes = cn('inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50', sizes[size], variants[variant], className);
   if (as === 'span') {
-    // A visual span inside a Link must not gain Motion's automatic tabIndex
-    // from a tap gesture and become a second keyboard target inside the link.
-    const spanAnimation = { animate: animationProps.animate, whileHover: animationProps.whileHover, transition: animationProps.transition };
-    return (
-      <motion.span
-        ref={ref as React.Ref<HTMLSpanElement>}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        className={cn(classes, 'cursor-pointer inline-flex')}
-        aria-disabled={disabled}
-        {...spanAnimation}
-      >
-        {innerElement}
-      </motion.span>
-    );
+    // A Link owns focus and interaction; its visual child is never a second tab stop.
+    return <span className={cn(classes, disabled && 'opacity-50')} aria-disabled={disabled || undefined}>{children}</span>;
   }
-
-  return (
-    <motion.button
-      ref={ref as React.Ref<HTMLButtonElement>}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className={classes}
-      disabled={disabled}
-      {...props}
-      {...animationProps}
-    >
-      {innerElement}
-    </motion.button>
-  );
+  return <motion.button {...props} className={classes} disabled={disabled} whileHover={undefined} whileTap={undefined}>{children}</motion.button>;
 };
 
 export default MagneticButton;

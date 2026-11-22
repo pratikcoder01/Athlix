@@ -82,9 +82,9 @@ export const Drawer: React.FC<DrawerProps> = ({
             initial={slideVariants[anchor].initial}
             animate={slideVariants[anchor].animate}
             exit={slideVariants[anchor].exit}
-            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              'absolute bg-surface-elevated border-border shadow-2xl flex flex-col',
+              'absolute bg-surface-elevated border-border  flex flex-col',
               containerClasses[anchor],
               className
             )}
@@ -100,7 +100,7 @@ export const Drawer: React.FC<DrawerProps> = ({
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover transition-colors"
+                className="p-1.5 text-text-secondary hover:text-text-primary rounded-md hover:bg-surface-hover transition-colors"
                 aria-label="Close drawer"
               >
                 <X className="w-4 h-4" />

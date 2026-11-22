@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { Shield, Users, Award, Zap, Sparkles } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
-import SpotlightCard from '../../components/shared/SpotlightCard';
 
 export default function AboutPage() {
   const team = [
@@ -19,12 +18,13 @@ export default function AboutPage() {
     <div className="relative min-h-screen bg-background text-text-primary overflow-hidden">
       <Navbar />
 
+      <main>
       {/* Asymmetric Header Section */}
       <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-6">
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
               className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-3 py-1 text-[10px] font-bold text-primary tracking-widest uppercase mb-6 font-mono"
@@ -33,7 +33,7 @@ export default function AboutPage() {
             </motion.div>
             
             <motion.h1
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08, duration: 0.35 }}
               className="text-4xl sm:text-5xl lg:text-6xl font-display font-black tracking-tight uppercase text-text-primary"
@@ -45,7 +45,7 @@ export default function AboutPage() {
 
           <div className="lg:col-span-6 lg:pt-14">
             <motion.p
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.16, duration: 0.35 }}
               className="text-sm sm:text-base text-text-secondary leading-relaxed"
@@ -58,7 +58,7 @@ export default function AboutPage() {
 
       {/* Asymmetric Core Values Section */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 border-t border-border/60">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2">
           {[
             {
               icon: <Users className="h-5 w-5 text-primary" />,
@@ -81,13 +81,13 @@ export default function AboutPage() {
               desc: "Professional privileges require approval. Roles do not certify sporting credentials or safeguarding checks."
             }
           ].map((item, idx) => (
-            <SpotlightCard key={idx} className="bg-secondary p-6 rounded-sm border border-border flex flex-col justify-between h-56">
+            <article key={idx} className="border-t border-border py-7 sm:pr-8">
               <div>
                 <div className="mb-4 bg-background/50 w-8 h-8 rounded-sm flex items-center justify-center border border-border/30">{item.icon}</div>
                 <h3 className="text-sm font-bold text-text-primary mb-2 font-mono uppercase tracking-wide">{item.title}</h3>
                 <p className="text-text-secondary text-xs leading-relaxed">{item.desc}</p>
               </div>
-            </SpotlightCard>
+            </article>
           ))}
         </div>
       </section>
@@ -104,18 +104,19 @@ export default function AboutPage() {
           
           <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {team.map((t, idx) => (
-              <SpotlightCard key={idx} className="bg-secondary p-6 border border-border flex flex-col justify-between h-52">
+              <article key={idx} className="border-t border-border py-6">
                 <div>
-                  <span className="text-[9px] font-bold text-primary font-mono tracking-widest uppercase">{t.role}</span>
+                  <span className="text-[10px] font-bold text-primary font-mono tracking-widest uppercase">{t.role}</span>
                   <h3 className="text-lg font-display font-black text-text-primary mt-1 uppercase tracking-wide">{t.name}</h3>
                   <p className="text-text-secondary text-xs mt-3 leading-relaxed">{t.desc}</p>
                 </div>
-              </SpotlightCard>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
+      </main>
       <Footer />
     </div>
   );

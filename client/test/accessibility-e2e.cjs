@@ -16,7 +16,7 @@ let browser;
     const page = await context.newPage();
     page.on('request', request => { if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(request.url())) externalFontRequests.push(request.url()); });
     page.on('pageerror', error => errors.push({ theme, message: error.message }));
-    for (const path of ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/coaches', '/academies', '/tournaments', '/training', '/clients', '/notifications', '/feed', '/settings', '/privacy', '/terms']) {
+    for (const path of ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/coaches', '/academies', '/tournaments', '/training', '/clients', '/notifications', '/feed', '/settings', '/about', '/features', '/pricing', '/blog', '/contact', '/privacy', '/terms']) {
       const response = await page.goto(base + path, { waitUntil: 'networkidle', timeout: 60000 });
       assert.equal(response.status(), 200, `Unexpected server response at ${path} (${theme})`);
       await page.waitForFunction(theme => document.documentElement.style.colorScheme === theme, theme);

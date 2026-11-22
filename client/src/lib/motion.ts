@@ -3,9 +3,9 @@ export const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as [number, number, number, numb
 export const DURATION = {
   instant: 0.12,
   fast: 0.2,
-  base: 0.32,
-  slow: 0.48,
-  signature: 0.8,
+  base: 0.35,
+  slow: 0.35,
+  signature: 0.35,
 } as const;
 
 export const fadeUp = (delay = 0) => ({
@@ -27,10 +27,10 @@ export const reveal = (delay = 0) => ({
 });
 
 export const pageTransition = {
-  initial: { opacity: 0, y: 8 },
+  initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -6 },
-  transition: { duration: 0.28, ease: EASE_OUT_EXPO },
+  transition: { duration: DURATION.base, ease: EASE_OUT_EXPO },
 };
 
 export const cardHover = {
@@ -39,6 +39,6 @@ export const cardHover = {
 };
 
 export const pressScale = {
-  scale: 0.98,
-  transition: { duration: DURATION.instant },
+  scale: 0.99,
+  transition: { duration: DURATION.instant, ease: EASE_OUT_EXPO },
 };

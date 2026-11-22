@@ -206,7 +206,7 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
               {!recording && countdown === -1 && (
                 <button
                   onClick={triggerCountdown}
-                  className="flex items-center gap-2 px-6 py-3 bg-accent text-black rounded-xl font-bold shadow-glow hover:scale-105 active:scale-95 transition-all duration-200"
+                  className="flex items-center gap-2 px-6 py-3 bg-accent text-accent-ink rounded-md font-bold hover:bg-accent-hover transition-colors duration-200"
                 >
                   <Video className="w-5 h-5" />
                   Start Recording
@@ -216,7 +216,7 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
               {recording && (
                 <button
                   onClick={stopRecording}
-                  className="flex items-center gap-2 px-6 py-3 bg-danger text-white rounded-xl font-bold hover:bg-danger/90 active:scale-95 transition-all duration-200"
+                  className="flex items-center gap-2 px-6 py-3 bg-danger text-text-inverse rounded-md font-bold hover:bg-danger/90 transition-colors duration-200"
                 >
                   <Square className="w-5 h-5" />
                   Stop & Process
@@ -225,7 +225,7 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
 
               <button
                 onClick={onClose}
-                className="px-6 py-3 bg-secondary text-text-primary rounded-xl font-semibold hover:bg-secondary/80 transition-colors"
+                className="px-6 py-3 bg-secondary text-text-primary rounded-md border border-border-strong font-semibold hover:bg-surface-hover transition-colors"
               >
                 Cancel
               </button>

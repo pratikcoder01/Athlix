@@ -29,7 +29,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               ref={ref}
               checked={checked}
               onChange={onChange}
-              className="sr-only"
+              className="peer sr-only"
               {...props}
             />
             <motion.div
@@ -40,7 +40,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               }}
               transition={{ duration: 0.15 }}
               className={cn(
-                'w-5 h-5 rounded-md border flex items-center justify-center text-white transition-shadow focus-within:ring-2 focus-within:ring-accent/50 group-hover:border-accent/70',
+                'w-5 h-5 rounded-md border flex items-center justify-center text-[#09090B] transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background group-hover:border-accent/70',
                 error && 'border-danger group-hover:border-danger'
               )}
             >
@@ -49,7 +49,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.5, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
                 >
                   <Check className="w-3.5 h-3.5 stroke-[3px]" />
                 </motion.span>

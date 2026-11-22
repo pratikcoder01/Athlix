@@ -50,7 +50,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className={cn(
-              'absolute z-[100] px-2.5 py-1 text-[11px] font-semibold text-text-inverse bg-color-text-primary border border-border shadow-md rounded-md whitespace-nowrap pointer-events-none select-none tracking-tight',
+              'absolute z-[100] px-2.5 py-1 text-[11px] font-medium text-text-inverse bg-text-primary border border-border rounded-md whitespace-nowrap pointer-events-none select-none tracking-tight',
               positionClasses[position],
               className
             )}

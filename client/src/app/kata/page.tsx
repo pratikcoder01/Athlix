@@ -304,15 +304,15 @@ export default function KataAnalyzerPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <AnimatedBadge variant="default" className="bg-accent/10 text-accent border-accent/20">
-                AI Sports Analytics
+              <AnimatedBadge variant="default">
+                2D pose heuristics
               </AnimatedBadge>
-              <AnimatedBadge variant="default" className="bg-purple/10 text-purple border-purple/20">
-                BETA
+              <AnimatedBadge variant="warning">
+                Experimental
               </AnimatedBadge>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              Karate Kata <span className="text-gradient-accent">Analyzer</span>
+              Karate Kata Analyzer
             </h1>
             <p className="text-text-secondary mt-1">
               Upload or record your movement patterns. Get sampled body pose feedback, joint angles and experimental movement metrics.
@@ -358,7 +358,7 @@ export default function KataAnalyzerPage() {
 
                 <label 
                   htmlFor="video-upload-input"
-                  className="px-6 py-3 bg-primary text-background rounded-xl font-bold cursor-pointer hover:bg-primary/95 transition-all active:scale-95 text-sm"
+                  className="px-6 py-3 bg-accent text-accent-ink rounded-md font-bold cursor-pointer hover:bg-accent-hover transition-colors text-sm"
                 >
                   Select Video File
                 </label>
@@ -424,7 +424,7 @@ export default function KataAnalyzerPage() {
                     <button 
                       onClick={triggerAnalysis}
                       disabled={!token || !consent}
-                      className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 px-5 py-2 bg-accent text-black text-sm font-bold rounded-lg shadow-glow hover:scale-105 transition-all duration-200"
+                      className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 px-5 py-2 bg-accent text-accent-ink text-sm font-bold rounded-md hover:bg-accent-hover transition-colors duration-200"
                     >
                       <Activity className="w-4 h-4" />
                       Run Pose Analysis
@@ -455,9 +455,8 @@ export default function KataAnalyzerPage() {
           <GlassCard className="max-w-2xl mx-auto flex flex-col items-center text-center my-12" padding="lg">
             <div className="relative w-20 h-20 mb-6">
               <div className="absolute inset-0 rounded-full border-4 border-accent/20 border-t-accent animate-spin" />
-              <div className="absolute inset-2 rounded-full border-4 border-purple/20 border-b-purple animate-spin" style={{ animationDirection: 'reverse' }} />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-accent animate-pulse" />
+                <Sparkles className="w-6 h-6 text-text-secondary" />
               </div>
             </div>
 
@@ -469,7 +468,7 @@ export default function KataAnalyzerPage() {
             {/* Progress Bar Container */}
             <div className="w-full bg-secondary rounded-full h-3 mb-2 overflow-hidden border border-border">
               <motion.div 
-                className="bg-gradient-to-r from-accent to-purple h-full"
+                className="bg-accent h-full"
                 initial={{ width: '0%' }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
@@ -502,7 +501,7 @@ export default function KataAnalyzerPage() {
               {selectedFile && (
                 <button 
                   onClick={triggerAnalysis}
-                  className="px-6 py-2.5 bg-accent text-black rounded-xl font-bold shadow-glow hover:scale-105 transition-all duration-200"
+                  className="px-6 py-2.5 bg-accent text-accent-ink rounded-md font-bold hover:bg-accent-hover transition-colors duration-200"
                 >
                   Try Again
                 </button>
@@ -590,7 +589,7 @@ export default function KataAnalyzerPage() {
                         </button>
                         <button
                           onClick={togglePlayback}
-                          className="p-2 bg-accent text-black rounded-lg shadow-glow hover:scale-105 active:scale-95 transition-all"
+                          className="p-2 bg-accent text-accent-ink rounded-md hover:bg-accent-hover transition-colors"
                         >
                           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </button>
@@ -654,7 +653,7 @@ export default function KataAnalyzerPage() {
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center text-center p-4" padding="none">
                   <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Arm Strikes</span>
-                  <span className="text-2xl font-black text-purple">{result.stats.total_arm_strikes}</span>
+                  <span className="text-2xl font-mono font-medium tabular-nums text-text-primary">{result.stats.total_arm_strikes}</span>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center text-center p-4" padding="none">
                   <span className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Leg Strikes</span>
@@ -686,15 +685,17 @@ export default function KataAnalyzerPage() {
                         const startPct = (seg.start_time / result.duration) * 100;
                         const widthPct = (seg.duration / result.duration) * 100;
                         return (
-                          <div
+                          <button
                             key={seg.id}
+                            type="button"
+                            aria-label={`Seek to ${seg.name} at ${seg.start_time} seconds`}
                             onClick={() => jumpToTime(seg.start_time)}
-                            className="absolute top-0 h-full bg-accent/25 border-l-2 border-r-2 border-accent hover:bg-accent/40 cursor-pointer flex items-center justify-center text-[10px] font-black text-accent truncate px-1 transition-all"
+                            className="absolute top-0 h-full bg-surface-hover border-x border-border-strong hover:bg-surface-elevated cursor-pointer flex items-center justify-center text-[10px] font-mono text-text-primary truncate px-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent"
                             style={{ left: `${startPct}%`, width: `${widthPct}%` }}
                             title={`${seg.name} (${seg.start_time}s - ${seg.end_time}s)`}
                           >
                             {seg.name.split(' (')[0]}
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -710,15 +711,17 @@ export default function KataAnalyzerPage() {
                         const startPct = (seg.start_time / result.duration) * 100;
                         const widthPct = (seg.duration / result.duration) * 100;
                         return (
-                          <div
+                          <button
                             key={seg.id}
+                            type="button"
+                            aria-label={`Seek to ${seg.name} at ${seg.start_time} seconds`}
                             onClick={() => jumpToTime(seg.start_time)}
-                            className="absolute top-0 h-full bg-purple/20 border-l-2 border-r-2 border-purple hover:bg-purple/35 cursor-pointer flex items-center justify-center text-[10px] font-black text-purple truncate px-1 transition-all"
+                            className="absolute top-0 h-full bg-surface-hover border-x border-border-strong hover:bg-surface-elevated cursor-pointer flex items-center justify-center text-[10px] font-mono text-text-primary truncate px-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent"
                             style={{ left: `${startPct}%`, width: `${widthPct}%` }}
                             title={`${seg.name} (${seg.start_time}s - ${seg.end_time}s)`}
                           >
                             {seg.name.split(' (')[0]}
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -730,7 +733,7 @@ export default function KataAnalyzerPage() {
               <GlassCard className="flex flex-col gap-4" padding="md">
                 <h3 className="font-extrabold text-lg flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-accent" />
-                  Physics Metrics over Time
+                  Movement proxies over time
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -745,8 +748,8 @@ export default function KataAnalyzerPage() {
                           <YAxis />
                           <Tooltip labelFormatter={(l) => `Time: ${l.toFixed(2)}s`} />
                           <Legend />
-                          <Line type="monotone" dataKey="Speed" stroke="#00E5FF" strokeWidth={2} dot={false} name="Strike Speed" />
-                          <Line type="monotone" dataKey="Sway" stroke="#EF4444" strokeWidth={1.5} dot={false} name="Balance Sway" />
+                          <Line type="monotone" dataKey="Speed" stroke="var(--accent-primary)" strokeWidth={2} dot={false} name="Landmark Speed" />
+                          <Line type="monotone" dataKey="Sway" stroke="var(--text-secondary)" strokeDasharray="4 3" strokeWidth={1.5} dot={false} name="Body-Center Sway" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -763,8 +766,8 @@ export default function KataAnalyzerPage() {
                           <YAxis domain={[60, 180]} />
                           <Tooltip labelFormatter={(l) => `Time: ${l.toFixed(2)}s`} />
                           <Legend />
-                          <Line type="monotone" dataKey="LKnee" stroke="#10B981" strokeWidth={1.5} dot={false} name="Left Knee" />
-                          <Line type="monotone" dataKey="RKnee" stroke="#F59E0B" strokeWidth={1.5} dot={false} name="Right Knee" />
+                          <Line type="monotone" dataKey="LKnee" stroke="var(--text-primary)" strokeWidth={1.5} dot={false} name="Left Knee" />
+                          <Line type="monotone" dataKey="RKnee" stroke="var(--text-secondary)" strokeDasharray="4 3" strokeWidth={1.5} dot={false} name="Right Knee" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -826,7 +829,7 @@ export default function KataAnalyzerPage() {
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
                     <p className="text-[10px] font-bold text-text-secondary uppercase">Stability</p>
-                    <p className="text-lg font-black text-purple">{result.scores.stability}/100</p>
+                    <p className="text-lg font-mono font-medium tabular-nums text-text-primary">{result.scores.stability}/100</p>
                   </div>
                   <div className="text-center p-2 bg-surface/50 rounded-xl">
                     <p className="text-[10px] font-bold text-text-secondary uppercase">Guard</p>
@@ -880,7 +883,7 @@ export default function KataAnalyzerPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-text-secondary font-semibold">Confidence</p>
-                    <p className="font-black text-base text-purple">{(result.kata_recognition.confidence * 100).toFixed(0)}%</p>
+                    <p className="font-mono font-medium tabular-nums text-base text-text-primary">{(result.kata_recognition.confidence * 100).toFixed(0)}%</p>
                   </div>
                 </div>
 

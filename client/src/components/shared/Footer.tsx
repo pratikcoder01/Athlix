@@ -1,12 +1,5 @@
-'use client';
-
-import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Mail, ArrowRight } from 'lucide-react';
-import { AnimatedText } from './AnimatedText';
-import { MagneticButton } from './MagneticButton';
+import { ArrowUpRight } from 'lucide-react';
 
 const footerLinks = {
   Platform: [
@@ -28,122 +21,26 @@ const footerLinks = {
   ],
 };
 
-const colFade = {
-  hidden: { opacity: 0, filter: 'blur(10px)', y: 20 },
-  visible: { opacity: 1, filter: 'blur(0px)', y: 0 },
-};
-
-export const Footer: React.FC = () => {
-  return (
-    <footer className="relative bg-background pt-24 pb-12 overflow-hidden border-t border-border">
-      {/* Subtle Background Glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/5 blur-[120px] rounded-full pointer-events-none" />
-      
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10">
-        
-        {/* Top CTA Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-border pb-16 mb-16">
-          <div className="max-w-xl">
-            <AnimatedText 
-              as="h2"
-              text="Ready to elevate your game?" 
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4"
-              delay={0.1}
-            />
-            <motion.p 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
-              className="text-text-secondary text-lg"
-            >
-              Explore the development build and discuss a focused karate-club pilot.
-            </motion.p>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5, type: 'spring' }}
-          >
-            <Link href="/signup">
-              <MagneticButton as="span" size="lg" variant="premium">
-                Get Started <ArrowRight className="ml-2 w-5 h-5" />
-              </MagneticButton>
-            </Link>
-          </motion.div>
+export const Footer = () => (
+  <footer className="border-t border-border bg-background">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-7 pt-14 sm:px-6 lg:px-8">
+      <div className="grid gap-x-10 gap-y-10 pb-14 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <Link href="/" className="font-display text-xl font-extrabold tracking-[0.06em] text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">ATHLIX<span aria-hidden="true" className="ml-1 text-text-tertiary">/</span></Link>
+          <p className="mt-5 max-w-[28ch] text-sm leading-relaxed text-text-secondary">A focused development project for combat-sports clubs, local events and experimental 2D kata feedback.</p>
+          <Link href="/contact" className="mt-5 inline-flex items-center gap-1 text-sm text-text-secondary underline decoration-border-strong underline-offset-4 transition-colors hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">Contact the project<ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" /></Link>
         </div>
-
-        {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mb-16">
-          {/* Brand Column */}
-          <motion.div
-            variants={colFade}
-            initial="hidden"
-            whileInView="visible"
-            transition={{ delay: 0.1, duration: 0.5 }}
-            viewport={{ once: true }}
-            className="col-span-2 lg:col-span-2 flex flex-col gap-6"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
-                <Image src="/logo.png" alt="Athlix" width={32} height={32} className="w-full h-full object-contain" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Athlix</span>
-            </div>
-            <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
-              A development project for combat-sports clubs, local events, and experimental kata feedback.
-            </p>
-            <Link href="/contact" className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-accent"><Mail className="h-4 w-4" />Contact the project</Link>
-          </motion.div>
-
-          {/* Nav Columns */}
-          {Object.entries(footerLinks).map(([col, links], i) => (
-            <motion.div
-              key={col}
-              variants={colFade}
-              initial="hidden"
-              whileInView="visible"
-              transition={{ delay: 0.2 + (i * 0.1), duration: 0.5 }}
-              viewport={{ once: true }}
-            >
-              <h4 className="text-sm font-semibold text-text-primary mb-6">{col}</h4>
-              <ul className="flex flex-col gap-4">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-text-secondary hover:text-accent transition-colors duration-200"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Bottom Bar */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-          className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-8 border-t border-border text-sm text-text-tertiary"
-        >
-          <p>© {new Date().getFullYear()} ATHLIX project.</p>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 cursor-default">
-              <div className="w-2 h-2 rounded-full bg-amber-400" />
-              <span>Development build · Service status unverified</span>
-            </div>
-          </div>
-        </motion.div>
-
+        {Object.entries(footerLinks).map(([group, links]) => <nav key={group} aria-label={`${group} footer links`}>
+          <h2 className="mb-5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-text-primary">{group}</h2>
+          <ul className="space-y-3">{links.map(link => <li key={link.href}><Link href={link.href} className="text-sm text-text-secondary transition-colors hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">{link.label}</Link></li>)}</ul>
+        </nav>)}
       </div>
-    </footer>
-  );
-};
+      <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-text-tertiary">© {new Date().getFullYear()} ATHLIX project</p>
+        <p className="flex items-center gap-2 font-mono text-[10px] leading-relaxed text-text-secondary"><span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#F59E0B]" />Development build · Checkout disabled · Service status unverified</p>
+      </div>
+    </div>
+  </footer>
+);
 
 export default Footer;

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 interface AnimatedBadgeProps {
@@ -15,33 +14,18 @@ export const AnimatedBadge: React.FC<AnimatedBadgeProps> = ({
   children,
   variant = 'default',
   className,
-  glow = false,
 }) => {
-  const variantStyles = {
-    default: 'bg-surface border-border text-text-secondary',
-    success: 'color-success-bg border-success/20 text-success',
-    warning: 'color-warning-bg border-warning/20 text-warning',
-    danger: 'color-danger-bg border-danger/20 text-danger',
-    accent: 'bg-accent/10 border-accent/20 text-accent',
-    gold: 'bg-accent-gold/10 border-accent-gold/20 text-accent-gold',
-  };
+  const dot = { default: 'bg-text-secondary', success: 'bg-[var(--status-active)]', warning: 'bg-[var(--status-experimental)]', danger: 'bg-danger', accent: 'bg-text-secondary', gold: 'bg-[var(--status-experimental)]' };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.9 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    <span
       className={cn(
-        'relative inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border',
-        variantStyles[variant],
+        'inline-flex items-center gap-2 rounded-full border border-border bg-surface-hover px-3 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.06em] text-text-secondary',
         className
       )}
     >
-      {glow && (
-        <span className="absolute inset-0 rounded-full bg-inherit blur-md opacity-50 -z-10 animate-pulse-glow" />
-      )}
+      <span aria-hidden="true" className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dot[variant])} />
       {children}
-    </motion.div>
+    </span>
   );
 };

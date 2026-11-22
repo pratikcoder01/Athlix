@@ -129,7 +129,7 @@ export default function PhoneLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center px-4 py-12 sm:p-8 bg-background text-text-primary overflow-hidden">
       <div className="absolute inset-0 mat-grid opacity-20 pointer-events-none" />
 
       {/* Invisible reCAPTCHA container — required by Firebase */}
@@ -152,10 +152,10 @@ export default function PhoneLoginPage() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
+          <h1 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
             SIGN IN WITH<br />
             <span className="text-primary">PHONE NUMBER</span>
-          </h2>
+          </h1>
           <p className="text-text-secondary text-xs mt-2">
             {step === 'phone'
               ? 'Enter your phone number to receive a one-time verification code.'
@@ -168,9 +168,9 @@ export default function PhoneLoginPage() {
           {(['phone', 'otp'] as Step[]).map(s => (
             <React.Fragment key={s}>
               <div
-                className={`h-1.5 flex-1 rounded-full transition-colors ${
+                className={`h-1 flex-1 transition-colors ${
                   step === s || (step === 'otp' && s === 'phone')
-                    ? 'bg-primary'
+                    ? 'bg-accent'
                     : 'bg-border'
                 }`}
               />
@@ -178,31 +178,33 @@ export default function PhoneLoginPage() {
           ))}
         </div>
 
-        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm shadow-xl">
+        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm">
 
           {/* ── Step 1: Phone Number ── */}
           {step === 'phone' && (
             <div className="flex flex-col gap-6">
               {/* Name */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                <label htmlFor="phone-name" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
                   Your Name
                 </label>
                 <input
+                  id="phone-name"
                   type="text"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Lucas Vianna"
-                  className="w-full bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
+                  className="w-full bg-surface border border-border-strong rounded-md px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                 />
               </div>
 
-              {/* Role */}
+              {/* Workspace preference does not grant professional permissions. */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
-                  Platform Role
-                </label>
-                <div className="grid grid-cols-2 gap-2">
+                <p id="phone-interest-label" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                  Workspace interest
+                </p>
+                <div role="group" aria-labelledby="phone-interest-label" aria-describedby="phone-interest-note" className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'athlete', label: 'ATHLETE' },
                     { id: 'coach', label: 'COACH' },
@@ -212,6 +214,7 @@ export default function PhoneLoginPage() {
                     <button
                       key={r.id}
                       type="button"
+                      aria-pressed={role === r.id}
                       onClick={() => setRole(r.id as typeof role)}
                       className={`py-2 text-[10px] font-bold font-mono tracking-wider border rounded-sm transition-all ${
                         role === r.id
@@ -223,39 +226,44 @@ export default function PhoneLoginPage() {
                     </button>
                   ))}
                 </div>
+                <p id="phone-interest-note" className="text-xs leading-relaxed text-text-secondary">
+                  New accounts start as athletes. Professional access requires separate review.
+                </p>
               </div>
 
               {/* Phone */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                <label htmlFor="phone-number" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
                   Phone Number (E.164 format)
                 </label>
                 <div className="relative">
                   <Smartphone className="absolute left-3 top-3 h-5 w-5 text-text-secondary" />
                   <input
+                    id="phone-number"
                     type="tel"
+                    autoComplete="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+919876543210"
-                    className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans font-mono"
+                    className="w-full bg-surface border border-border-strong rounded-md pl-11 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all font-sans font-mono"
                   />
                 </div>
-                <span className="text-[9px] text-text-tertiary font-mono">
+                <span className="text-[10px] text-text-tertiary font-mono">
                   Include country code, e.g. +91 for India, +1 for US
                 </span>
               </div>
 
               {authError && (
-                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
+                <div className="flex items-center gap-2 p-3 bg-surface border border-border rounded-sm">
                   <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                  <span className="text-xs text-danger font-mono font-medium">{authError}</span>
                 </div>
               )}
 
               <MagneticButton
                 onClick={handleSendOtp}
                 disabled={loading}
-                className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-ink py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase"
               >
                 {loading ? 'SENDING CODE...' : 'SEND OTP'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
               </MagneticButton>
@@ -267,7 +275,7 @@ export default function PhoneLoginPage() {
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                  <label htmlFor="phone-otp" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
                     6-Digit Code
                   </label>
                   <button
@@ -282,27 +290,29 @@ export default function PhoneLoginPage() {
                   Code sent to <span className="text-text-secondary">{phone}</span>
                 </p>
                 <input
+                  id="phone-otp"
                   type="text"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="● ● ● ● ● ●"
-                  className="w-full bg-surface border border-border rounded-sm px-4 py-4 text-xl text-text-primary focus:outline-none focus:border-primary transition-all font-mono text-center tracking-[0.75em]"
+                  className="w-full bg-surface border border-border-strong rounded-md px-4 py-4 text-xl text-text-primary focus:outline-none focus:border-primary transition-all font-mono text-center tracking-[0.75em]"
                 />
               </div>
 
               {authError && (
-                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
+                <div className="flex items-center gap-2 p-3 bg-surface border border-border rounded-sm">
                   <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                  <span className="text-xs text-danger font-mono font-medium">{authError}</span>
                 </div>
               )}
 
               <MagneticButton
                 onClick={handleVerifyOtp}
                 disabled={loading || otp.length !== 6}
-                className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-ink py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase"
               >
                 {loading ? 'VERIFYING...' : 'CONFIRM CODE'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
               </MagneticButton>
@@ -317,6 +327,6 @@ export default function PhoneLoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

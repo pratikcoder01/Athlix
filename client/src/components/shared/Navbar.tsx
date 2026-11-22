@@ -1,51 +1,29 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Sun, Moon, Menu, X, LogOut, Bell } from 'lucide-react';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import { Bell, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { logoutSession } from '../../lib/authSession';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSocket } from '../../context/SocketContext';
-import MagneticButton from './MagneticButton';
 import { cn } from '../../lib/utils';
 
-const NavLink = ({
-  href,
-  active,
-  children,
-  onClick,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-  onClick?: () => void;
-}) => (
-  <Link
-    href={href}
-    onClick={onClick}
-    className={cn(
-      "relative px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-full",
-      active ? "text-primary" : "text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-    )}
-  >
-    <span className="relative z-10">{children}</span>
-    {active && (
-      <motion.span
-        layoutId="activeNavBackground"
-        className="absolute inset-0 z-0 bg-surface rounded-full border border-border"
-        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-      />
-    )}
-  </Link>
-);
+const links = [
+  { name: 'Coaches', href: '/coaches' },
+  { name: 'Academies', href: '/academies' },
+  { name: 'Kata Analyzer', href: '/kata' },
+  { name: 'Tournaments', href: '/tournaments' },
+];
+const focus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
+const iconButton = `inline-flex h-10 w-10 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary ${focus}`;
+const primaryLink = `inline-flex min-h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-[#09090B] transition-colors hover:bg-[var(--accent-primary-hover)] ${focus}`;
 
-export const Navbar: React.FC = () => {
+export const Navbar: React.FC<{ announcement?: boolean }> = ({ announcement = false }) => {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuthStore();
   const { unreadCount, notificationError } = useSocket();
@@ -53,15 +31,9 @@ export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
   const [signingOut, setSigningOut] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  
-  const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const { scrollY } = useScroll();
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsScrolled(latest > 20);
-  });
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -73,12 +45,16 @@ export const Navbar: React.FC = () => {
       if (event.key === 'Escape') { setIsOpen(false); return; }
       if (event.key !== 'Tab') return;
       const items = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])') || []);
-      const first = items[0]; const last = items.at(-1);
+      const first = items[0], last = items.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
     document.addEventListener('keydown', handleKey);
-    return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = previousOverflow; menuButton?.focus(); };
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = previousOverflow;
+      menuButton?.focus();
+    };
   }, [isOpen]);
 
   const handleLogout = async () => {
@@ -87,186 +63,59 @@ export const Navbar: React.FC = () => {
     catch (error) { setLogoutError(error instanceof Error ? error.message : 'Sign-out could not be confirmed. Please retry.'); }
     finally { setSigningOut(false); }
   };
-
-  const navLinks = [
-    { name: 'Coaches', href: '/coaches' },
-    { name: 'Academies', href: '/academies' },
-    { name: 'Kata Analyzer', href: '/kata' },
-    { name: 'Tournaments', href: '/tournaments' },
-  ];
-
-  const isActive = (path: string) => pathname === path;
+  const closeMenu = () => setIsOpen(false);
+  const notificationLabel = `Notifications${!notificationError && unreadCount ? `, ${unreadCount} unread` : ''}`;
 
   return (
-    <motion.nav 
-      className={cn(
-        "fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b",
-        isScrolled 
-          ? "glass-panel border-border py-3 shadow-sm" 
-          : "bg-transparent border-transparent py-5"
-      )}
-    >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          
-          <Link href="/" className="flex items-center gap-2.5 group outline-none shrink-0">
-            <div className="relative flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
-              <motion.div 
-                className="absolute inset-0 bg-white/20 skew-x-12 z-10"
-                initial={{ x: '-100%' }}
-                whileHover={{ x: '100%' }}
-                transition={{ duration: 0.5 }}
-              />
-              <Image src="/logo.png" alt="Athlix Logo" width={32} height={32} className="w-full h-full object-contain" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-primary">
-              Athlix
-            </span>
-          </Link>
-
-          {/* Desktop Nav - Centered Floating Pill */}
-          <div className="hidden lg:flex items-center p-1 bg-background/50 backdrop-blur-md border border-border rounded-full shadow-sm">
-            {navLinks.map((link) => (
-              <NavLink key={link.name} href={link.href} active={isActive(link.href)}>
-                {link.name}
-              </NavLink>
-            ))}
+    <header className="fixed inset-x-0 top-0 z-50">
+      {announcement && <div className="flex h-9 items-center justify-center gap-2 border-b border-border bg-surface px-3 font-mono text-[10px] font-medium tracking-[0.025em] text-text-secondary sm:text-[11px] lg:text-xs">
+        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#F59E0B]" />
+        <span className="whitespace-nowrap">DEVELOPMENT BUILD<span className="sr-only sm:not-sr-only"> · KARATE PILOT IN PREPARATION</span> · CHECKOUT DISABLED</span>
+      </div>}
+      <nav aria-label="Main navigation" className="h-16 border-b border-border bg-background/85 backdrop-blur-md">
+        <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:px-8">
+          <Link href="/" aria-label="ATHLIX home" className={cn('w-fit font-display text-xl font-extrabold tracking-[0.06em] text-text-primary', focus)}>ATHLIX<span aria-hidden="true" className="ml-1 text-text-tertiary">/</span></Link>
+          <div className="hidden h-full items-center gap-7 lg:flex">
+            {links.map(link => <Link key={link.href} href={link.href} aria-current={pathname === link.href ? 'page' : undefined} className={cn('inline-flex h-full items-center border-b-2 text-[13px] font-medium transition-colors', pathname === link.href ? 'border-accent text-text-primary' : 'border-transparent text-text-secondary hover:text-text-primary', focus)}>{link.name}</Link>)}
           </div>
-
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-4 shrink-0">
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-text-secondary hover:text-text-primary transition-colors rounded-full hover:bg-surface-hover"
-              aria-label="Toggle theme"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={theme}
-                  initial={{ opacity: 0, rotate: -45, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 45, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </motion.div>
-              </AnimatePresence>
-            </button>
-
-            {isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <Link href="/notifications"
-                    aria-label={`Notifications${!notificationError && unreadCount ? `, ${unreadCount} unread` : ''}`}
-                    title={notificationError ? 'Notification count unavailable. Open inbox to retry.' : 'Open saved notifications'}
-                    className="p-2 text-text-secondary hover:text-text-primary transition-colors rounded-full hover:bg-surface relative"
-                  >
-                    <Bell className="h-4 w-4" />
-                    {!notificationError && unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 h-2 w-2 bg-accent rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,148,0.8)]" />
-                    )}
-                </Link>
-
-                <Link href="/dashboard">
-                  <MagneticButton as="span" variant="outline" size="sm">
-                    Console
-                  </MagneticButton>
-                </Link>
-                <button disabled={signingOut} onClick={() => { void handleLogout(); }} className="p-2 text-text-tertiary hover:text-danger transition-colors disabled:opacity-40" aria-label="Log out">
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
-                  Log in
-                </Link>
-                <Link href="/signup">
-                  <MagneticButton as="span" variant="premium" size="sm">
-                    Get Started
-                  </MagneticButton>
-                </Link>
-              </div>
-            )}
+          <div className="hidden items-center justify-self-end gap-2 lg:flex">
+            <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className={iconButton}>{theme === 'dark' ? <Sun aria-hidden="true" className="h-4 w-4" /> : <Moon aria-hidden="true" className="h-4 w-4" />}</button>
+            {isAuthenticated ? <>
+              <Link href="/notifications" aria-label={notificationLabel} title={notificationError ? 'Notification count unavailable. Open inbox to retry.' : 'Open saved notifications'} className={cn(iconButton, 'relative')}>
+                <Bell aria-hidden="true" className="h-4 w-4" />
+                {!notificationError && unreadCount > 0 && <span aria-hidden="true" className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[var(--status-active)]" />}
+              </Link>
+              <Link href="/dashboard" className={cn('inline-flex min-h-10 items-center rounded-md border border-border-strong px-4 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover', focus)}>Console</Link>
+              <button type="button" disabled={signingOut} onClick={() => { void handleLogout(); }} aria-label="Log out" className={cn(iconButton, 'disabled:cursor-wait disabled:opacity-40')}><LogOut aria-hidden="true" className="h-4 w-4" /></button>
+            </> : <>
+              <Link href="/login" className={cn('inline-flex min-h-10 items-center px-3 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary', focus)}>Log in</Link>
+              <Link href="/signup" className={primaryLink}>Get Started</Link>
+            </>}
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <div className="flex lg:hidden items-center gap-2">
-            <button onClick={toggleTheme} className="p-2 text-text-secondary" aria-label="Toggle theme">
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-            <button ref={menuButtonRef} onClick={() => setIsOpen(true)} aria-expanded={isOpen} aria-controls="athlix-mobile-menu" className="p-2 text-primary" aria-label="Open menu">
-              <Menu className="h-6 w-6" />
-            </button>
+          <div className="flex items-center gap-1 lg:hidden">
+            <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className={iconButton}>{theme === 'dark' ? <Sun aria-hidden="true" className="h-5 w-5" /> : <Moon aria-hidden="true" className="h-5 w-5" />}</button>
+            <button type="button" ref={menuButtonRef} onClick={() => setIsOpen(true)} aria-expanded={isOpen} aria-controls="athlix-mobile-menu" aria-label="Open menu" className={iconButton}><Menu aria-hidden="true" className="h-5 w-5" /></button>
           </div>
-
         </div>
-      </div>
-      {logoutError && <p role="alert" className="mx-auto max-w-7xl border border-danger/40 bg-background px-4 py-3 text-sm text-danger">{logoutError}</p>}
-
-      {/* Mobile Drawer */}
+      </nav>
+      {logoutError && <p role="alert" className="border-b border-danger/40 bg-background px-4 py-3 text-center text-sm text-danger">{logoutError}</p>}
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            id="athlix-mobile-menu" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu"
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 w-full sm:w-80 glass-panel-strong border-l border-border z-[100] flex flex-col overflow-y-auto p-6"
-          >
-            <div className="flex justify-between items-center mb-8">
-              <span className="text-xl font-bold">Menu</span>
-              <button onClick={() => setIsOpen(false)} className="p-2 bg-surface rounded-full" aria-label="Close menu">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="flex flex-col gap-2 flex-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "text-2xl font-bold py-4 border-b border-border transition-colors",
-                    isActive(link.href) ? "text-accent" : "text-text-secondary hover:text-primary"
-                  )}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-auto pt-8 flex flex-col gap-4">
-              {isAuthenticated ? (
-                <>
-                  <Link href="/training" onClick={() => setIsOpen(false)}>Training history</Link>
-                  <Link href="/bookings" onClick={() => setIsOpen(false)}>My sessions</Link>
-                  <Link href="/feed" onClick={() => setIsOpen(false)}>Community</Link>
-                  <Link href="/notifications" onClick={() => setIsOpen(false)}>Notifications{!notificationError && unreadCount > 0 ? ` (${unreadCount})` : ''}</Link>
-                  {user?.role === 'coach' && <Link href="/clients" onClick={() => setIsOpen(false)}>My clients</Link>}
-                  <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                    <MagneticButton as="span" variant="premium" className="w-full">Go to Console</MagneticButton>
-                  </Link>
-                  <button disabled={signingOut} onClick={() => { void handleLogout(); }} className="w-full py-4 text-danger font-medium disabled:opacity-40">
-                    Log out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" onClick={() => setIsOpen(false)} className="text-center font-medium py-2">
-                    Log in
-                  </Link>
-                  <Link href="/signup" onClick={() => setIsOpen(false)}>
-                    <MagneticButton as="span" variant="premium" className="w-full">Get Started</MagneticButton>
-                  </Link>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
+        {isOpen && <motion.aside id="athlix-mobile-menu" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu"
+          initial={{ opacity: 0, x: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: reduceMotion ? 0 : 12 }}
+          transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-y-0 right-0 z-[100] flex h-dvh w-full max-w-sm flex-col overflow-y-auto border-l border-border-strong bg-background p-6">
+          <div className="mb-7 flex items-center justify-between border-b border-border pb-5"><span className="font-mono text-xs uppercase tracking-[0.14em] text-text-secondary">Navigation</span><button type="button" onClick={closeMenu} aria-label="Close menu" className={iconButton}><X aria-hidden="true" className="h-5 w-5" /></button></div>
+          <div className="mb-8 flex flex-col">{links.map(link => <Link key={link.href} href={link.href} onClick={closeMenu} aria-current={pathname === link.href ? 'page' : undefined} className={cn('border-b border-border py-4 font-display text-xl font-semibold', pathname === link.href ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary', focus)}>{link.name}</Link>)}</div>
+          <div className="mt-auto flex flex-col gap-1">
+            {isAuthenticated ? <>
+              {[['/training', 'Training history'], ['/bookings', 'My sessions'], ['/feed', 'Community'], ['/notifications', `Notifications${!notificationError && unreadCount > 0 ? ` (${unreadCount})` : ''}`], ...(user?.role === 'coach' ? [['/clients', 'My clients']] : [])].map(([href, label]) => <Link key={href} href={href} onClick={closeMenu} className={cn('rounded-md py-2 text-sm text-text-secondary hover:text-text-primary', focus)}>{label}</Link>)}
+              <Link href="/dashboard" onClick={closeMenu} className={cn(primaryLink, 'mt-5')}>Go to Console</Link>
+              <button type="button" disabled={signingOut} onClick={() => { void handleLogout(); }} className={cn('min-h-11 rounded-md border border-border px-4 text-sm text-text-secondary hover:text-text-primary disabled:opacity-40', focus)}>Log out</button>
+            </> : <><Link href="/login" onClick={closeMenu} className={cn('inline-flex min-h-11 items-center justify-center rounded-md border border-border-strong text-sm font-medium text-text-primary', focus)}>Log in</Link><Link href="/signup" onClick={closeMenu} className={primaryLink}>Get Started</Link></>}
+          </div>
+        </motion.aside>}
       </AnimatePresence>
-    </motion.nav>
+    </header>
   );
 };
 

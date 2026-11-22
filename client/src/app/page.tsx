@@ -1,551 +1,199 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import {
-  ArrowRight, Users, Trophy, Brain, TrendingUp, Shield,
-  Activity, Zap, Target, MessageSquare, CheckCircle, Play,
-  ChevronDown, Flame, Globe, Lock, BarChart3, Sparkles,
-  ChevronRight
-} from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowDown, ArrowRight, Check, ChevronDown, CornerDownRight, ScanLine, Trophy } from 'lucide-react';
 import Navbar from '../components/shared/Navbar';
 import Footer from '../components/shared/Footer';
+import KataTelemetryPreview from '../components/landing/KataTelemetryPreview';
 import { cn } from '../lib/utils';
 
-// ─── Animation Variants ──────────────────────────────────────────────────────
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' as const } },
-};
+const primaryLink = 'inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-accent px-6 py-3 text-sm font-bold text-accent-ink transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent';
+const secondaryLink = 'inline-flex min-h-12 items-center justify-center gap-3 rounded-md border border-border-strong px-6 py-3 text-sm font-medium text-text-primary transition-colors hover:border-text-secondary hover:bg-surface';
+const pageWidth = 'mx-auto w-full max-w-7xl px-5 sm:px-8';
+const eyebrow = 'font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-text-secondary';
 
-const stagger = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
-};
-
-// ─── Floating Orb ─────────────────────────────────────────────────────────────
-function FloatingOrb({
-  className,
-  size = 400,
-  delay = 0,
-}: {
-  className?: string;
-  size?: number;
-  delay?: number;
-}) {
-  return (
-    <motion.div
-      className={cn('absolute rounded-full blur-3xl pointer-events-none', className)}
-      style={{ width: size, height: size }}
-      animate={{ scale: [1, 1.12, 1], opacity: [0.6, 0.9, 0.6] }}
-      transition={{ duration: 6 + delay, ease: 'easeInOut', repeat: Infinity, delay }}
-    />
-  );
-}
-
-// ─── Section Label ─────────────────────────────────────────────────────────────
-function SectionLabel({ icon: Icon, label }: { icon?: React.FC<React.SVGProps<SVGSVGElement>>; label: string }) {
-  return (
-    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-surface text-xs font-semibold tracking-widest text-text-secondary uppercase">
-      {Icon && <Icon className="w-3.5 h-3.5 text-accent" />}
-      {label}
-    </div>
-  );
-}
-
-// Product scope is explicit: these are development areas, not traction claims.
-const features = [
-  { icon: Brain, title: 'Kata analysis · experimental', description: '2D pose estimates and rule-based movement feedback. Camera angle and landmark confidence affect results; scores are not a validated measure of skill.', color: 'from-orange-500/20 to-red-500/10', iconColor: 'text-orange-400' },
-  { icon: Trophy, title: 'Tournaments · pilot scope', description: 'Authenticated event registration and organizer-managed brackets. Real events require an approved organizer and configured backend.', color: 'from-yellow-500/20 to-amber-500/10', iconColor: 'text-yellow-400' },
-  { icon: Users, title: 'Academy workspace', description: 'Approved owners can manage listing details, private member records, daily attendance, and saved operational counts.', color: 'from-blue-500/20 to-indigo-500/10', iconColor: 'text-blue-400' },
-  { icon: BarChart3, title: 'Your training records', description: 'Keep a private training journal and review your saved profile, sessions, plans, and notifications.', color: 'from-green-500/20 to-emerald-500/10', iconColor: 'text-green-400' },
-  { icon: Target, title: 'Coaching sessions', description: 'Review published rates and UTC availability, request sessions, and manage bookings. Coach credentials still require independent review.', color: 'from-purple-500/20 to-violet-500/10', iconColor: 'text-purple-400' },
-  { icon: Shield, title: 'Professional access · reviewed', description: 'New public accounts start as athletes. Coach, academy owner, organizer, and administrator privileges require a trusted approval process.', color: 'from-cyan-500/20 to-teal-500/10', iconColor: 'text-cyan-400' },
+const capabilities = [
+  { n: '01', title: 'Academy workspace', href: '/academies', body: 'Listing details, private member records, daily attendance. One useful operational view for approved owners.' },
+  { n: '02', title: 'Your training records', href: '/training', body: 'A private journal, saved plans and session history. Your own records, without a public performance leaderboard.' },
+  { n: '03', title: 'Coaching sessions', href: '/coaches', body: 'Published rates and UTC availability, real session requests and booking management. Qualifications still need independent review.' },
+  { n: '04', title: 'Professional access', href: '/contact', body: 'Public accounts begin as athletes. Coach, owner and organizer privileges follow a trusted review process.' },
 ];
-
 const steps = [
-  { n: '01', title: 'Start with an account', desc: 'Create an athlete account when the authentication services are configured.' },
-  { n: '02', title: 'Know the product status', desc: 'Check which workflows are implemented, experimental, or still being developed.' },
-  { n: '03', title: 'Set up a club pilot', desc: 'Discuss your karate club or local event needs with the project team.' },
-  { n: '04', title: 'Review access', desc: 'Professional accounts need approval before managing athletes or events.' },
-  { n: '05', title: 'Use real event data', desc: 'An approved organizer can create an event and receive athlete registrations.' },
-  { n: '06', title: 'Share feedback', desc: 'Help test the workflow before it is offered for wider use.' },
+  { n: '01', title: 'Start with an account', detail: 'Create an athlete account to keep your profile and training records together. Public signup does not grant professional privileges.', href: '/signup', link: 'Create an athlete account' },
+  { n: '02', title: 'Know the product status', detail: 'Separate saved workflows from illustrative previews and experimental feedback. Review the product boundaries before planning your pilot.', href: '/features', link: 'Read the product status' },
+  { n: '03', title: 'Set up a club pilot', detail: 'Discuss a narrow karate-club or local-event workflow with the project team. Customer demand, geography and operating support still need validation.', href: '/contact', link: 'Discuss a club pilot' },
+  { n: '04', title: 'Review access', detail: 'Professional accounts require approval before managing a club or event. A platform role does not certify coaching qualifications or sporting credentials.', href: '/contact', link: 'Ask about professional access' },
+  { n: '05', title: 'Use real event data', detail: 'An approved organizer can configure divisions, receive athlete registrations and manage versioned brackets and results. Entry-fee collection remains outside ATHLIX.', href: '/tournaments', link: 'Explore tournaments' },
+  { n: '06', title: 'Share feedback', detail: 'Test a focused workflow and report where it helps or gets in the way. Use permissioned data and agree operating responsibilities before wider use.', href: '/contact', link: 'Share pilot feedback' },
 ];
-
+const principles = [
+  ['Access controls', 'Protected actions check the current account, role and ownership. No security certification is claimed.'],
+  ['Realtime event updates', 'Authenticated channels provide refresh hints; saved event records remain the source of truth.'],
+  ['A narrow karate-first market', 'Karate clubs and local organizers are the proposed starting point. Customer demand still needs to be tested.'],
+  ['Evidence before numbers', 'No invented customer counts, testimonials or revenue. Report outcomes after they have been measured.'],
+  ['Reviewed privileges', 'Professional access needs approval. A platform role is not proof of sporting qualifications.'],
+];
+const calculations = ['Joint-angle estimates', 'Body-center proxy', 'Stability and symmetry', 'Observed guard position', 'Landmark velocity', 'Relative stance width'];
+const limitations = ['True 3D position', 'Physical impact force', 'Fine-grained kata names', 'Weight distribution'];
 const faqs = [
   { q: 'Who is ATHLIX being built for?', a: 'Our proposed first pilot is karate academies and local tournament organizers. The initial geography and customer demand still need validation; broader combat-sports support is a roadmap direction.' },
-  { q: 'Is every screen ready for real customers?', a: 'This is a development pilot. Account workspaces use saved records; illustrative product mockups are labeled. Hosted acceptance, reviewed policies, and operating support are still needed before a public release.' },
-  { q: 'What does the Kata Analyzer measure?', a: 'It estimates 2D body landmarks and calculates movement heuristics. It cannot measure physical force, diagnose injuries, or certify performance. No independently validated accuracy figure is available.' },
-  { q: 'Are subscriptions or payments available?', a: 'No. Paid plans, checkout, and automated billing are not available. Pilot scope and commercial terms must be discussed with the team.' },
+  { q: 'Is every screen ready for real customers?', a: 'This is a development pilot. Account workspaces use saved records; illustrative product mockups are labeled. Broader hosted qualification, reviewed policies and operating support are still needed before a public release.' },
+  { q: 'What does the Kata Analyzer measure?', a: 'It estimates body landmarks from monocular video and calculates movement heuristics. It cannot measure physical force, diagnose injuries or certify performance. No independently validated accuracy figure is available.' },
+  { q: 'Are subscriptions or payments available?', a: 'No. Paid plans, checkout and automated billing are not available. Pilot scope and commercial terms must be discussed with the team.' },
   { q: 'What should I know before sharing data?', a: 'Privacy and service terms are pending legal review. Avoid uploading sensitive or third-party information. Use only videos you have permission to share, and review the analyzer consent notice.' },
 ];
 
-const focusAreas = [
-  { value: 'Karate', label: 'Proposed first discipline', icon: Target },
-  { value: 'Clubs', label: 'Proposed pilot customers', icon: Users },
-  { value: 'Events', label: 'First workflow to validate', icon: Trophy },
-  { value: 'Feedback', label: 'Learning before scale', icon: MessageSquare },
-];
-const disciplines = ['Karate', 'BJJ', 'Judo', 'Taekwondo', 'Boxing', 'Muay Thai'];
-
-// ─── Main Component ────────────────────────────────────────────────────────────
-export default function Home() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
-
-  return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden">
-      <Navbar />
-      <main>
-
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <motion.section
-        ref={heroRef}
-        style={{ opacity: heroOpacity, y: heroY }}
-        className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-24 pb-16 text-center overflow-hidden"
-      >
-        {/* Background effects */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <FloatingOrb className="bg-accent/20 top-[-10%] left-[10%]" size={600} delay={0} />
-          <FloatingOrb className="bg-blue-500/10 bottom-[10%] right-[5%]" size={500} delay={2} />
-          <FloatingOrb className="bg-purple-500/10 top-[40%] left-[60%]" size={300} delay={4} />
-          {/* Grid overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage:
-                'linear-gradient(var(--color-text-primary) 1px, transparent 1px), linear-gradient(90deg, var(--color-text-primary) 1px, transparent 1px)',
-              backgroundSize: '60px 60px',
-            }}
-          />
-          {/* Radial fade */}
-          <div className="absolute inset-0 bg-radial-[ellipse_80%_60%_at_50%_50%] from-transparent to-background" />
-        </div>
-
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          animate="visible"
-          className="max-w-5xl mx-auto relative z-10 flex flex-col items-center gap-6"
-        >
-          {/* Badge */}
-          <motion.div variants={fadeUp}>
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-border bg-surface/80 backdrop-blur-sm text-sm font-medium text-text-secondary shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-              </span>
-              Development build · Karate pilot in preparation
-              <ChevronRight className="w-3.5 h-3.5 text-accent" />
-            </div>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            variants={fadeUp}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold font-display tracking-tight leading-[1.05] text-text-primary"
-          >
-            More time
-            <br />
-            <span className="relative inline-block">
-              <span className="text-gradient-accent">on the mat</span>
-              <motion.span
-                className="absolute -bottom-2 left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-accent via-accent-light to-accent-gold"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 1, delay: 0.8, ease: 'easeOut' as const }}
-              />
-            </span>
-          </motion.h1>
-
-          {/* Sub-heading */}
-          <motion.p
-            variants={fadeUp}
-            className="text-lg sm:text-xl md:text-2xl text-text-secondary max-w-2xl leading-relaxed font-light"
-          >
-            Athlete accounts, local tournaments, and experimental kata feedback.
-            Built around the needs of a focused club pilot, with product limits made clear.
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            variants={fadeUp}
-            className="flex flex-col sm:flex-row gap-3 pt-2"
-          >
-            <Link href="/signup" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-              <motion.span
-                whileHover={{ y: -2, scale: 1.02 }}
-                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
-              >
-                <Sparkles className="w-5 h-5" />
-                Create Athlete Account
-                <ArrowRight className="w-5 h-5" />
-              </motion.span>
-            </Link>
-            <Link href="/features" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-              <motion.span
-                whileHover={{ y: -2 }}
-                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-semibold text-base border border-border bg-surface/60 backdrop-blur-sm text-text-primary hover:border-accent/40 hover:bg-surface transition-all duration-300 cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                See How It Works
-              </motion.span>
-            </Link>
-          </motion.div>
-
-          <motion.p variants={fadeUp} className="max-w-xl text-sm text-text-secondary pt-4">
-            Development pilot with saved account workflows and labeled product mockups. Checkout remains disabled; no measured traction is claimed.
-          </motion.p>
-        </motion.div>
-
-        {/* Scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        >
-          <span className="text-xs text-text-tertiary tracking-widest uppercase font-medium">Scroll</span>
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            <ChevronDown className="w-5 h-5 text-text-tertiary" />
-          </motion.div>
-        </motion.div>
-      </motion.section>
-
-      {/* ── DISCIPLINES ─────────────────────────────────────────────────── */}
-      <section className="relative py-10 border-y border-border overflow-hidden">
-        <div className="absolute inset-0 bg-surface/40" />
-        <div className="relative max-w-7xl mx-auto px-4">
-          <p className="text-center text-xs tracking-widest text-text-tertiary uppercase font-semibold mb-6">
-            Combat-sports direction · availability varies by workflow
-          </p>
-          <div className="flex items-center justify-center gap-8 md:gap-16 flex-wrap">
-            {disciplines.map((logo, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="text-xl md:text-2xl font-black font-display text-text-tertiary hover:text-text-secondary transition-colors duration-300 cursor-default tracking-tight"
-              >
-                {logo}
-              </motion.span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── STATS ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {focusAreas.map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.12 }}
-                className="relative group"
-              >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative rounded-2xl border border-border bg-surface/60 p-6 text-center hover:border-accent/30 transition-colors duration-300">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                    <stat.icon className="w-5 h-5 text-accent" />
-                  </div>
-                  <p className="text-3xl md:text-4xl font-extrabold font-display text-text-primary">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-sm text-text-secondary font-medium">{stat.label}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURES ──────────────────────────────────────────────────────── */}
-      <section id="features" className="py-24 md:py-32 px-4 relative">
-        <div className="absolute inset-0 bg-surface/30 -z-10" />
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <SectionLabel icon={Zap} label="Platform Overview" />
-            <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-text-primary">
-              A focused foundation for
-              <br className="hidden md:block" />
-              clubs and local events
-            </h2>
-            <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-              Implemented APIs, experimental analysis, and work in progress. Explore the status of each area before using it.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.09 }}
-                whileHover={{ y: -6 }}
-                className="group relative rounded-2xl border border-border bg-surface overflow-hidden cursor-default transition-colors duration-300 hover:border-accent/30"
-              >
-                {/* Gradient top band */}
-                <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', f.color)} />
-                <div className="p-8">
-                  <div className={cn('w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center mb-5', f.color)}>
-                    <f.icon className={cn('w-6 h-6', f.iconColor)} />
-                  </div>
-                  <h3 className="text-xl font-bold font-display text-text-primary mb-2">{f.title}</h3>
-                  <p className="text-text-secondary text-sm leading-relaxed">{f.description}</p>
-                </div>
-                {/* Hover glow */}
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                  <div className={cn('absolute inset-0 rounded-2xl bg-gradient-to-br opacity-10', f.color)} />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
-      <section id="how" className="py-24 md:py-32 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <SectionLabel icon={Activity} label="The Workflow" />
-            <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-text-primary">
-              From first look to
-              <br className="hidden md:block" />
-              a useful pilot
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {steps.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.08 }}
-                className="group relative rounded-2xl border border-border bg-surface p-8 hover:border-accent/30 transition-all duration-300 hover:shadow-md"
-              >
-                <div className="text-5xl font-black font-display text-accent leading-none mb-4">
-                  {step.n}
-                </div>
-                <h4 className="text-lg font-bold font-display text-text-primary mb-1.5">{step.title}</h4>
-                <p className="text-sm text-text-secondary leading-relaxed">{step.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURE HIGHLIGHT BENTO ───────────────────────────────────────── */}
-      <section className="py-24 md:py-32 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <SectionLabel icon={Flame} label="Why Athlix" />
-            <h2 className="mt-6 text-4xl md:text-5xl font-extrabold font-display tracking-tight text-text-primary">
-              Built around the mat,
-              <br className="hidden md:block" />
-              <span className="text-gradient-accent">improved through feedback</span>
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { icon: Lock, title: 'Access controls', desc: 'Authentication and ownership checks are being hardened with regression tests. No security certification is claimed.', badge: 'Engineering' },
-              { icon: Zap, title: 'Event updates', desc: 'Authenticated realtime channels support event updates when the backend is configured.', badge: 'Pilot' },
-              { icon: Globe, title: 'A narrow first market', desc: 'Karate clubs and local organizers are the proposed starting point. Demand still needs to be tested.', badge: 'Focus' },
-              { icon: TrendingUp, title: 'Evidence before numbers', desc: 'Customer counts, retention, and revenue will be reported only after they have been measured.', badge: 'Evidence' },
-              { icon: CheckCircle, title: 'Reviewed privileges', desc: 'Professional access needs approval. A platform role is not proof of sporting qualifications.', badge: 'Trust' },
-              { icon: Sparkles, title: 'Explainable feedback', desc: 'Kata scores describe pose-based heuristics, with limits that a coach should review.', badge: 'Experimental' },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.07 }}
-                className="rounded-2xl border border-border bg-surface p-6 hover:border-accent/30 transition-all duration-300 group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-accent" />
-                  </div>
-                  <span className="text-[10px] font-black tracking-widest uppercase text-text-primary border border-accent/20 rounded-full px-2.5 py-1 bg-accent/5">
-                    {item.badge}
-                  </span>
-                </div>
-                <h4 className="font-bold text-text-primary mb-1.5">{item.title}</h4>
-                <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section className="py-24 md:py-32 px-4 relative">
-        <div className="absolute inset-0 bg-surface/30 -z-10" />
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <SectionLabel icon={MessageSquare} label="FAQ" />
-            <h2 className="mt-6 text-4xl md:text-5xl font-extrabold font-display tracking-tight text-text-primary">
-              Questions answered
-            </h2>
-          </motion.div>
-
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.07 }}
-              >
-                <button
-                  aria-expanded={openFaq === i}
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full text-left rounded-2xl border border-border bg-surface px-6 py-5 hover:border-accent/30 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-base font-semibold text-text-primary">{faq.q}</span>
-                    <motion.div
-                      animate={{ rotate: openFaq === i ? 45 : 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="w-7 h-7 rounded-full border border-border bg-surface-elevated flex items-center justify-center shrink-0"
-                    >
-                      <svg className="w-3.5 h-3.5 text-text-secondary" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M7 1v12M1 7h12" />
-                      </svg>
-                    </motion.div>
-                  </div>
-                  <AnimatePresence initial={false}>
-                    {openFaq === i && (
-                      <motion.div
-                        key="answer"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <p className="pt-4 text-sm text-text-secondary leading-relaxed">{faq.a}</p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ─────────────────────────────────────────────────────── */}
-      <section className="py-24 md:py-32 px-4">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="relative rounded-3xl overflow-hidden border border-border bg-surface text-center p-12 md:p-20"
-          >
-            {/* Background */}
-            <div className="absolute inset-0 -z-10">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl" />
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/30 bg-accent/10 text-xs font-semibold tracking-widest text-accent uppercase mb-6">
-                <Sparkles className="w-3.5 h-3.5" />
-                Ready to begin?
-              </div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-text-primary mb-5">
-                Help shape a better
-                <br className="hidden md:block" />
-                <span className="text-gradient-accent">club workflow.</span>
-              </h2>
-              <p className="text-lg text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-                Bring a real club workflow, try the development build, and help us understand
-                what athletes and organizers need next.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/signup" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-                  <motion.span
-                    whileHover={{ y: -2, scale: 1.02 }}
-                    className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-xl shadow-accent/30 hover:shadow-accent/50 transition-all duration-300 cursor-pointer"
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    Create Athlete Account
-                    <ArrowRight className="w-5 h-5" />
-                  </motion.span>
-                </Link>
-                <Link href="/features" className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-                  <motion.span
-                    whileHover={{ y: -2 }}
-                    className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-semibold text-base border border-border bg-surface/60 backdrop-blur-sm text-text-primary hover:border-accent/40 hover:bg-surface transition-all duration-300 cursor-pointer"
-                  >
-                    View Product Status
-                  </motion.span>
-                </Link>
-              </div>
-
-              <p className="mt-6 text-xs text-text-tertiary">
-                Development access · No checkout or automatic billing
-              </p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      </main>
-      <Footer />
+function Status({ children, experimental = false }: { children: ReactNode; experimental?: boolean }) {
+  return <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-subtle px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-secondary"><span aria-hidden="true" className={cn('h-1.5 w-1.5 rounded-full', experimental ? 'bg-status-experimental' : 'bg-status-active')} />{children}</span>;
+}
+function SectionHeading({ index, label, title, children }: { index: string; label: string; title: string; children?: ReactNode }) {
+  return <div className="mb-10 grid gap-5 lg:grid-cols-12 lg:items-end">
+    <div className="lg:col-span-8"><p className={eyebrow}>{index} / {label}</p><h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-[1.15] tracking-[-0.025em] sm:text-4xl">{title}</h2></div>
+    {children && <p className="max-w-prose text-sm leading-relaxed text-text-secondary lg:col-span-4">{children}</p>}
+  </div>;
+}
+function WorkflowStepper() {
+  const [active, setActive] = useState(0);
+  const current = steps[active];
+  return <div>
+    <p className="mb-7 text-sm text-text-secondary">Select a step to see what it involves.</p>
+    <ol aria-label="Pilot workflow" className="relative grid border-l border-border md:grid-cols-6 md:border-l-0 md:border-t">
+      {steps.map((step, index) => <li key={step.n} className="relative min-w-0 md:pr-5">
+        <button id={'pilot-step-' + step.n} type="button" aria-pressed={active === index} aria-controls="pilot-step-details" onClick={() => setActive(index)} className="group flex min-h-16 w-full items-start gap-4 py-4 pl-5 text-left md:block md:py-6 md:pl-0">
+          <span aria-hidden="true" className={cn('absolute -left-[3px] top-6 h-1.5 w-1.5 rounded-full md:-top-[3px] md:left-0', active === index ? 'bg-accent' : 'bg-border-strong')} />
+          <span className={cn('font-mono text-xs tabular-nums transition-colors md:mb-4 md:block', active === index ? 'text-accent' : 'text-text-secondary group-hover:text-text-primary')}>{step.n}</span>
+          <span className={cn('block text-sm font-medium leading-snug transition-colors', active === index ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary')}>{step.title}</span>
+        </button>
+      </li>)}
+    </ol>
+    <div id="pilot-step-details" role="region" aria-labelledby={'pilot-step-' + current.n} className="mt-5 grid gap-6 border-y border-border py-7 sm:grid-cols-[8rem_1fr] lg:grid-cols-[10rem_1fr_15rem] lg:items-center">
+      <p className="font-mono text-xs uppercase tracking-wider text-text-secondary">Step <span className="tabular-nums text-text-primary">{current.n}</span> / 06</p>
+      <div><h3 className="font-display text-xl font-semibold tracking-tight">{current.title}</h3><p className="mt-2 max-w-prose text-sm leading-relaxed text-text-secondary">{current.detail}</p></div>
+      <Link href={current.href} className="inline-flex min-h-11 items-center gap-3 text-sm font-medium text-text-primary sm:col-start-2 lg:col-start-auto lg:justify-self-end">{current.link}<ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" /></Link>
     </div>
-  );
+  </div>;
+}
+function FAQ() {
+  const [open, setOpen] = useState<number | null>(null);
+  const reducedMotion = useReducedMotion();
+  return <div className="divide-y divide-border border-y border-border">
+    {faqs.map((faq, index) => <div key={faq.q}>
+      <h3><button id={'faq-question-' + index} type="button" onClick={() => setOpen(open === index ? null : index)} aria-expanded={open === index} aria-controls={'faq-answer-' + index} className="flex min-h-20 w-full items-center justify-between gap-6 py-5 text-left text-base font-medium">
+        {faq.q}<ChevronDown aria-hidden="true" className={cn('h-4 w-4 shrink-0 text-text-secondary transition-transform duration-200 motion-reduce:transition-none', open === index && 'rotate-180')} />
+      </button></h3>
+      <motion.div id={'faq-answer-' + index} role="region" aria-labelledby={'faq-question-' + index} aria-hidden={open !== index} initial={false} animate={{ height: open === index ? 'auto' : 0, opacity: open === index ? 1 : 0 }} transition={{ duration: reducedMotion ? 0 : 0.25, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
+        <p className="max-w-prose pb-6 pr-8 text-sm leading-relaxed text-text-secondary">{faq.a}</p>
+      </motion.div>
+    </div>)}
+  </div>;
+}
+
+export default function Home() {
+  return <div className="min-h-screen bg-background text-text-primary">
+    <Navbar announcement />
+    <main>
+      <section aria-labelledby="hero-heading" className="pb-20 pt-40 lg:pb-28 lg:pt-48">
+        <div className={cn(pageWidth, 'grid items-center gap-12 lg:grid-cols-12 lg:gap-10')}>
+          <div className="min-w-0 lg:col-span-7 lg:pr-5">
+            <p className={eyebrow}>Combat sports development pilot</p>
+            <h1 id="hero-heading" className="mt-6 max-w-3xl font-display text-[2.75rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-6xl lg:text-[4.5rem]">More time<br className="hidden sm:block" /> on the mat.</h1>
+            <p className="mt-7 max-w-xl text-lg leading-relaxed text-text-secondary">Athlete accounts, local tournament brackets, and experimental 2D kata feedback—built around a focused karate club pilot with clear engineering boundaries.</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link href="/signup" className={primaryLink}>Create Athlete Account<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+              <Link href="#how" className={secondaryLink}>See How It Works<ArrowDown aria-hidden="true" className="h-4 w-4" /></Link>
+            </div>
+            <p className="mt-6 max-w-xl text-xs leading-relaxed text-text-secondary">Saved account workflows. Experimental analysis. No measured traction is claimed.</p>
+            <div className="mt-9 border-t border-border pt-5">
+              <p className="font-mono text-[10px] uppercase leading-loose tracking-[0.05em] text-text-secondary">Karate <span className="text-text-primary">(pilot focus)</span><span aria-hidden="true"> · </span>BJJ · Judo · Taekwondo · Boxing · Muay Thai</p>
+              <p className="mt-1 text-xs text-text-secondary">Broader disciplines are a roadmap direction, not equivalent feature coverage.</p>
+            </div>
+          </div>
+          <div className="min-w-0 lg:col-span-5"><KataTelemetryPreview /></div>
+        </div>
+      </section>
+
+      <section id="features" aria-label="Platform overview" className="border-t border-border py-16 sm:py-20">
+        <div className={pageWidth}>
+          <SectionHeading index="01" label="The platform" title="Two focused tools. One useful club workflow.">From the individual session to the local event. Implemented workflows and experimental feedback are labeled separately.</SectionHeading>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <article className="flex min-w-0 flex-col rounded-xl border border-border bg-surface p-6 sm:p-8">
+              <div className="flex flex-wrap items-center justify-between gap-4"><ScanLine aria-hidden="true" className="h-6 w-6 text-text-secondary" /><Status experimental>Experimental</Status></div>
+              <h3 className="mt-7 font-display text-2xl font-semibold tracking-tight">Kata analysis</h3>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-text-secondary">2D pose estimation, joint-angle estimates and rule-based stance and movement feedback. Camera angle and landmark confidence affect what can be observed.</p>
+              <dl className="my-7 divide-y divide-border border-y border-border font-mono text-[11px]">
+                <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">INPUT</dt><dd>Consented monocular video</dd></div>
+                <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">SIGNALS</dt><dd>Angles / relative motion</dd></div>
+                <div className="flex justify-between gap-4 py-3"><dt className="text-text-secondary">CONFIDENCE</dt><dd>Unseen components unscored</dd></div>
+              </dl>
+              <p className="mb-5 text-xs leading-relaxed text-text-secondary">Hosted availability depends on service configuration. No validated skill or accuracy measure is claimed.</p>
+              <Link href="/kata" className="mt-auto inline-flex min-h-11 items-center gap-3 text-sm font-medium">Review the analyzer<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+            </article>
+            <article className="flex min-w-0 flex-col rounded-xl border border-border bg-surface p-6 sm:p-8">
+              <div className="flex flex-wrap items-center justify-between gap-4"><Trophy aria-hidden="true" className="h-6 w-6 text-text-secondary" /><Status experimental>Pilot scope</Status></div>
+              <h3 className="mt-7 font-display text-2xl font-semibold tracking-tight">Tournaments</h3>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-text-secondary">Authenticated athlete registration and organizer-managed divisions, brackets and results. Saved state and version checks govern each transition.</p>
+              <div className="my-7 rounded-md border border-border bg-background p-4">
+                <p className="mb-4 font-mono text-[10px] uppercase tracking-wider text-text-secondary">Illustrative bracket · not a real event</p>
+                <div className="grid grid-cols-[1fr_1.5rem_1fr] items-center text-xs sm:grid-cols-[1fr_2rem_1fr]">
+                  <div className="space-y-2"><div className="border border-border-strong px-3 py-2.5">Entrant A</div><div className="border border-border-strong px-3 py-2.5">Entrant B</div></div>
+                  <div aria-hidden="true" className="relative h-12 border-y border-r border-border-strong after:absolute after:left-full after:top-1/2 after:w-3 after:border-t after:border-border-strong" />
+                  <div className="ml-3 border border-border-strong px-3 py-3 font-mono text-[10px] leading-relaxed text-text-secondary">Organizer<br />records result</div>
+                </div>
+              </div>
+              <p className="mb-5 text-xs leading-relaxed text-text-secondary">Local-event scope. Entry fees and refunds remain outside ATHLIX.</p>
+              <Link href="/tournaments" className="mt-auto inline-flex min-h-11 items-center gap-3 text-sm font-medium">Explore tournaments<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+            </article>
+          </div>
+          <div className="mt-6 grid overflow-hidden rounded-xl border border-border bg-surface md:grid-cols-2">
+            {capabilities.map((capability, index) => <Link key={capability.n} href={capability.href} className={cn('group min-w-0 p-6 transition-colors hover:bg-surface-subtle sm:p-8', index > 0 && 'border-t border-border', index === 1 && 'md:border-t-0', index % 2 === 1 && 'md:border-l')}>
+              <div className="flex items-center justify-between gap-4"><span className="font-mono text-[10px] text-text-secondary">{capability.n} / SUPPORTING WORKFLOW</span><ArrowRight aria-hidden="true" className="h-4 w-4 text-text-secondary transition-transform group-hover:translate-x-1 motion-reduce:transform-none" /></div>
+              <h3 className="mt-5 font-display text-lg font-semibold tracking-tight">{capability.title}{index === 3 && <span className="ml-2 font-mono text-[10px] font-normal uppercase tracking-wide text-text-secondary">Reviewed</span>}</h3>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-text-secondary">{capability.body}</p>
+            </Link>)}
+          </div>
+        </div>
+      </section>
+
+      <section id="how" aria-labelledby="workflow-heading" className="border-t border-border py-16 sm:py-20">
+        <div className={pageWidth}>
+          <p className={eyebrow}>02 / The workflow</p><h2 id="workflow-heading" className="mb-9 mt-4 max-w-2xl font-display text-3xl font-bold leading-[1.15] tracking-[-0.025em] sm:text-4xl">A useful pilot starts with a clear process.</h2>
+          <WorkflowStepper />
+        </div>
+      </section>
+
+      <section aria-label="Engineering and measurement transparency" className="border-t border-border py-16 sm:py-20">
+        <div className={pageWidth}>
+          <SectionHeading index="03" label="Engineering, in plain sight" title="Know the system. Know its limits.">Pilot principles and measurement boundaries belong in the product, not in the fine print.</SectionHeading>
+          <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+            <div><h3 className="mb-5 font-display text-xl font-semibold">Pilot architecture &amp; trust</h3><dl className="divide-y divide-border border-y border-border">{principles.map(([title, detail], index) => <div key={title} className="relative py-5 pl-10"><dt className="text-sm font-semibold"><span aria-hidden="true" className="absolute left-0 pt-0.5 font-mono text-[10px] font-normal text-text-secondary">0{index + 1}</span>{title}</dt><dd className="mt-2 max-w-prose text-sm leading-relaxed text-text-secondary">{detail}</dd></div>)}</dl></div>
+            <div className="self-start rounded-xl border border-border bg-surface">
+              <div className="border-b border-border p-6 sm:p-7"><p className={eyebrow}>Measurement specification</p><h3 className="mt-3 font-display text-xl font-semibold">Kata Analyzer boundaries</h3><p className="mt-3 text-sm leading-relaxed text-text-secondary">Estimated landmarks support interpretable movement heuristics. They do not replace a qualified coach or a physical measurement system.</p></div>
+              <div className="grid sm:grid-cols-2">
+                <div className="p-6 sm:border-r sm:border-border sm:p-7"><h4 className="mb-5 font-mono text-[10px] font-medium uppercase tracking-wider text-text-secondary">What it calculates</h4><ul className="space-y-3">{calculations.map(item => <li key={item} className="flex items-start gap-2.5 text-sm"><Check aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-text-secondary" />{item}</li>)}</ul></div>
+                <div className="border-t border-border p-6 sm:border-t-0 sm:p-7"><h4 className="mb-5 font-mono text-[10px] font-medium uppercase tracking-wider text-text-secondary">What it does not measure</h4><ul className="space-y-3">{limitations.map(item => <li key={item} className="flex items-start gap-2.5 text-sm text-text-secondary"><span aria-hidden="true" className="mt-2 h-px w-3 shrink-0 bg-border-strong" />{item}</li>)}</ul></div>
+              </div>
+              <p className="border-t border-border px-6 py-5 text-xs leading-relaxed text-text-secondary sm:px-7">No independently validated accuracy figure. No injury diagnosis or performance certification. Use only videos you have permission to share.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="faq-heading" className="border-t border-border py-16 sm:py-20">
+        <div className={cn(pageWidth, 'grid gap-10 lg:grid-cols-12 lg:gap-16')}>
+          <div className="lg:col-span-4"><p className={eyebrow}>04 / Before you begin</p><h2 id="faq-heading" className="mt-4 font-display text-3xl font-bold leading-[1.15] tracking-[-0.025em] sm:text-4xl">Questions,<br className="hidden lg:block" /> answered.</h2><p className="mt-5 max-w-prose text-sm leading-relaxed text-text-secondary">A development pilot should make its scope easy to understand.</p></div>
+          <div className="lg:col-span-8"><FAQ /></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="closing-heading" className={cn(pageWidth, 'pb-20 pt-4')}>
+        <div className="grid items-center gap-8 rounded-2xl border border-border bg-surface p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:p-14">
+          <div><p className={eyebrow}>Your next step</p><h2 id="closing-heading" className="mt-4 max-w-xl font-display text-3xl font-bold leading-[1.15] tracking-[-0.025em] sm:text-4xl">A focused pilot.<br />A clear first step.</h2><p className="mt-5 max-w-prose text-sm leading-relaxed text-text-secondary">Create an athlete account, explore the saved workflows and help shape a useful karate-club pilot. Professional access requires review; checkout remains disabled.</p></div>
+          <div className="flex flex-col items-start gap-4 lg:items-center"><Link href="/signup" className={primaryLink}>Create Athlete Account<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link><Link href="/features" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary">View Product Status<CornerDownRight aria-hidden="true" className="h-4 w-4" /></Link></div>
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </div>;
 }

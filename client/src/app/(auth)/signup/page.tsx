@@ -13,7 +13,6 @@ import {
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
-import { cn } from '../../../lib/utils';
 
 
 const signupSchema = z.object({
@@ -25,15 +24,15 @@ const signupSchema = z.object({
 type SignupFields = z.infer<typeof signupSchema>;
 
 const roles = [
-  { id: 'athlete', label: 'Athlete', icon: Zap, desc: 'Track your journey', color: 'from-orange-500/20 to-red-500/10', iconColor: 'text-orange-400' },
-  { id: 'coach', label: 'Coach', icon: Shield, desc: 'Manage students', color: 'from-blue-500/20 to-indigo-500/10', iconColor: 'text-blue-400' },
-  { id: 'academy_owner', label: 'Gym Owner', icon: Award, desc: 'Run your academy', color: 'from-green-500/20 to-emerald-500/10', iconColor: 'text-green-400' },
-  { id: 'tournament_organizer', label: 'Organizer', icon: Trophy, desc: 'Host events', color: 'from-purple-500/20 to-violet-500/10', iconColor: 'text-purple-400' },
+  { id: 'athlete', label: 'Athlete', icon: Zap, desc: 'Track your journey' },
+  { id: 'coach', label: 'Coach', icon: Shield, desc: 'Manage students' },
+  { id: 'academy_owner', label: 'Gym Owner', icon: Award, desc: 'Run your academy' },
+  { id: 'tournament_organizer', label: 'Organizer', icon: Trophy, desc: 'Host events' },
 ] as const;
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
 
@@ -128,8 +127,8 @@ export default function SignupPage() {
     <main className="min-h-screen bg-background flex">
       {/* ── Left Branding Panel ── */}
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col items-center justify-center p-12 bg-surface border-r border-border">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-accent/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[350px] h-[350px] bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -146,8 +145,8 @@ export default function SignupPage() {
         >
           <motion.div variants={fadeIn} className="mb-10">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-md border border-border bg-background flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-text-primary" />
               </div>
               <span className="text-2xl font-extrabold font-display tracking-tight text-text-primary">Athlix</span>
             </Link>
@@ -164,30 +163,20 @@ export default function SignupPage() {
           </motion.p>
 
           <motion.div variants={stagger} className="grid grid-cols-2 gap-3">
-            {roles.map(({ id, label, icon: Icon, desc, color, iconColor }) => (
+            {roles.map(({ id, label, icon: Icon, desc }) => (
               <motion.div
                 key={id}
                 variants={fadeIn}
-                className={cn(
-                  'p-4 rounded-xl border border-border/60 bg-gradient-to-br',
-                  color
-                )}
+                className="border-b border-border py-4"
               >
-                <Icon className={cn('w-5 h-5 mb-2', iconColor)} />
+                <Icon className="mb-2 h-5 w-5 text-text-secondary" />
                 <p className="text-sm font-bold text-text-primary">{label}</p>
                 <p className="text-xs text-text-secondary">{desc}</p>
               </motion.div>
             ))}
           </motion.div>
 
-          <motion.div variants={fadeIn} className="mt-8 flex items-center gap-2.5 p-3.5 rounded-xl bg-accent/5 border border-accent/20">
-            <div className="flex -space-x-2">
-              {['SC', 'MR', 'EW'].map((av, i) => (
-                <div key={i} className={cn('w-7 h-7 rounded-full flex items-center justify-center text-black text-[9px] font-black border-2 border-background', ['bg-orange-500', 'bg-blue-500', 'bg-green-500'][i])}>
-                  {av}
-                </div>
-              ))}
-            </div>
+          <motion.div variants={fadeIn} className="mt-8 flex items-center gap-2.5 p-3.5 rounded-md bg-background border border-border">
             <p className="text-xs text-text-secondary">
               <span className="font-semibold text-text-primary">Start with an athlete profile.</span> Professional access requires approval.
             </p>
@@ -205,8 +194,8 @@ export default function SignupPage() {
         >
           {/* Mobile logo */}
           <motion.div variants={fadeIn} className="flex lg:hidden items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg border border-border bg-background flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-text-primary" />
             </div>
             <span className="text-xl font-extrabold font-display text-text-primary">Athlix</span>
           </motion.div>
@@ -217,7 +206,7 @@ export default function SignupPage() {
             </h1>
             <p className="text-sm text-text-secondary">
               Already have an account?{' '}
-              <Link href="/login" className="text-accent hover:text-accent-light font-semibold transition-colors">
+              <Link href="/login" className="text-text-primary hover:text-text-secondary underline underline-offset-4 font-semibold transition-colors">
                 Sign in
               </Link>
             </p>
@@ -226,7 +215,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Professional roles are provisioned by a trusted operator. */}
             <motion.div variants={fadeIn}>
-              <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm">
+              <div className="rounded-md border border-border bg-surface p-4 text-sm">
                 <p className="font-semibold text-text-primary">Athlete account</p>
                 <p className="mt-1 text-text-secondary">
                   Coach, academy owner, and organizer access requires review. Create your account first, then contact the Athlix team to request professional access.
@@ -244,7 +233,7 @@ export default function SignupPage() {
                   autoComplete="name"
                   {...register('name')}
                   placeholder="John Doe"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-md border border-border-strong bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
               </div>
               {errors.name && <p className="text-xs text-danger mt-1">{errors.name.message}</p>}
@@ -261,7 +250,7 @@ export default function SignupPage() {
                   autoComplete="email"
                   {...register('email')}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-md border border-border-strong bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
               </div>
               {errors.email && <p className="text-xs text-danger mt-1">{errors.email.message}</p>}
@@ -278,7 +267,7 @@ export default function SignupPage() {
                   autoComplete="new-password"
                   {...register('password')}
                   placeholder="Min. 6 characters"
-                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
+                  className="w-full pl-10 pr-11 py-3 rounded-md border border-border-strong bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
                 <button
                   type="button"
@@ -299,7 +288,7 @@ export default function SignupPage() {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2.5 p-3.5 bg-danger/10 border border-danger/20 rounded-xl"
+                className="flex items-center gap-2.5 p-3.5 bg-danger/10 border border-danger/20 rounded-md"
               >
                 <AlertCircle className="w-4 h-4 text-danger shrink-0" />
                 <p className="text-xs text-danger">{authError}</p>
@@ -311,9 +300,9 @@ export default function SignupPage() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                whileHover={undefined}
+                whileTap={undefined}
+                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-md font-semibold text-sm bg-accent text-accent-ink hover:bg-accent-hover transition-colors duration-150 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
               >
                 {isSubmitting ? (
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -341,7 +330,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                className="flex items-center justify-center gap-2 py-3 rounded-full border border-border bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-all duration-200"
+                className="flex items-center justify-center gap-2 py-3 rounded-md border border-border-strong bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-colors duration-150"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
@@ -354,7 +343,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={handleAnonymousSignIn}
-                className="flex items-center justify-center gap-2 py-3 rounded-full border border-border bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-all duration-200"
+                className="flex items-center justify-center gap-2 py-3 rounded-md border border-border-strong bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-colors duration-150"
               >
                 <User className="w-4 h-4 text-text-tertiary" />
                 Guest

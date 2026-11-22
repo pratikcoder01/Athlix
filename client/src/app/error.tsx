@@ -22,12 +22,12 @@ export default function ErrorPage({
     <div className="min-h-screen bg-background text-text-primary transition-colors duration-300 flex flex-col justify-between">
       <Navbar />
 
-      <div className="flex-grow flex items-center justify-center px-4 py-24 sm:px-6 lg:px-8 text-center relative z-10">
-        <div className="max-w-md w-full bg-secondary border border-border rounded-2xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 h-32 w-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <main className="flex-grow flex items-center justify-center px-4 py-24 sm:px-6 lg:px-8 text-center relative z-10">
+        <div className="max-w-md w-full bg-secondary border border-border rounded-lg p-8 sm:p-12 relative overflow-hidden">
+
           
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6 text-primary">
-            <AlertOctagon className="h-8 w-8 text-primary animate-bounce" />
+          <div className="h-12 w-12 rounded-md border border-border bg-surface flex items-center justify-center mx-auto mb-6 text-primary">
+            <AlertOctagon className="h-8 w-8 text-primary" />
           </div>
 
           <h1 className="text-xl font-bold font-display uppercase tracking-wider mb-2">SYSTEM ERROR</h1>
@@ -38,7 +38,7 @@ export default function ErrorPage({
           <div className="flex flex-col gap-3">
             <MagneticButton 
               onClick={() => reset()}
-              className="w-full bg-primary hover:bg-opacity-95 text-white font-bold py-3 rounded-md font-bebas tracking-widest text-sm"
+              className="w-full bg-accent hover:bg-accent-hover text-accent-ink font-bold py-3 rounded-md font-display tracking-widest text-sm"
             >
               RETRY OPERATION
             </MagneticButton>
@@ -47,7 +47,7 @@ export default function ErrorPage({
             </Link>
           </div>
         </div>
-      </div>
+      </main>
 
       <Footer />
     </div>

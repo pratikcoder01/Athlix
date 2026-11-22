@@ -25,11 +25,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center text-center p-8 border border-dashed border-border rounded-2xl bg-surface/30 max-w-md mx-auto select-none',
+        'flex flex-col items-center justify-center text-center p-8 border border-dashed border-border rounded-lg bg-surface/30 max-w-md mx-auto select-none',
         className
       )}
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-surface-hover border border-border mb-4 shrink-0 shadow-inner">
+      <div className="flex items-center justify-center w-16 h-16 rounded-md bg-surface-hover border border-border mb-4 shrink-0 ">
         {icon}
       </div>
       <h3 className="text-base font-bold font-display tracking-tight text-text-primary mb-1">

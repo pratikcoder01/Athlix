@@ -37,7 +37,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             ref={ref}
             className={cn(
-              'w-full px-4 py-2.5 text-sm rounded-xl bg-surface border border-border text-text-primary transition-all duration-200 placeholder:text-text-tertiary focus:outline-none focus:border-accent focus:bg-surface-elevated focus:ring-1 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none',
+              'w-full px-4 py-2.5 text-sm rounded-md bg-surface border border-border text-text-primary transition-all duration-200 placeholder:text-text-tertiary focus:outline-none focus:border-accent focus:bg-surface-elevated focus:ring-1 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               error && 'border-danger focus:border-danger focus:ring-danger/30 focus:ring-1',

@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center px-4 py-12 sm:p-8 bg-background text-text-primary overflow-hidden">
       {/* Fine background grid */}
       <div className="absolute inset-0 mat-grid opacity-20 pointer-events-none" />
 
@@ -90,10 +90,10 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm shadow-xl">
+        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm">
           {checking ? <p role="status">Checking your recovery link…</p> : done ? <div role="status">
             <h3 className="font-bold text-success">Your password has been updated.</h3>
-            <Link href="/login" className="mt-4 inline-block text-accent underline">Sign in with your new password</Link>
+            <Link href="/login" className="mt-4 inline-block text-text-primary underline">Sign in with your new password</Link>
           </div> : <>
           {error && <div role="alert" className="mb-5 text-sm text-danger">{error} <Link href="/forgot-password" className="underline">Request a new recovery link</Link></div>}
           {code && <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
                   id="new-password"
                   autoComplete="new-password"
                   {...register('password')}
-                  className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
+                  className="w-full bg-surface border border-border-strong rounded-md pl-11 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                   placeholder="••••••••"
                 />
               </div>
@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
                   id="confirm-password"
                   autoComplete="new-password"
                   {...register('confirmPassword')}
-                  className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
+                  className="w-full bg-surface border border-border-strong rounded-md pl-11 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                   placeholder="••••••••"
                 />
               </div>
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
             <MagneticButton
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-primary hover:bg-opacity-95 text-text-inverse py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md mt-2"
+              className="w-full bg-accent hover:bg-accent-hover text-accent-ink py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase mt-2"
             >
               {isSubmitting ? 'SAVING...' : 'UPDATE PASSWORD'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
             </MagneticButton>

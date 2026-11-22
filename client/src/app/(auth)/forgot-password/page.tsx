@@ -16,8 +16,8 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFields = z.infer<typeof forgotPasswordSchema>;
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
 
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4 py-16 relative overflow-hidden">
       {/* Background */}
-      <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -71,8 +71,8 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <motion.div variants={fadeIn} className="flex items-center gap-2 mb-10">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-              <Sparkles className="w-4.5 h-4.5 text-white" />
+            <div className="w-9 h-9 rounded-md border border-border bg-background flex items-center justify-center">
+              <Sparkles className="w-4.5 h-4.5 text-text-primary" />
             </div>
             <span className="text-xl font-extrabold font-display text-text-primary">Athlix</span>
           </Link>
@@ -83,13 +83,13 @@ export default function ForgotPasswordPage() {
             /* ── Success ── */
             <motion.div
               key="success"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="rounded-2xl border border-border bg-surface p-8 text-center"
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-lg border border-border bg-surface p-8 text-center"
             >
-              <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center mx-auto mb-5">
+              <div className="w-12 h-12 rounded-md border border-border bg-surface flex items-center justify-center mx-auto mb-5">
                 <CheckCircle2 className="w-7 h-7 text-success" />
               </div>
               <h2 className="text-2xl font-extrabold font-display text-text-primary mb-2">Check your inbox</h2>
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
               </p>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-light transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-primary hover:text-text-secondary underline underline-offset-4 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to sign in
               </Link>
@@ -140,7 +140,7 @@ export default function ForgotPasswordPage() {
                       autoComplete="email"
                       {...register('email')}
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-md border border-border-strong bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                     />
                   </div>
                   {errors.email && (
@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
                   <motion.div
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2.5 p-3.5 bg-danger/10 border border-danger/20 rounded-xl"
+                    className="flex items-center gap-2.5 p-3.5 bg-danger/10 border border-danger/20 rounded-md"
                   >
                     <AlertCircle className="w-4 h-4 text-danger shrink-0" />
                     <p className="text-xs text-danger">{authError}</p>
@@ -163,9 +163,9 @@ export default function ForgotPasswordPage() {
                   <motion.button
                     type="submit"
                     disabled={isSubmitting}
-                    whileHover={{ y: -1 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer mt-1"
+                    whileHover={undefined}
+                    whileTap={undefined}
+                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-md font-semibold text-sm bg-accent text-accent-ink hover:bg-accent-hover transition-colors duration-150 disabled:opacity-60 disabled:pointer-events-none cursor-pointer mt-1"
                   >
                     {isSubmitting ? (
                       <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">

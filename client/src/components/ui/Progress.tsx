@@ -27,7 +27,7 @@ export const Progress: React.FC<ProgressProps> = ({
   };
 
   return (
-    <div className={cn('h-2 w-full bg-surface-hover rounded-full overflow-hidden border border-border/20 shadow-inner', className)}>
+    <div className={cn('h-2 w-full bg-surface-hover rounded-full overflow-hidden border border-border/20 ', className)}>
       <div
         className={cn('h-full rounded-full transition-all duration-500 ease-out', bgClasses[variant])}
         style={{ width: `${percentage}%` }}
