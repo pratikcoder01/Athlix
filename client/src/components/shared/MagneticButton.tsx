@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
-interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MagneticButtonProps extends HTMLMotionProps<'button'> {
   children: React.ReactNode;
   variant?: 'primary' | 'ghost' | 'outline' | 'premium' | 'accent';
   size?: 'sm' | 'md' | 'lg' | 'icon';
@@ -20,11 +20,15 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   as = 'button',
   ...restProps
 }) => {
-  const { type, onClick, id, title, style } = restProps;
-  const props = { type, onClick, id, title, style };
+  const props = restProps;
   const ref = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const shouldReduce = useReducedMotion();
+  const reducedMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  // The server has no media-query result. Use the same initial animation props
+  // for hydration, then honor the browser preference before interaction.
+  const shouldReduce = mounted && reducedMotion;
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!ref.current || shouldReduce || disabled) return;
@@ -81,6 +85,9 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   };
 
   if (as === 'span') {
+    // A visual span inside a Link must not gain Motion's automatic tabIndex
+    // from a tap gesture and become a second keyboard target inside the link.
+    const spanAnimation = { animate: animationProps.animate, whileHover: animationProps.whileHover, transition: animationProps.transition };
     return (
       <motion.span
         ref={ref as React.Ref<HTMLSpanElement>}
@@ -88,7 +95,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
         onMouseLeave={handleMouseLeave}
         className={cn(classes, 'cursor-pointer inline-flex')}
         aria-disabled={disabled}
-        {...animationProps}
+        {...spanAnimation}
       >
         {innerElement}
       </motion.span>

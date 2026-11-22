@@ -1,8 +1,8 @@
-fastapi
-uvicorn
-opencv-python-headless
-mediapipe
-numpy
-python-multipart
-python-dotenv
-httpx
+-c constraints.txt
+fastapi==0.143.3
+uvicorn==0.54.0
+opencv-contrib-python==4.13.0.92
+mediapipe==0.10.35
+numpy==2.4.6
+python-multipart==0.0.33
+httpx==0.28.1

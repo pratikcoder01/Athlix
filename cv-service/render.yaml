@@ -1,7 +1,27 @@
 services:
   - type: web
     name: athlix-cv-service
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    plan: starter
+    runtime: docker
+    dockerfilePath: ./cv-service/Dockerfile
+    dockerContext: ./cv-service
+    autoDeployTrigger: off
+    numInstances: 1
+    plan: 1c-2g
+    healthCheckPath: /ready
+    disk:
+      name: cv-job-state
+      mountPath: /var/lib/athlix-cv
+      sizeGB: 1
+    envVars:
+      - key: CV_SERVICE_API_KEY
+        sync: false
+      # Render forwards this public setting as a Docker build argument. The
+      # image build verifies the manifest-pinned bytes; no runtime download.
+      - key: CV_BUILD_PROVISION_MODEL
+        value: "true"
+      - key: CV_MODEL_PATH
+        value: /models/pose.task
+      - key: CV_STATE_DIR
+        value: /var/lib/athlix-cv
+      - key: CV_TEMP_DIR
+        value: /tmp/athlix-cv

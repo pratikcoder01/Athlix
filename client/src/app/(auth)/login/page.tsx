@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import {
-  Lock, Mail, Award, Shield, Smartphone, AlertCircle, User,
+  Lock, Mail, Shield, Smartphone, AlertCircle, User,
   ArrowRight, Eye, EyeOff, Sparkles, Trophy, Brain, Users
 } from 'lucide-react';
 import {
@@ -21,7 +21,6 @@ import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
 import { cn } from '../../../lib/utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -30,10 +29,10 @@ const loginSchema = z.object({
 type LoginFields = z.infer<typeof loginSchema>;
 
 const featureList = [
-  { icon: Trophy, label: 'Tournament Engine', desc: 'Automated brackets & live scoring' },
-  { icon: Brain, label: 'AI Coaching', desc: 'Personalised real-time feedback' },
-  { icon: Shield, label: 'Verified Network', desc: 'Identity-verified athletes & coaches' },
-  { icon: Users, label: '50k+ Athletes', desc: 'A global community awaits you' },
+  { icon: Trophy, label: 'Tournament Events', desc: 'Organizer-recorded brackets & results' },
+  { icon: Brain, label: 'Experimental Kata Feedback', desc: 'Observed 2D pose metrics and limitations' },
+  { icon: Shield, label: 'Professional Access', desc: 'Privileges require operator approval' },
+  { icon: Users, label: 'Member Community', desc: 'Profiles and persisted text posts' },
 ];
 
 const fadeIn = {
@@ -60,7 +59,8 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -82,7 +82,8 @@ export default function LoginPage() {
     try {
       const cred = await signInAnonymously(auth);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
@@ -102,7 +103,8 @@ export default function LoginPage() {
     try {
       const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch(`${API_URL}/api/auth/firebase`, {
+      const res = await fetch('/api/auth/firebase', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -125,7 +127,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <main className="min-h-screen bg-background flex">
       {/* ── Left Branding Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col items-center justify-center p-12 bg-surface border-r border-border">
         <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-accent/15 rounded-full blur-3xl pointer-events-none" />
@@ -187,13 +189,13 @@ export default function LoginPage() {
           <motion.div variants={fadeIn} className="mt-8 flex items-center gap-2.5">
             <div className="flex -space-x-2">
               {[['SC', 'bg-orange-500'], ['MR', 'bg-blue-500'], ['EW', 'bg-green-500']].map(([av, bg], i) => (
-                <div key={i} className={cn('w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-black border-2 border-background', bg)}>
+                <div key={i} className={cn('w-7 h-7 rounded-full flex items-center justify-center text-black text-[9px] font-black border-2 border-background', bg)}>
                   {av}
                 </div>
               ))}
             </div>
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">50,000+</span> athletes training smarter
+              <span className="font-semibold text-text-primary">Build your profile</span> and follow your training journey
             </p>
           </motion.div>
         </motion.div>
@@ -238,6 +240,7 @@ export default function LoginPage() {
                 <input
                   id="login-email"
                   type="email"
+                  autoComplete="username"
                   {...register('email')}
                   placeholder="you@example.com"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
@@ -259,12 +262,16 @@ export default function LoginPage() {
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   {...register('password')}
                   placeholder="••••••••"
                   className="w-full pl-10 pr-11 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  aria-controls="login-password"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
                 >
@@ -293,7 +300,7 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
               >
                 {isSubmitting ? (
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -363,6 +370,6 @@ export default function LoginPage() {
           </p>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

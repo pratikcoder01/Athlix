@@ -1,68 +1,48 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Initialise Firebase Admin SDK before any routes are loaded
 import './config/firebase';
-
 import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+import mongoose from 'mongoose';
 import app from './app';
 import connectDB from './config/db';
+import { validateRuntimeConfig } from './config/runtime';
+import { createRealtimeServer } from './socket';
+import { createShutdown, closeRealtimeAndHttp } from './utils/lifecycle';
+import { writeLog } from './middleware/loggingMiddleware';
 
-
-const PORT = process.env.PORT || 5000;
-
-// Initialize Server
-const server = http.createServer(app);
-
-// Initialize Socket.io
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: '*', // Set to target client domains in production
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  },
-});
-
-// Store socket IO instance in Express app context
+const server = http.createServer({
+  requestTimeout: 60_000,
+  headersTimeout: 15_000,
+  keepAliveTimeout: 5_000,
+}, app);
+const io = createRealtimeServer(server);
 app.set('io', io);
 
-// Socket.io connection handlers
-io.on('connection', (socket) => {
-  console.log(`🔌 Client connected: ${socket.id}`);
-
-  // User joins a personal room based on their userId
-  socket.on('join_user_room', (userId: string) => {
-    if (userId) {
-      socket.join(userId);
-      console.log(`👤 User joined room: ${userId}`);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`🔌 Client disconnected: ${socket.id}`);
-  });
+const shutdown = createShutdown({
+  markDraining: () => { app.locals.draining = true; },
+  closeServer: () => closeRealtimeAndHttp(server, io),
+  disconnectDatabase: () => mongoose.disconnect(),
+  forceClose: () => { io.disconnectSockets(true); server.closeAllConnections(); },
+  exit: (code) => process.exit(code),
 });
 
-// Start Database & Web Server
-const startServer = async () => {
-  await connectDB();
+process.once('SIGTERM', () => { void shutdown('SIGTERM'); });
+process.once('SIGINT', () => { void shutdown('SIGINT'); });
+process.once('unhandledRejection', () => { void shutdown('unhandled_rejection', 1); });
+process.once('uncaughtException', () => { void shutdown('uncaught_exception', 1); });
 
-  server.listen(PORT, () => {
-    console.log(
-      `🚀 ATHLIX Backend Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`
-    );
+const startServer = async () => {
+  const configuration = validateRuntimeConfig();
+  await connectDB();
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(configuration.port, () => {
+      server.off('error', reject);
+      resolve();
+    });
   });
+  writeLog({ level: 'info', event: 'server_listening', port: configuration.port });
 };
 
-// Handle process crashes gracefully
-process.on('unhandledRejection', (err: any) => {
-  console.error(`💥 Unhandled Rejection: ${err.message}`);
-  server.close(() => process.exit(1));
-});
-
-process.on('uncaughtException', (err: any) => {
-  console.error(`💥 Uncaught Exception: ${err.message}`);
-  process.exit(1);
-});
-
-startServer();
+void startServer().catch(() => { void shutdown('startup_failure', 1); });

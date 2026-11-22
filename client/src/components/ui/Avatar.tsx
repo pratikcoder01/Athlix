@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { cn } from '../../lib/utils';
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -49,8 +50,11 @@ export const Avatar: React.FC<AvatarProps> = ({
       {...props}
     >
       {src && !error ? (
-        <img
+        <Image
           src={src}
+          width={96}
+          height={96}
+          unoptimized
           alt={alt}
           onError={() => setError(true)}
           className="w-full h-full object-cover rounded-full"

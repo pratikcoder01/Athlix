@@ -1,23 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ReactLenis } from 'lenis/react';
+import { useReducedMotion } from 'framer-motion';
 
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <>{children}</>;
-  }
+  const reducedMotion = useReducedMotion();
 
   return (
-    <ReactLenis root options={{ lerp: 0.1, duration: 1.2 }}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {children as any}
+    // Lenis initializes in an effect and renders children directly in root mode.
+    // A fragment-to-provider switch would remount every page during hydration.
+    <ReactLenis root options={{ lerp: 0.1, duration: 1.2, smoothWheel: !reducedMotion }}>
+      {children}
     </ReactLenis>
   );
 }

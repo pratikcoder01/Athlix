@@ -8,18 +8,31 @@
     "server"
   ],
   "scripts": {
-    "install-all": "npm install && npm install --prefix client --legacy-peer-deps && npm install --prefix server --legacy-peer-deps",
+    "install-all": "npm ci --legacy-peer-deps",
     "client": "npm run dev --prefix client",
     "server": "npm run dev --prefix server",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "npm run build --prefix client",
-    "start": "npm start --prefix server"
+    "build": "npm run build --workspaces",
+    "start": "npm start --prefix server",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspace client",
+    "test": "npm run test --workspaces"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
   "overrides": {
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "express": {
+      "qs": "6.17.1"
+    },
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "1.14.7"
+    },
+    "postcss": "8.5.32"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }
