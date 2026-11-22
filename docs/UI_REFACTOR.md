@@ -3,7 +3,7 @@
 Implemented 2026-11-23 on `codex/athlix-market-ready`. This is a frontend
 presentation refactor of the existing pilot, not an expansion of its commercial
 or measurement claims. Review/CI outcomes are tracked on
-[PR #2](https://github.com/pratikcoder01/Athlix/pull/2).
+[PR #3](https://github.com/pratikcoder01/Athlix/pull/3).
 
 ## Discovery and preserved boundaries
 
