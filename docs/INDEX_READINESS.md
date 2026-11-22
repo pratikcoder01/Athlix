@@ -90,7 +90,11 @@ disconnects and role CLI connection options. The opt-in
 database: fresh startup fails without DDL, explicit synthetic provisioning passes,
 and replacing a required unique index with a nonunique one fails without repair.
 It skips without `TEST_MONGO_URI`; a local skip does not establish real MongoDB
-acceptance. No production database was connected or provisioned by this work.
+acceptance. The initial automated phase did not connect to a production database.
+The later owner-approved hosted inspection and additive 10-collection/21-index
+provisioning are recorded in [HOST_ROLLOUT_REVIEW.md](HOST_ROLLOUT_REVIEW.md);
+the actual production verifier passed against that catalog. This does not imply
+permission for future DDL or acceptance of a full production restore.
 
 The build-info format is supported from
 [MongoDB 4.2](https://github.com/mongodb/mongo/blob/r4.2.0/src/mongo/db/commands/list_indexes.cpp#L61-L86)

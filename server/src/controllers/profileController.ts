@@ -55,7 +55,9 @@ export const getProfileById = async (req: AuthenticatedRequest, res: Response, n
 
     res.status(200).json({
       success: true,
-      user,
+      // Schema-level select:true can add account controls to an inclusive
+      // query projection. Keep the public identity boundary explicit.
+      user: { _id: user._id, name: user.name, role: user.role },
       profile,
       coachProfile: coachInfo,
     });

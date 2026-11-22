@@ -1,11 +1,15 @@
 # Product feature status
 
-Updated 2026-11-15 for the latest source additions. The implementation column
+Updated 2026-11-22 for the latest source and hosted corrections. The implementation column
 describes code behavior and its regression/fixture coverage; it does **not** mean
 the feature was deployed or accepted against live services. Latest aggregate
 test counts and remote run outcomes are tracked in [verification](VERIFICATION.md)
 and [PR #2](https://github.com/pratikcoder01/Athlix/pull/2). Older green CI runs
-do not establish the result of the new database, emulator or container suites.
+do not establish the result of later source. The hosted pilot is deployed, with
+qualification still in progress: the approved backup/index preparation and
+network restriction completed; actual HTTPS acceptance found an internal-field
+projection issue that is now corrected in source. See
+[host rollout evidence](HOST_ROLLOUT_REVIEW.md) for precise live outcomes and limits.
 
 | Audience/area | Implemented source behavior | Remaining or gated |
 | --- | --- | --- |

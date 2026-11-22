@@ -1,10 +1,68 @@
 # Hosting rollout review
 
-Observed 2026-11-21, Asia/Calcutta. This is a concrete review packet, not approval
-to modify production or purchase services. The source candidate remains on
-`codex/athlix-market-ready`; `main` has not been merged by this work.
+Observed 2026-11-21, Asia/Calcutta. The owner approved controlled recovery,
+backup/schema preparation, the remaining release work and the specific Vercel
+configuration replacement/production promotion. No paid service was approved.
+Source remains on `codex/athlix-market-ready`; `main` has not been merged.
 
-## Verified hosting state
+## Approved execution and live evidence
+
+- The old Render API remains suspended. Its June build is a historical reference,
+  not an approved rollback: it contains the authorization defects fixed here.
+- The owner resumed the existing Atlas free cluster. A native metadata connection
+  verified the actual configured database without changing its namespace. An
+  encrypted Windows-current-user local backup passed decryption/hash verification
+  and `mongorestore --dryRun`; no plaintext archive was saved. This is not an
+  off-device disaster-recovery solution or a completed full production restore.
+- The reviewed additive operation created **10 collections and 21 indexes**.
+  All **20 model catalogs / 45 declared secondary indexes** then passed the exact
+  production verifier. No existing records, collections or indexes were removed.
+- A new cluster-scoped runtime database identity has CRUD access to the 18 API
+  collections and catalog-read privileges, without schema-management privileges.
+  Read-only effective-privilege and index checks passed. Existing users' roles
+  and credentials were not changed; the bounded inventory found no preexisting
+  privileged application accounts.
+- A new **free** Render API was built from immutable `8ded4414` at
+  `https://athlix-api-8ded-256083.onrender.com`. It uses repository-root locked
+  installation, Node 24, production mode, exact browser origins, secure cookies,
+  `/api/ready`, the restricted database credential and automatic deploys disabled.
+- Vercel's old public API address had legacy Secret classification. Its CLI
+  required explicit human confirmation before removal. After owner approval,
+  only `NEXT_PUBLIC_API_URL` was replaced as public Config for production and
+  preview; all other values and SSO protection were preserved. The promoted
+  production build `dpl_4pYAdxndfNV9StWcrf2jnxxe5KMZ` was READY at `8ded4414`.
+  Public compiled assets reference the new API and no longer reference the old
+  suspended service. All five credential-free host preflight contracts passed.
+- The new API's two provider-reported outbound ranges and temporary operator
+  access were added before network restriction. The owner removed only the
+  `0.0.0.0/0` rule in Atlas after single-entry CLI calls failed authentication.
+  The four narrower entries were preserved exactly; a fresh operator database
+  connection passed. A fresh backend deployment/connection must also be verified.
+
+Actual HTTPS Firebase/password and session acceptance used four new, clearly
+marked QA identities. Cookie issuance, rotation, replay rejection, role/session
+invalidation and identity checks passed before profile projection acceptance
+failed: Mongoose's `select: true` adds `sessionVersion` to an inclusion query.
+The source fix removes forced schema inclusion while retaining normal auth
+selection and serializes an explicit public user DTO. Do not weaken the privacy
+assertion to accept the internal field. The failed run cleaned up all QA users
+and their owned artifacts, retaining only three labeled role-audit records;
+original user records were untouched. Final corrected-run and deployment
+outcomes are recorded on [PR #2](https://github.com/pratikcoder01/Athlix/pull/2).
+
+Eight hosted public route/viewport visits passed main/heading, layout and password
+toggle checks with no runtime or hydration errors. The first mobile visit also
+showed a recoverable session timeout; subsequent direct/proxied no-cookie checks
+returned the expected 401 promptly. Navigation-aborted bootstrap bodies are not
+counted as successful session acceptance. The timeout copy is being made
+actionable while preserving bounded requests, error reporting and Retry.
+
+Operational receipts, account-bound backup, credential material and IP details
+remain in operator-private storage outside Git. Runtime secrets are never printed
+or committed. A temporary credential config used by the backup tool had verified
+user-only permissions and was removed after archive validation.
+
+## Initial discovery before approved recovery
 
 | Component | Observation |
 | --- | --- |
@@ -18,9 +76,9 @@ to modify production or purchase services. The source candidate remains on
 | Database targeting | The stored SRV URI has credentials but no explicit database path. Do not replace it with a guessed database name. A local read-only metadata attempt failed during SRV DNS resolution; no application documents were read or changed. |
 | CV hosting | No matching ATHLIX CV service was found in the authorized Render workspace. The supplied CV template has not been deployed. |
 
-Provider secret values were handled in memory only and are omitted here.
-No service environment, database record, deployment, billing setting or email
-template was changed by these inspections.
+The initial inspections below were read-only. The explicitly approved execution
+above supersedes their live-state observations. No billing setting or email
+template was changed.
 
 An earlier `vercel curl` preview-access attempt automatically created a project
 automation bypass credential. It was immediately revoked after matching its
@@ -29,7 +87,7 @@ secret and unchanged SSO protection. Do not use that command as a supposedly
 read-only probe. The CLI credentials authorized by the owner remain separate
 from deployment-protection settings.
 
-## Prepared backend rollout
+## Reusable rollout prerequisites
 
 Before changing the existing live service:
 

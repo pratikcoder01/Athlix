@@ -1,5 +1,64 @@
 # Verification record
 
+## Hosted profile-boundary correction (2026-11-22)
+
+Real hosted acceptance exposed an internal session counter in a public profile
+response. The cause was Mongoose's schema-level `select: true`, which also forces
+the field into name-only owner/author selections. That unnecessary flag is removed;
+ordinary and password-exclusion auth queries still select the real version, and
+socket queries request it explicitly. The profile handler also serializes an
+explicit `_id`/name/role DTO rather than a whole hydrated account document.
+
+Regression coverage uses actual Mongoose selection/hydration with only the driver
+transport replaced. Public projections omit controls; normal/auth/socket queries
+retain a nonzero version; the DTO rejects private fields even when supplied a
+hydrated account containing them. The projection regression failed before the
+schema correction. All **16 directory tests** passed afterward.
+
+The combined local suite passed **18 client + 428 server tests (446 total)**,
+with nine service-dependent skips. Client lint/type checking and the production
+build passed; server compilation passed. Timeout/network errors now have
+actionable recovery copy and a theme-aware Retry link, without changing request
+bounds, retries, cookie logic or logout. Corrected hosted-run and remote CI
+outcomes are tracked on PR #2; prior results below remain historical evidence.
+
+## Hosted recovery and release acceptance (2026-11-21)
+
+At `8ded4414`, [PR CI 44796878096](https://github.com/pratikcoder01/Athlix/actions/runs/44796878096)
+and [push CI 44796869350](https://github.com/pratikcoder01/Athlix/actions/runs/44796869350)
+both passed: **503 JavaScript tests** (18 client, 478 server/database, seven
+separate demo Firebase tests), 37 Python tests, all ten production browser suites,
+30 accessibility cases, 63 production and 189 development hydration visits.
+Actual synthetic backup/restore, native model execution, the mount-free image
+and constrained container/restart acceptance passed. Seven moderate dependency
+findings remain; the high/critical gate passed.
+
+The approved live database preparation subsequently passed a real encrypted
+local backup/decryption/hash/archive dry run, an additive 10-collection/21-index
+operation and the production catalog verifier against all 20 model catalogs.
+The owner removed the world-access rule after narrower provider/operator rules
+were added. A fresh restricted runtime-identity connection passed without DDL
+privileges; a fresh backend process must be checked as well. See
+[host rollout evidence](HOST_ROLLOUT_REVIEW.md) for the backup's account/device
+and consistency limits; this is not a full production restore claim.
+
+A new free backend and promoted production frontend were verified at `8ded4414`.
+Public assets use the new API; all five unauthenticated host contracts passed.
+Actual HTTPS QA passed 28 auth/session/privacy-boundary checks before revealing
+an internal `sessionVersion` field in the profile response. The source now uses
+an explicit public DTO and retains the original rejection assertion. This is a
+confirmed live failure followed by a source fix, not yet a passing corrected
+hosted acceptance claim. The failed run's four temporary identities/artifacts
+were cleaned up; three labeled role-audit entries remain as operational evidence.
+Later corrected-run/CI outcomes are tracked on PR #2.
+
+The small hosted browser smoke passed eight page/viewport heading/layout and
+password-toggle checks with zero runtime/hydration errors, but recorded a first
+mobile session timeout and navigation-aborted bootstrap requests. These results
+do not replace authenticated acceptance. Bounded requests and visible recovery
+remain; timeout copy is improved without claiming that free-host cold starts
+or every external provider workflow have been qualified.
+
 ## Release-safety increment (2026-11-21)
 
 Local checks for the current source additions passed **18 client + 425 server

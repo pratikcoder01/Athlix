@@ -1,5 +1,12 @@
 # Hosting and identity discovery
 
+Update 2026-11-22: the owner subsequently authorized live recovery and release
+work. A new free Render backend and the production Vercel frontend were deployed
+at `8ded4414`; actual cookie/Firebase acceptance then identified a profile
+projection issue, now corrected in source. Current evidence and remaining
+qualification are in [HOST_ROLLOUT_REVIEW.md](HOST_ROLLOUT_REVIEW.md). The dated
+read-only discovery below is retained as history, not current release status.
+
 Observed 2026-11-15 (Asia/Calcutta). These are read-only configuration findings,
 not a completed staging acceptance test. The owner has not identified a separate
 staging Firebase project, Vercel project or Render service. The existing Firebase

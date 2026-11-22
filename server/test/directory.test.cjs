@@ -116,6 +116,71 @@ test('profile details select public identity fields and only expose draft coachi
   assert.deepEqual(filters.at(-1), { userId: id, active: true });
 });
 
+test('public profile and name-only selections exclude account controls with real Mongoose queries', async () => {
+  const stored = { _id: new Types.ObjectId(id), name: 'Public athlete', role: 'athlete', sessionVersion: 7,
+    email: 'private@example.test', phone: '+15550101010', firebaseUid: 'private-test-provider-id',
+    password: 'synthetic-password-hash', isActive: true };
+  let selected, hydrated;
+  // Keep the actual query selection/hydration path; only replace the database
+  // transport with the inclusive projection a MongoDB server would return.
+  mock.method(User.collection, 'findOne', async (_filter, options) => {
+    selected = options.projection;
+    return Object.fromEntries(Object.entries(stored)
+      .filter(([key]) => selected[key] === 1 || (key === '_id' && selected._id !== 0)));
+  });
+  const findOne = User.findOne;
+  mock.method(User, 'findOne', function (...args) {
+    return findOne.apply(this, args).transform(document => { hydrated = document; return document; });
+  });
+  mock.method(Profile, 'findOne', () => ({ select: async () => null }));
+
+  const result = await invoke(profile.getProfileById, { params: { userId: id } });
+  assert.equal(result.res.code, 200);
+  assert.equal(selected.sessionVersion, undefined, 'public projections must not force in account controls');
+  assert.ok(hydrated instanceof User, 'the handler receives a real hydrated Mongoose document');
+  assert.equal(hydrated.sessionVersion, undefined);
+  const body = JSON.parse(JSON.stringify(result.res.body));
+  assert.deepEqual(body.user, { _id: id, name: stored.name, role: stored.role });
+  for (const field of ['email', 'phone', 'firebaseUid', 'password', 'isActive', 'sessionVersion']) {
+    assert.equal(Object.hasOwn(body.user, field), false, `${field} is private account metadata`);
+  }
+  const owner = await User.findOne({ _id: id }).select('name');
+  assert.equal(selected.sessionVersion, undefined, 'name-only owner/author populations must omit account controls');
+  assert.deepEqual(JSON.parse(JSON.stringify(owner)), { _id: id, name: stored.name });
+});
+
+test('normal, auth exclusion and explicit socket queries retain the actual session version', async () => {
+  const stored = { _id: new Types.ObjectId(id), name: 'Athlete', role: 'athlete', sessionVersion: 7,
+    isActive: true, password: 'synthetic-password-hash' };
+  mock.method(User.collection, 'findOne', async (_filter, { projection } = {}) => {
+    const inclusive = projection && Object.entries(projection).some(([key, included]) => key !== '_id' && included === 1);
+    return Object.fromEntries(Object.entries(stored).filter(([key]) => inclusive
+      ? projection[key] === 1 || (key === '_id' && projection._id !== 0) : projection?.[key] !== 0));
+  });
+  const ordinary = await User.findOne({ _id: id });
+  const authenticated = await User.findById(id).select('-password');
+  const socket = await User.findById(id).select('_id isActive sessionVersion').lean();
+  assert.ok(ordinary instanceof User); assert.ok(authenticated instanceof User);
+  assert.equal(ordinary.sessionVersion, 7);
+  assert.equal(authenticated.sessionVersion, 7); assert.equal(authenticated.password, undefined);
+  assert.equal(socket.sessionVersion, 7); assert.equal(socket.isActive, true);
+});
+
+test('profile response serializes only its public DTO even if a hydrated document contains private fields', async () => {
+  const document = User.hydrate({ _id: new Types.ObjectId(id), name: 'Athlete', role: 'athlete', sessionVersion: 7,
+    email: 'private@example.test', phone: '+15550101010', firebaseUid: 'private-test-provider-id',
+    password: 'synthetic-password-hash', isActive: true });
+  mock.method(User, 'findOne', () => ({ select: async () => document }));
+  mock.method(Profile, 'findOne', () => ({ select: async () => null }));
+  const result = await invoke(profile.getProfileById, { params: { userId: id } });
+  assert.equal(result.res.code, 200);
+  const body = JSON.parse(JSON.stringify(result.res.body));
+  assert.deepEqual(body.user, { _id: id, name: 'Athlete', role: 'athlete' });
+  for (const field of ['email', 'phone', 'firebaseUid', 'password', 'isActive', 'sessionVersion']) {
+    assert.equal(Object.hasOwn(body.user, field), false, `${field} is private account metadata`);
+  }
+});
+
 test('profile directory uses safe bounded aggregation and projects no private account metadata', async () => {
   const aggregate = mock.method(Profile, 'aggregate', pipeline => ({ exec: async () => [] }));
   const response = await invoke(profile.getProfiles, { query: { search: '.*', discipline: 'Karate', limit: '10', page: '3' } });
