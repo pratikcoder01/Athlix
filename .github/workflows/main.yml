@@ -95,6 +95,7 @@ jobs:
           exit "$failed"
         env:
           ATHLIX_E2E_BASE_URL: http://127.0.0.1:3100
+          ATHLIX_UI_ARTIFACT_DIR: ${{ runner.temp }}/athlix-ui-screenshots
       - name: Development hydration diagnostics
         if: always() && !cancelled() && steps.install_browser.outcome == 'success'
         shell: bash
@@ -112,8 +113,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dojo-ui-screenshots
-          path: ../.task-tools/screenshots/dojo-ui/*.png
-          include-hidden-files: true
+          path: ${{ runner.temp }}/athlix-ui-screenshots/*.png
           if-no-files-found: ignore
           retention-days: 7
       - name: Audit dependencies (high and critical block the check)

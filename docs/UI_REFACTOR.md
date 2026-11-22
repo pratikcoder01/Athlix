@@ -55,8 +55,8 @@ magnetic translations, ambient loops and springs were removed from the touched
 presentation surfaces; purposeful loading indicators honor reduced motion.
 
 The union of homepage/layout JavaScript files in the local production manifest
-fell from **276,093 to 259,937 gzip bytes** versus the preceding local build
-(**16,156 bytes / 5.9%**). This is an asset-compression estimate, excluding fonts,
+fell from **276,093 to 259,943 gzip bytes** versus the preceding local build
+(**16,150 bytes / 5.8%**). This is an asset-compression estimate, excluding fonts,
 images and server latency; it is not an LCP, throughput or field-performance claim.
 
 The hero SVG is explicitly **illustrative: no video is processed**. Guard and
@@ -76,10 +76,17 @@ client expected text. The correction supplies one concatenated string, matching
 The actual-component server-render test failed before the correction and passed
 afterward. No hydration suppression or client-only rendering workaround was added.
 
-The completed local checks passed **19 client regression tests**, lint,
+The completed local checks passed **20 client regression tests**, lint,
 TypeScript and the production build. Both initial dark/light browser runs
 retained their original server-rendered main with zero runtime/hydration errors;
 **63 delayed production visits** retained the original frame and main as well.
+
+The first CI development run also caught a last-bit difference in raw SVG arc
+coordinates between Node and Chromium. The illustrative arc endpoints now
+serialize to three decimal places. An actual-component regression reproduces
+the runtime difference with a tiny trigonometric perturbation; it failed before
+the correction and passes afterward. Angle readouts and CV calculations are
+unchanged, and development hydration warnings remain test failures.
 
 The browser suite checks pose/readout changes, keyboard workflow/FAQ interaction,
 native anchor clearance, CTA hierarchy, responsive layouts and runtime font
@@ -88,6 +95,11 @@ The existing automated accessibility suite now covers **20 routes in both
 themes (40 cases)**, including content/policy pages and mobile drawer focus.
 Existing role-workflow, auth-rewrite and retained-SSR-node regressions remain
 part of CI; UI screenshots are retained as a review artifact.
+
+CI writes review PNGs to an explicitly configured absolute runner-temporary
+directory and uploads only those PNGs for seven days. Local screenshots retain
+their operator-private default location. This avoids the artifact action's
+rejection of literal parent-directory paths without uploading other task files.
 
 Local compiled-asset interception is listener-free and uses synthetic API
 fixtures. Nine browser suites passed locally, including the new landing,

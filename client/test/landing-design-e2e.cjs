@@ -6,7 +6,9 @@ const { chromium } = require('playwright');
 const { installSession } = require('./helpers/auth-fixture.cjs');
 const base = process.env.ATHLIX_E2E_BASE_URL || 'http://127.0.0.1:3100';
 if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(base).hostname)) throw Error('Use an isolated loopback app');
-const output = path.resolve(__dirname, '../../../.task-tools/screenshots/dojo-ui');
+const output = process.env.ATHLIX_UI_ARTIFACT_DIR
+  ? path.resolve(process.env.ATHLIX_UI_ARTIFACT_DIR)
+  : path.resolve(__dirname, '../../../.task-tools/screenshots/dojo-ui');
 let browser;
 (async () => {
   await fs.mkdir(output, { recursive: true });

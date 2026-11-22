@@ -56,7 +56,8 @@ function angleArc(start: Point, joint: Point, end: Point, radius: number): strin
   const difference = Math.atan2(Math.sin(second - first), Math.cos(second - first));
   const from = { x: joint.x + Math.cos(first) * radius, y: joint.y + Math.sin(first) * radius };
   const to = { x: joint.x + Math.cos(first + difference) * radius, y: joint.y + Math.sin(first + difference) * radius };
-  return `M ${from.x} ${from.y} A ${radius} ${radius} 0 0 ${difference > 0 ? 1 : 0} ${to.x} ${to.y}`;
+  // Bound SVG serialization to sub-pixel precision across Node/browser math.
+  return `M ${from.x.toFixed(3)} ${from.y.toFixed(3)} A ${radius} ${radius} 0 0 ${difference > 0 ? 1 : 0} ${to.x.toFixed(3)} ${to.y.toFixed(3)}`;
 }
 
 export default function KataTelemetryPreview() {
