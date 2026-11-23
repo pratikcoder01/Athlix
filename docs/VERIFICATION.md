@@ -1,10 +1,46 @@
 # Verification record
 
-## Current deployed candidate (2026-11-22)
+## Account reliability and dependency cleanup (2026-11-23)
 
-The production Vercel frontend and new free Render API both run
-`24aafcc7f2e70e557e30cc4014fec5c8c2a9ac32`. The old vulnerable API remains
-suspended; the June artifact is not an approved safe rollback.
+[PR #3](https://github.com/pratikcoder01/Athlix/pull/3) contains the presentation
+refactor and subsequent account fixes. Its exact head checks are the authority
+for the current CI outcome; the dated results below do not qualify later source.
+
+The follow-up repairs destroyed reCAPTCHA retries, rejected phone role payloads,
+reconfirmation of consumed SMS codes, abandoned phone continuations and stale
+signed-in UI in other tabs after logout. Login/signup/phone exchanges, renewal
+and logout share a browser Web Lock; credential verification happens outside it,
+cookie exchanges and memory-auth commits inside it. Tests cover queued login/
+logout order, late provider results, failed logout and secret-free tab hints.
+
+Local verification passed a clean locked install, all client unit tests, client
+lint, both type checks and both builds. The server suite passed **428 tests**
+with **nine explicit local-service skips**. Real MongoDB, the demo Auth emulator
+and actual Next rewrite/browser checks are supplied to CI; their absence locally
+is not counted as passing integration coverage. The expanded emulator phone case
+checks incorrect codes, email-less identity isolation, renewal and approved roles.
+The two-tab browser fixture uses exact single-use cookie rotation and tests both
+BroadcastChannel and storage-event sign-out propagation.
+
+The targeted TypeScript-ESLint cleanup removed unused nodemon and resolved the
+remaining tooling advisory without framework upgrades. Both full and
+production-only audits reported **zero findings** on 23 November; see
+[dependency review](DEPENDENCY_REVIEW.md). All five unauthenticated public host
+contracts passed on that date. This probe does not identify the deployed SHA or
+qualify the new auth source against real providers.
+
+No production promotion, real SMS/email delivery or paid provider call is part
+of this milestone. The owner merged PR #2 on 22 November; PR #3 remains a separate
+review. Genuine provider delivery, reviewed policies/support ownership,
+off-device backup/full hosted restore and optional CV hosting/evaluation remain
+launch gates.
+
+## Hosted acceptance revision (2026-11-22)
+
+The production Vercel frontend and new free Render API were both verified at
+`24aafcc7f2e70e557e30cc4014fec5c8c2a9ac32` during this acceptance. The old
+vulnerable API was suspended; the June artifact is not an approved safe rollback.
+This dated record does not establish a later deployment's source revision.
 
 [PR run 44987854947](https://github.com/pratikcoder01/Athlix/actions/runs/44987854947)
 and [push run 44987850735](https://github.com/pratikcoder01/Athlix/actions/runs/44987850735)

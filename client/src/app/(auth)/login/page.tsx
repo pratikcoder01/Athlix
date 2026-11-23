@@ -19,6 +19,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
+import { withSessionLock } from '../../../lib/authSession';
 
 
 const loginSchema = z.object({
@@ -52,22 +53,27 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFields>({ resolver: zodResolver(loginSchema) });
 
+  const exchangeIdentity = (body: { idToken: string; name?: string }, errorMessage: string) => withSessionLock(async () => {
+    const res = await fetch('/api/auth/firebase', {
+      credentials: 'include',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || errorMessage);
+    setAuth(json.user, json.token);
+    router.push('/dashboard');
+  });
+
   const handleGoogleSignIn = async () => {
     setAuthError(null);
     try {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Google Authentication failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken }, 'Google Authentication failed');
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e.code !== 'auth/popup-closed-by-user') {
@@ -81,16 +87,7 @@ export default function LoginPage() {
     try {
       const cred = await signInAnonymously(auth);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Anonymous Authentication failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken, name: 'Anonymous Athlete' }, 'Anonymous Authentication failed');
     } catch (err: unknown) {
       const e = err as { message?: string };
       setAuthError(e.message || 'Anonymous Login failed.');
@@ -102,16 +99,7 @@ export default function LoginPage() {
     try {
       const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Authentication failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken }, 'Authentication failed');
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       const code = e.code || '';

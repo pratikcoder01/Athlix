@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { accessExpiresAt, renewSession } from '../lib/authSession';
+import { accessExpiresAt, applySessionSignOut, renewSession } from '../lib/authSession';
+import { subscribeSessionSignOut } from '../lib/sessionEvents';
 
 const sessionFailureMessage = (error: unknown) => {
   if (error instanceof Error) {
@@ -19,20 +20,24 @@ const sessionFailureMessage = (error: unknown) => {
 
 export default function AuthSessionProvider({ children }: { children: React.ReactNode }) {
   const [message, setMessage] = useState('');
+  const retry = useRef<() => Promise<void>>(async () => {});
   useEffect(() => {
     let active = true;
+    let generation = 0;
     let timer: ReturnType<typeof setTimeout>;
     try { localStorage.removeItem('athlix-auth'); } catch { /* Private storage can be disabled. */ }
     const schedule = (delay: number) => { clearTimeout(timer); timer = setTimeout(() => { void refresh(); }, delay); };
     const refresh = async () => {
+      clearTimeout(timer);
+      const requestGeneration = generation;
       try {
         const signedIn = await renewSession();
-        if (!active) return;
+        if (!active || requestGeneration !== generation) return;
         setMessage('');
         useAuthStore.getState().setSessionLoading(false);
         if (signedIn) schedule(12 * 60_000);
       } catch (error) {
-        if (!active) return;
+        if (!active || requestGeneration !== generation) return;
         useAuthStore.getState().setSessionLoading(false);
         const state = useAuthStore.getState();
         if (state.token && accessExpiresAt(state.token) <= Date.now()) state.logout();
@@ -40,16 +45,22 @@ export default function AuthSessionProvider({ children }: { children: React.Reac
         schedule(30_000);
       }
     };
+    retry.current = refresh;
     const unsubscribe = useAuthStore.subscribe((state, previous) => {
+      if (state.revision !== previous.revision && (state.lastSignInAt !== previous.lastSignInAt || (!state.token && previous.token))) generation++;
       if (state.token !== previous.token) {
         clearTimeout(timer);
         if (state.token) schedule(Math.max(1000, (accessExpiresAt(state.token) || Date.now() + 15 * 60_000) - Date.now() - 3 * 60_000));
+        else setMessage('');
       }
     });
     const focus = () => { const state = useAuthStore.getState(); if (state.token && accessExpiresAt(state.token) - Date.now() < 3 * 60_000) void refresh(); };
+    const unsubscribeSignOut = subscribeSessionSignOut(startedAt => {
+      if (applySessionSignOut(startedAt)) { generation++; clearTimeout(timer); setMessage(''); }
+    });
     window.addEventListener('focus', focus);
     void refresh();
-    return () => { active = false; clearTimeout(timer); unsubscribe(); window.removeEventListener('focus', focus); };
+    return () => { active = false; retry.current = async () => {}; clearTimeout(timer); unsubscribe(); unsubscribeSignOut(); window.removeEventListener('focus', focus); };
   }, []);
-  return <>{children}{message && <div role="alert" className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-xl rounded-xl border border-border bg-surface p-4 text-sm text-text-primary shadow-lg">{message}<button type="button" className="ml-3 [color:var(--brand-accent-text)] underline" onClick={() => { void renewSession().then(() => setMessage('')).catch(error => setMessage(sessionFailureMessage(error))); }}>Retry</button></div>}</>;
+  return <>{children}{message && <div role="alert" className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-xl rounded-xl border border-border bg-surface p-4 text-sm text-text-primary shadow-lg">{message}<button type="button" className="ml-3 [color:var(--brand-accent-text)] underline" onClick={() => { void retry.current(); }}>Retry</button></div>}</>;
 }

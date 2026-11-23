@@ -58,6 +58,42 @@ test('Firebase Auth Emulator identities, recovery, legacy linking and ATHLIX ses
     assert.equal((await User.findById(result.body.user.id)).firebaseUid, actor.uid);
     assert.equal((await request('/session', undefined, { Cookie: result.cookie })).status, 200);
   });
+  await t.test('phone-only emulator identities exchange without email or a client-selected role', async () => {
+    // This endpoint exists only on the guarded demo emulator. No SMS, reCAPTCHA
+    // challenge or production provider is contacted by this acceptance test.
+    async function phoneIdentity(phoneNumber) {
+      const sent = await firebase('sendVerificationCode', { phoneNumber });
+      assert.equal(sent.status, 200); assert.ok(sent.body.sessionInfo);
+      const codesResponse = await fetch(`${emulator}/emulator/v1/projects/demo-athlix/verificationCodes`, { signal: AbortSignal.timeout(10000) });
+      assert.equal(codesResponse.status, 200);
+      const codes = await codesResponse.json();
+      const pending = codes.verificationCodes.find(item => item.sessionInfo === sent.body.sessionInfo && item.phoneNumber === phoneNumber);
+      assert.match(pending?.code || '', /^\d{6}$/);
+      const wrong = await firebase('signInWithPhoneNumber', { sessionInfo: sent.body.sessionInfo, code: pending.code === '000000' ? '999999' : '000000' });
+      assert.equal(wrong.status, 400);
+      const signed = await firebase('signInWithPhoneNumber', { sessionInfo: sent.body.sessionInfo, code: pending.code });
+      assert.equal(signed.status, 200); identities.add(signed.body.localId);
+      return signed.body;
+    }
+    const firstIdentity = await phoneIdentity('+16505550101');
+    const first = await exchange(firstIdentity.idToken);
+    assert.equal(first.status, 200); assert.equal(first.body.user.role, 'athlete');
+    assert.equal(first.body.user.email, ''); assert.equal(first.body.user.phone, '+16505550101');
+    const stored = await User.findById(first.body.user.id);
+    assert.equal(stored.email, undefined); assert.equal(stored.firebaseUid, firstIdentity.localId);
+    const renewed = await request('/session', undefined, { Cookie: first.cookie });
+    assert.equal(renewed.status, 200); assert.equal(renewed.body.user.phone, '+16505550101');
+    // A second email-less identity must not collide with the sparse email index.
+    const secondIdentity = await phoneIdentity('+16505550102');
+    const second = await exchange(secondIdentity.idToken);
+    assert.equal(second.status, 200); assert.notEqual(second.body.user.id, first.body.user.id);
+    // Trusted-role setup is confined to the disposable test database. The phone
+    // client omits role entirely and must still receive an existing server role.
+    await User.updateOne({ _id: stored._id }, { $set: { role: 'coach' } });
+    const returning = await exchange((await phoneIdentity('+16505550101')).idToken);
+    assert.equal(returning.status, 200); assert.equal(returning.body.user.id, first.body.user.id);
+    assert.equal(returning.body.user.role, 'coach');
+  });
   await t.test('legacy linking refuses unverified email and accepts an emulator-verified identity', async () => {
     const actor = await identity();
     const legacy = await User.create({ name: 'Synthetic Legacy Athlete', email: actor.email, password: 'legacy-test-password', role: 'athlete' });

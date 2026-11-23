@@ -7,13 +7,20 @@ or measurement claims. Review/CI outcomes are tracked on
 
 ## Discovery and preserved boundaries
 
-The audit mapped all **30 page routes**, their auth/navigation destinations,
+For the presentation milestone (`d1365ef` through `a688403`), the audit mapped
+all **30 page routes**, their auth/navigation destinations,
 typed API adapters and shared components before edits. `/gyms` still redirects
 to `/academies`; existing `#features` and `#how` anchors remain. No backend,
 computer-vision service, session store, API adapter or auth-provider logic was
 changed. Phone inputs received explicit label associations; workspace-interest
 buttons now expose their selected state and clarify that professional access
 requires separate review.
+
+The subsequent account-reliability work in the same review branch intentionally
+changes auth exchange/session handlers and removes that unsaved phone role
+selector. Its scope and qualification are recorded in
+[session security](SESSION_SECURITY.md); the preservation statements above
+describe the earlier presentation milestone.
 
 The root keeps Query, AuthSession, Socket, Theme and PageTransition providers
 in their existing order, with the toast container. The module-level
@@ -24,7 +31,8 @@ mobile drawer's focus trap, Escape behavior and focus return.
 Resolved baseline: Next **15.5.29**, React **19.1.0**, Tailwind **4.3.5**,
 Framer Motion **12.42.0**, Lucide **1.21.0**, TanStack Query **5.101.0**,
 Zustand **5.0.14** and Socket.IO client **4.8.3**. Retained package versions
-were not upgraded during dependency cleanup.
+were not upgraded during the presentation dependency cleanup. The subsequent
+TypeScript-ESLint tooling refresh is recorded in [dependency review](DEPENDENCY_REVIEW.md).
 
 ## Presentation system
 

@@ -1,7 +1,7 @@
 # Session lifecycle and identity recovery
 
-Updated 2026-11-14. These changes are implemented source and test behavior, not
-an assertion that a live Firebase/hosting deployment has been accepted.
+Updated 2026-11-23. Source verification and the earlier hosted acceptance are
+separate; a later source change requires its own release and hosted checks.
 
 ## Credentials and revocation
 
@@ -93,9 +93,49 @@ across tabs where supported. A concurrent cookie rotation in a browser without
 Web Locks fails closed and can require sign-in. Revisions prevent a delayed
 bootstrap from clearing a new login or restoring an account after sign-out.
 
+All browser Firebase exchanges (email, Google, guest and phone), renewal and
+logout use the same Web Lock. Provider popup/SMS operations happen outside it;
+the server exchange, response parsing and memory-auth commit happen inside it.
+Exchange requests have a 15-second abort deadline. Logout captures its timestamp
+and access token after acquiring the lock, so queued operations follow actual
+cookie-write order. Confirmed logout then notifies other tabs through a same-origin
+BroadcastChannel. A storage-event fallback briefly writes
+and removes a nonsecret hint when BroadcastChannel is unavailable. Messages
+contain only the sign-out type and operation-start timestamp; no JWT, cookie,
+account identifier or profile crosses either transport. Receiving tabs clear
+memory auth, protected UI and the existing socket subscription. Failed server
+logout neither clears auth nor sends a success hint. If both browser transports
+are unavailable, immediate cross-tab UI propagation cannot be guaranteed;
+server revocation still applies.
+
+An in-memory explicit-sign-in timestamp prevents an older pending sign-out hint
+from clearing a newer explicit login. Automatic renewal does not count as a new
+sign-in. Provider continuations are invalidated when identity changes, so a late
+renewal success/error cannot recreate old retry banners or timers after sign-out.
+This coordinates ATHLIX's own client operations where Web Locks is supported;
+independent callers and browsers without that API do not share this guarantee.
+The server, rather than a browser hint, authorizes requests.
+
 This limits persistent token exposure; it does not eliminate XSS. Malicious
 same-origin script can still use a current account or make cookie-authorized
 requests. CSP/content validation and operational controls remain relevant.
+
+## Phone sign-in recovery
+
+Phone login creates and awaits reCAPTCHA only when the user requests a code.
+A failed initialization/send destroys that verifier and the next attempt creates
+a fresh instance. Duplicate requests are guarded synchronously. Changing the
+number or leaving the page invalidates pending Firebase continuations and aborts
+the ATHLIX exchange. An already issued server cookie cannot be undone by aborting
+a browser request.
+
+After successful code confirmation, the page retains that verified Firebase
+user only in the current attempt's memory. Token/exchange retries reuse it rather
+than confirming a consumed SMS code again. Changing the number, code expiry or
+unmount clears the retained identity. Authentication sends no client-selected
+role: new users become athletes and existing approved roles come from the server.
+This repairs the former selector's rejected professional-role payloads without
+relaxing the server's athlete-only public-account rule.
 
 ## Recovering interrupted account creation
 
@@ -112,7 +152,11 @@ transactional guarantee that an unsuccessful signup leaves no account record.
   global revocation, provider outage and idempotent profile recovery regressions
   using controlled model/provider boundaries.
 - `client/test/auth-session.test.cjs`: actual helper/store renewal races, memory
-  state, authorization failures and truthful logout behavior.
+  state, authorization failures, cross-tab hint transports, stale provider
+  continuations and truthful logout behavior.
+- `client/test/phone-auth.test.cjs`: actual-page regressions with controlled
+  Firebase/network boundaries, including fresh verifier retries, consumed-code
+  recovery, role-free payloads and abandoned-operation cleanup. No SMS is sent.
 - `client/test/auth-proxy.test.cjs`: rejects missing production and unsafe
   upstream configuration.
 - `server/test/sessions.integration.test.cjs`: opt-in real loopback MongoDB
@@ -120,17 +164,23 @@ transactional guarantee that an unsuccessful signup leaves no account record.
 - `server/test/firebase-emulator.integration.test.cjs`: demo-only Auth emulator
   and loopback MongoDB acceptance for sign-in/exchange, verified legacy linking,
   password recovery/old-password refusal, disabled/revoked identities and logout
-  replay. It rejects real project IDs and credential files. This proves emulator
+  replay, plus phone-only identities without email/client roles. The phone case
+  reads codes from the emulator-only REST endpoint, checks incorrect-code failure,
+  sparse-email isolation, cookie renewal and preserved server-assigned roles.
+  It rejects real project IDs and credential files. This proves emulator
   contracts when its CI run succeeds; it does not prove email delivery or live
   provider/hosting configuration. No external recovery email is delivered.
 
 Windows Application Control prevents the local MongoDB executable, so the real
 database/emulator suites are explicitly skipped locally and supplied to CI.
-Staging must still prove HTTPS cookie round-trip through the actual hosting
-proxy, correct identity domains, genuine recovery-email delivery, sessions across
-tabs/restarts, indexes and rollback compatibility before production rollout.
+The earlier hosted acceptance proved HTTPS login/cookie reload/logout and the
+actual recovery UI at `24aafcc`; see [host evidence](HOST_ROLLOUT_REVIEW.md).
+That result does not qualify these later source changes. Genuine recovery-email,
+Google/phone delivery, broader browser/restart behavior and operational rollback
+acceptance remain release work.
 
 Primary references: [Next rewrites](https://nextjs.org/docs/app/api-reference/config/next-config-js/rewrites),
 [Firebase persistence](https://firebase.google.com/docs/auth/web/auth-state-persistence),
 [cookie attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie),
-[Firebase Auth emulator](https://firebase.google.com/docs/emulator-suite/connect_auth).
+[Firebase Auth emulator](https://firebase.google.com/docs/emulator-suite/connect_auth),
+[phone-code emulator REST endpoint](https://firebase.google.com/docs/reference/rest/auth#retrieve_sms_verification_codes).

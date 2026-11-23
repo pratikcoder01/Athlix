@@ -13,6 +13,7 @@ import {
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
+import { withSessionLock } from '../../../lib/authSession';
 
 
 const signupSchema = z.object({
@@ -50,22 +51,27 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
+  const exchangeIdentity = (body: { idToken: string; name?: string }, errorMessage: string) => withSessionLock(async () => {
+    const res = await fetch('/api/auth/firebase', {
+      credentials: 'include',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || errorMessage);
+    setAuth(json.user, json.token);
+    router.push('/dashboard');
+  });
+
   const handleGoogleSignIn = async () => {
     setAuthError(null);
     try {
       const provider = new GoogleAuthProvider();
       const firebaseUserCred = await signInWithPopup(auth, provider);
       const idToken = await firebaseUserCred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Google Registration failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken }, 'Google Registration failed');
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e.code !== 'auth/popup-closed-by-user') {
@@ -79,16 +85,7 @@ export default function SignupPage() {
     try {
       const firebaseUserCred = await signInAnonymously(auth);
       const idToken = await firebaseUserCred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Anonymous Registration failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken, name: 'Anonymous Athlete' }, 'Anonymous Registration failed');
     } catch (err: unknown) {
       const e = err as { message?: string };
       setAuthError(e.message || 'Anonymous Registration failed.');
@@ -101,16 +98,7 @@ export default function SignupPage() {
       const firebaseUserCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(firebaseUserCred.user, { displayName: data.name });
       const idToken = await firebaseUserCred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: data.name }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Registration failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken, name: data.name }, 'Registration failed');
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e.code === 'auth/email-already-in-use') {
