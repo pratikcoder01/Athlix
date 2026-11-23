@@ -1,4 +1,6 @@
-# Dependency and CI review — 13 November 2026
+# Dependency and CI review
+
+Updated 23 November 2026. Historical findings below retain their original dates.
 
 Use Node.js 24 (`.nvmrc`) and the **root** workspace lockfile. Install with
 `npm ci --legacy-peer-deps`; the old independent client/server lockfiles were
@@ -52,16 +54,24 @@ cloud-provider acceptance test. A clean install and full Next production build
 remain required release checks; consult the current milestone log for their
 actual outcomes.
 
-## Remaining dependency finding
+## Development-tool cleanup (23 November 2026)
 
-Seven moderate audit entries are the development-tool chain around minimatch
-10.2.x: TypeScript-ESLint packages and nodemon. The advisory is
-[glob-parts amplification](https://github.com/advisories/GHSA-g3hv-75wg-m249).
-Current parents constrain minimatch below its patched 11.0.1 major. The review
-does not silently force that major across tools. Avoid accepting untrusted glob
-patterns in development automation; update reviewed parent dependencies or test
-a dedicated migration before removing this finding. These packages are tooling,
-not a declaration that the advisory is harmless in every environment.
+The remaining seven moderate entries were the TypeScript-ESLint/nodemon chain
+around minimatch 10.2.x and the
+[glob-parts amplification advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+TypeScript-ESLint's [8.73.0 release](https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.73.0)
+now [declares minimatch ^11.0.1](https://github.com/typescript-eslint/typescript-eslint/blob/v8.73.0/packages/typescript-estree/package.json).
+The compatible v8 graph was refreshed from 8.62.0 to 8.73.0, resolving minimatch
+11.0.9. Unused nodemon was removed; the server development command already uses
+ts-node-dev. No forced major override was added.
+
+Only those ten TypeScript-ESLint packages and their semver child changed retained
+versions; eleven obsolete lock paths were removed and two added. Next.js,
+Firebase, Tailwind and the existing overrides did not change. A clean root
+`npm ci --legacy-peer-deps`, client lint and dependency-graph validation passed.
+Both full `npm audit --json` and production-only `npm audit --omit=dev --json`
+reported **zero findings in all severities** on 23 November. This is a dated
+dependency audit result, not a claim that the application has no security defects.
 
 ## Provider client reliability
 
