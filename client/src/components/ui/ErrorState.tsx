@@ -21,11 +21,11 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center text-center p-8 border border-danger/10 rounded-2xl bg-danger-bg/5 max-w-md mx-auto select-none',
+        'flex flex-col items-center justify-center text-center p-8 border border-danger/10 rounded-lg bg-danger-bg/5 max-w-md mx-auto select-none',
         className
       )}
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-danger-bg border border-danger/25 mb-4 shrink-0 shadow-sm shadow-danger/10">
+      <div className="flex items-center justify-center w-16 h-16 rounded-md bg-danger-bg border border-danger/25 mb-4 shrink-0  ">
         <AlertCircle className="w-8 h-8 text-danger" />
       </div>
       <h3 className="text-base font-bold font-display tracking-tight text-text-primary mb-1">

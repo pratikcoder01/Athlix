@@ -25,25 +25,23 @@ export const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(({
   };
 
   const variantStyles = {
-    default: 'glass-panel border border-border',
-    glow: 'glass-panel-strong border border-border-strong shadow-glow',
-    interactive: 'glass-panel border border-border hover:border-accent hover:bg-surface-hover cursor-pointer transition-all duration-300',
-    elevated: 'bg-surface-elevated border border-border shadow-lg',
+    default: 'bg-surface border border-border',
+    glow: 'bg-surface border border-border-strong',
+    interactive: 'bg-surface border border-border hover:border-border-strong transition-colors duration-200',
+    elevated: 'bg-surface-subtle border border-border-strong',
   };
 
   return (
     <motion.div
       ref={ref}
       className={cn(
-        'relative overflow-hidden rounded-2xl md:rounded-3xl',
+        'relative overflow-hidden rounded-xl',
         paddingStyles[padding],
         variantStyles[variant],
         className
       )}
       {...props}
     >
-      {/* Subtle top inner highlight for depth */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
       {children}
     </motion.div>
   );

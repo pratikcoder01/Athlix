@@ -1,28 +1,33 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Space_Grotesk, Sora } from 'next/font/google';
+import { DM_Sans, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '../context/QueryProvider';
 import AuthSessionProvider from '../context/AuthSessionProvider';
 import SocketProvider from '../context/SocketContext';
 import ThemeProvider from '../components/shared/ThemeProvider';
-import SmoothScrollProvider from '../components/shared/SmoothScrollProvider';
 import PageTransitionProvider from '../components/shared/PageTransitionProvider';
 import { ToastContainer } from '../components/ui/Toast';
 import { cn } from '../lib/utils';
 
-const inter = Inter({
+const bodyFont = DM_Sans({
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
   variable: '--font-athlix-sans',
   display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
   variable: '--font-athlix-mono',
   display: 'swap',
 });
-const displayFont = Space_Grotesk({ subsets: ['latin'], variable: '--font-athlix-display', display: 'swap' });
-const numberFont = Sora({ subsets: ['latin'], variable: '--font-athlix-numbers', display: 'swap' });
+const displayFont = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-athlix-display',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'ATHLIX | Combat Sports Development Pilot',
@@ -42,20 +47,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn('dark', inter.variable, jetbrainsMono.variable, displayFont.variable, numberFont.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn('dark', bodyFont.variable, jetbrainsMono.variable, displayFont.variable)} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans text-text-primary antialiased selection:bg-accent selection:text-black" suppressHydrationWarning>
         <QueryProvider>
           <AuthSessionProvider>
-          <SocketProvider>
-            <ThemeProvider>
-              <SmoothScrollProvider>
+            <SocketProvider>
+              <ThemeProvider>
                 <PageTransitionProvider>
                   {children}
                 </PageTransitionProvider>
                 <ToastContainer />
-              </SmoothScrollProvider>
-            </ThemeProvider>
-          </SocketProvider>
+              </ThemeProvider>
+            </SocketProvider>
           </AuthSessionProvider>
         </QueryProvider>
       </body>

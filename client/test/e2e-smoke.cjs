@@ -143,8 +143,60 @@ async function themeTests() {
   await page.reload();await page.waitForFunction(()=>!document.documentElement.classList.contains('dark'));
   assert.deepEqual(errors,[]);console.log('PASS default dark theme and persisted explicit light preference without hydration errors');await context.close();
 }
+async function mobileNavigationTests() {
+  const {context,page}=await pageFor('athlete');let logoutAttempts=0;
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.setViewportSize({width:430,height:900});
+  await page.route('**/api/auth/logout',route=>{
+    logoutAttempts++;
+    return logoutAttempts===1
+      ? route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({success:false})})
+      : route.fallback();
+  });
+  try {
+    await page.goto(base,{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>['dark','light'].includes(document.documentElement.style.colorScheme));
+    await page.evaluate(()=>{
+      window.__backgroundClicks=0;document.body.style.overflow='auto';
+      const action=document.createElement('button');action.id='background-action-fixture';action.textContent='Background action fixture';
+      action.style.cssText='position:fixed;left:6px;top:400px;width:30px;height:40px;z-index:9999';
+      action.onclick=()=>{window.__backgroundClicks++;};document.querySelector('main').appendChild(action);
+    });
+    const open=page.getByRole('button',{name:'Open menu',exact:true});
+    const dialog=page.getByRole('dialog',{name:'Navigation menu',exact:true});
+    await open.click();await visible(dialog);
+    await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Close menu');
+    assert.equal(await dialog.evaluate(node=>node.matches(':modal')),true,'The drawer must use a genuine modal boundary');
+    const panel=await dialog.locator('aside').boundingBox();assert.ok(panel.x>36,'430px must exercise the exposed strip beside the narrow panel');
+    assert.equal(await page.evaluate(()=>document.body.style.overflow),'hidden');
+    assert.equal(await page.evaluate(()=>{document.getElementById('background-action-fixture').focus();return document.getElementById('athlix-mobile-menu').contains(document.activeElement);}),true,'Background controls must be inert to focus');
+    await page.mouse.click(20,420);
+    await dialog.waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>window.__backgroundClicks),0,'A click beside the panel must never activate the page behind it');
+    await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Open menu');
+    assert.equal(await page.evaluate(()=>document.body.style.overflow),'auto');
+    await page.getByRole('button',{name:'Background action fixture',exact:true}).click();
+    assert.equal(await page.evaluate(()=>window.__backgroundClicks),1,'Closing the modal must restore background interaction');
+    await open.click();await visible(dialog);
+    await dialog.getByRole('button',{name:'Log out',exact:true}).click();
+    const failure=dialog.getByRole('alert').filter({hasText:'Server sign-out could not be confirmed'});await visible(failure);
+    assert.equal(await dialog.evaluate(node=>node.matches(':modal')),true,'Failed sign-out must keep the drawer usable');
+    assert.equal(logoutAttempts,1);assert.equal(await dialog.getByRole('button',{name:'Log out',exact:true}).isDisabled(),false);
+    await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
+    await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Open menu');
+    await open.click();await visible(dialog);await visible(dialog.getByRole('alert'));
+    await dialog.getByRole('button',{name:'Log out',exact:true}).click();await dialog.waitFor({state:'hidden'});
+    assert.equal(logoutAttempts,2);assert.equal(await page.evaluate(()=>document.body.style.overflow),'auto');
+    await open.click();await visible(dialog);await visible(dialog.getByRole('link',{name:'Log in',exact:true}));
+    assert.equal(await dialog.getByRole('button',{name:'Log out',exact:true}).count(),0);
+    await dialog.getByRole('button',{name:'Close menu',exact:true}).click();await dialog.waitFor({state:'hidden'});
+    await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Open menu');
+    assert.deepEqual(errors,[]);
+    console.log('PASS mobile430 modal background isolation, visible failed logout, retry, Escape and focus/scroll restoration');
+  } finally { await context.close(); }
+}
 (async()=>{
   await fs.mkdir(output,{recursive:true});browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
-  try{if(process.env.ATHLIX_E2E_SCOPE==='video'){await videoTests();}else{await recoveryTests();await tournamentTests();await videoTests();await responsiveTests();await themeTests();}}
+  try{if(process.env.ATHLIX_E2E_SCOPE==='video'){await videoTests();}else if(process.env.ATHLIX_E2E_SCOPE==='mobile-navigation'){await mobileNavigationTests();}else{await recoveryTests();await tournamentTests();await videoTests();await responsiveTests();await themeTests();await mobileNavigationTests();}}
   finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

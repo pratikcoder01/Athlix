@@ -89,12 +89,13 @@ jobs:
           trap 'kill "$app_pid" 2>/dev/null || true' EXIT
           node -e 'const deadline=Date.now()+60000; (async()=>{while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3100");if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,500));}throw Error("Built client did not become ready");})().catch(e=>{console.error(e.message);process.exit(1)})'
           failed=0
-          for suite in e2e-smoke auth-proxy-e2e booking-e2e workspace-e2e academy-operations-e2e training-workspace-e2e tournament-divisions-e2e community-moderation-e2e accessibility-e2e hydration-production-e2e; do
+          for suite in e2e-smoke auth-proxy-e2e booking-e2e workspace-e2e academy-operations-e2e training-workspace-e2e tournament-divisions-e2e community-moderation-e2e landing-design-e2e accessibility-e2e hydration-production-e2e; do
             if ! node "client/test/$suite.cjs"; then failed=1; fi
           done
           exit "$failed"
         env:
           ATHLIX_E2E_BASE_URL: http://127.0.0.1:3100
+          ATHLIX_UI_ARTIFACT_DIR: ${{ runner.temp }}/athlix-ui-screenshots
       - name: Development hydration diagnostics
         if: always() && !cancelled() && steps.install_browser.outcome == 'success'
         shell: bash
@@ -107,6 +108,14 @@ jobs:
           ATHLIX_E2E_BASE_URL=http://127.0.0.1:3101 node client/test/hydration-debug.cjs
         env:
           ATHLIX_HYDRATION_PASSES: ${{ job.status == 'success' && '9' || '1' }}
+      - name: Retain UI review screenshots
+        if: always() && !cancelled() && steps.install_browser.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dojo-ui-screenshots
+          path: ${{ runner.temp }}/athlix-ui-screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Audit dependencies (high and critical block the check)
         run: npm audit --audit-level=high --json > npm-audit.json
       - name: Retain dependency audit results

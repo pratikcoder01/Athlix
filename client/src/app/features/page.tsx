@@ -37,7 +37,7 @@ const features = [
     body: 'Profile APIs store basic athlete details. Training history, weight logs, and instructor-verified promotions still need a complete workflow. The adjacent timeline is an illustrative mockup.',
     bullets: ['Saved athlete profiles', 'Private training journal and saved plans', 'No credential-verification claim'],
     visual: (
-      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
+      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
           <span>TIMELINE — LUCAS VIANNA</span>
           <span className="text-primary font-bold">12-WEEK STREAK</span>
@@ -46,17 +46,17 @@ const features = [
           <div className="relative">
             <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-border-strong border border-background" />
             <span className="font-bold text-text-primary">Gi Sparring Log Submitted</span>
-            <span className="block text-[9px] text-text-tertiary mt-0.5">3 hrs logged · Coach Thiago</span>
+            <span className="block text-[10px] text-text-tertiary mt-0.5">3 hrs logged · Coach Thiago</span>
           </div>
           <div className="relative">
             <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-border-strong border border-background" />
             <span className="font-bold text-text-primary">Weight Check: 77.2 kg</span>
-            <span className="block text-[9px] text-text-tertiary mt-0.5">On target for competition</span>
+            <span className="block text-[10px] text-text-tertiary mt-0.5">On target for competition</span>
           </div>
           <div className="relative">
-            <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-primary border border-background animate-pulse" />
+            <span className="absolute -left-[16.5px] top-1 w-2 h-2 rounded-full bg-primary border border-background" />
             <span className="font-bold text-primary">3rd Stripe — Blue Belt Awarded</span>
-            <span className="block text-[9px] text-text-secondary mt-0.5">Verified by Prof. Thiago Valente</span>
+            <span className="block text-[10px] text-text-secondary mt-0.5">Verified by Prof. Thiago Valente</span>
           </div>
         </div>
       </div>
@@ -72,10 +72,10 @@ const features = [
     body: 'Coach-profile and booking APIs are being tested. Some directory screens show examples. Confirm availability with the coach before relying on a reservation; payment collection is not implemented.',
     bullets: ['Booking API foundation', 'Example directory screens', 'No payment collection'],
     visual: (
-      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
+      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
           <span>COACH AVAILABILITY GRID</span>
-          <span className="text-success font-bold">EXAMPLE</span>
+          <span className="text-text-secondary font-bold">EXAMPLE</span>
         </div>
         <div className="flex flex-col gap-3">
           {[
@@ -86,7 +86,7 @@ const features = [
             <div key={c.name} className="flex justify-between items-center p-2.5 bg-background/50 border border-border/30 rounded-sm">
               <div>
                 <span className="font-bold text-text-primary block">{c.name}</span>
-                <span className="text-[9px] text-text-tertiary">{c.slots} this week</span>
+                <span className="text-[10px] text-text-tertiary">{c.slots} this week</span>
               </div>
               <span className="text-primary font-bold">{c.rate}</span>
             </div>
@@ -105,7 +105,7 @@ const features = [
     body: 'Approved organizers can manage events and bracket updates through authenticated APIs. A single-elimination pilot is the initial target. Advanced formats and competition-rule validation remain roadmap work.',
     bullets: ['Athlete event registration', 'Organizer-owned updates', 'Advanced formats planned'],
     visual: (
-      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
+      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
           <span>LIVE MATCH PORTAL</span>
           <span className="text-primary font-bold">SEMIFINALS</span>
@@ -115,14 +115,14 @@ const features = [
             <span className="font-bold text-text-primary">Lucas Vianna</span>
             <span className="text-xs text-primary font-bold">WIN — Armbar</span>
           </div>
-          <div className="p-2.5 bg-background/30 border border-border/20 rounded-sm opacity-50 flex justify-between items-center">
+          <div className="p-2.5 bg-background/30 border border-border/20 rounded-sm text-text-secondary flex justify-between items-center">
             <span>John Doe</span>
             <span className="text-xs">LOSS</span>
           </div>
           <div className="mt-3 h-px w-full bg-border/40" />
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm flex justify-between items-center">
             <span className="font-bold text-text-primary">Garrison Thorne</span>
-            <span className="text-xs text-accent-gold font-bold">FINAL NEXT</span>
+            <span className="text-xs text-text-secondary font-bold">FINAL NEXT</span>
           </div>
         </div>
       </div>
@@ -138,7 +138,7 @@ const features = [
     body: 'Browse published academy listings. Approved owners can edit their listing, manage private member records, record daily attendance, and review saved operational counts. Credentials and customer outcomes still need independent validation.',
     bullets: ['Published academy directory', 'Private member and attendance tools', 'Approved professional access'],
     visual: (
-      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
+      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
           <span>API RESPONSE — /athlete/:id</span>
           <span className="text-primary font-bold">HTTPS/REST</span>
@@ -166,19 +166,19 @@ const features = [
     body: 'Experimental AI helpers require a configured provider and human review. Kata feedback uses 2D pose estimates and rules, with camera and confidence limits. No independent model-accuracy result is available.',
     bullets: ['Pose-based movement heuristics', 'Provider-dependent text suggestions', 'Coach review required'],
     visual: (
-      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs shadow-inner">
+      <div className="bg-secondary border border-border p-6 rounded-sm font-mono text-xs">
         <div className="flex justify-between items-center text-[10px] text-text-secondary border-b border-border/40 pb-3 mb-4">
           <span>ILLUSTRATIVE AI OUTPUT</span>
-          <span className="text-accent-gold font-bold">EXAMPLE</span>
+          <span className="text-text-secondary font-bold">EXAMPLE</span>
         </div>
         <div className="flex flex-col gap-3">
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
-            <span className="text-[9px] text-text-secondary block">COACH MATCH COMPATIBILITY</span>
+            <span className="text-[10px] text-text-secondary block">COACH MATCH COMPATIBILITY</span>
             <span className="font-bold text-text-primary block mt-0.5">Thiago Valente: Sample suggestion</span>
-            <span className="text-[8px] text-text-tertiary block mt-0.5 font-bold">Fits availability, 77kg weight class, BJJ focus</span>
+            <span className="text-[10px] text-text-tertiary block mt-0.5 font-bold">Fits availability, 77kg weight class, BJJ focus</span>
           </div>
           <div className="p-2.5 bg-background/50 border border-border/30 rounded-sm">
-            <span className="text-[9px] text-text-secondary block">DRILL ROUTINE GENERATED</span>
+            <span className="text-[10px] text-text-secondary block">DRILL ROUTINE GENERATED</span>
             <span className="font-bold text-text-primary block mt-0.5">5 Guard Retention drills (Purple Belt BJJ)</span>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function FeaturesPage() {
           {/* Left: heading block */}
           <div className="lg:col-span-6">
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
               className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-3 py-1 text-[10px] font-bold text-primary tracking-widest uppercase mb-6 font-mono"
@@ -257,14 +257,14 @@ export default function FeaturesPage() {
           variants={fadeUp(0.3)}
           initial="hidden"
           animate="visible"
-          className="mt-16 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 border-t border-border/60 pt-10"
+          className="mt-14 flex flex-wrap gap-x-6 gap-y-4 border-y border-border py-6"
         >
           {capabilities.map(({ icon: Icon, label }) => (
             <div
               key={label}
-              className="flex flex-col items-center gap-2 p-4 bg-secondary border border-border rounded-sm hover:border-primary/40 transition-colors"
+              className="flex items-center gap-2.5"
             >
-              <div className="h-8 w-8 rounded-sm bg-surface flex items-center justify-center border border-border/30">
+              <div className="flex h-6 w-6 items-center justify-center">
                 <Icon className="h-4 w-4 text-primary" />
               </div>
               <span className="text-[10px] font-bold tracking-wider text-text-secondary uppercase font-mono text-center">
@@ -277,15 +277,15 @@ export default function FeaturesPage() {
 
       {/* ── Alternating feature showcases ── */}
       <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8 border-t border-border/60">
-        <div className="flex flex-col gap-28 pt-20">
+        <div className="flex flex-col gap-16 pt-16">
           {features.map(({ id, num, label, icon: Icon, heading, body, bullets, visual, flip }) => (
             <motion.div
               key={id}
               id={id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
               className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center"
             >
               {/* Text block */}
@@ -293,7 +293,7 @@ export default function FeaturesPage() {
                 <div className="h-9 w-9 rounded-sm bg-surface flex items-center justify-center border border-border/30 mb-4">
                   <Icon className="h-4.5 w-4.5 text-primary" />
                 </div>
-                <span className="text-[9px] font-bold tracking-widest text-primary uppercase font-mono">
+                <span className="text-[10px] font-bold tracking-widest text-primary uppercase font-mono">
                   {num}. {label}
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-display font-black text-text-primary uppercase tracking-wide mt-2">
@@ -314,7 +314,7 @@ export default function FeaturesPage() {
 
               {/* Visual block */}
               <div className={`lg:col-span-6 ${flip ? 'order-2 lg:order-1' : ''}`}>
-                <p className="text-xs font-semibold text-accent mb-3">Illustrative mockup · sample content</p>
+                <p className="font-mono text-xs font-medium text-text-secondary mb-3">Illustrative mockup · sample content</p>
                 {visual}
               </div>
             </motion.div>
@@ -326,14 +326,14 @@ export default function FeaturesPage() {
       <section className="border-t border-border bg-secondary">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
             className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
           >
             <div className="lg:col-span-8">
-              <span className="text-[9px] font-bold tracking-widest text-primary uppercase font-mono">
+              <span className="text-[10px] font-bold tracking-widest text-primary uppercase font-mono">
                 Help validate a focused pilot
               </span>
               <h2 className="mt-2 text-3xl sm:text-4xl font-display font-black uppercase text-text-primary tracking-tight">

@@ -15,14 +15,14 @@ export default function BlogPage() {
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
         <div className="max-w-3xl mb-14">
-          <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-xs font-semibold text-accent mb-6"><BookOpen className="w-4 h-4" /> Product notes</p>
-          <h1 className="text-4xl md:text-6xl font-extrabold font-display tracking-tight mb-5">From the <span className="text-gradient-accent">work in progress.</span></h1>
+          <p className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-mono text-xs font-medium text-text-secondary mb-6"><BookOpen className="w-4 h-4" /> Product notes</p>
+          <h1 className="text-4xl md:text-6xl font-extrabold font-display tracking-tight mb-5">From the <span className="text-text-primary">work in progress.</span></h1>
           <p className="text-lg text-text-secondary leading-relaxed">A clear account of what we are building and what remains to be proven. A newsletter is not currently available.</p>
         </div>
-        <div className="space-y-6">
-          {notes.map(({ icon: Icon, title, body }) => <article key={title} className="p-7 md:p-9 rounded-2xl border border-border bg-surface"><Icon className="w-6 h-6 text-accent mb-5" /><h2 className="text-2xl font-bold mb-4">{title}</h2><p className="text-text-secondary leading-relaxed max-w-4xl">{body}</p></article>)}
+        <div className="divide-y divide-border border-y border-border">
+          {notes.map(({ icon: Icon, title, body }) => <article key={title} className="py-8 md:py-10"><Icon className="mb-4 h-5 w-5 text-text-secondary" /><h2 className="text-2xl font-bold mb-4">{title}</h2><p className="text-text-secondary leading-relaxed max-w-4xl">{body}</p></article>)}
         </div>
-        <Link href="/features" className="inline-flex gap-2 items-center text-accent font-semibold mt-10 underline underline-offset-4">Review product status<ArrowRight className="w-4 h-4" /></Link>
+        <Link href="/features" className="inline-flex gap-2 items-center text-text-primary font-semibold mt-10 underline underline-offset-4">Review product status<ArrowRight className="w-4 h-4" /></Link>
       </main>
       <Footer />
     </div>

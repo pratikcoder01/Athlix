@@ -24,43 +24,38 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const variantClasses = {
-    primary: 'bg-primary/10 text-primary border border-primary/20',
-    secondary: 'bg-secondary text-text-primary border border-border',
-    success: 'bg-success-bg text-success border border-success/20',
-    warning: 'bg-warning-bg text-warning border border-warning/20',
-    danger: 'bg-danger-bg text-danger border border-danger/20',
-    info: 'bg-info-bg text-info border border-info/20',
-    accent: 'bg-accent/15 text-accent border border-accent/25',
+    primary: 'bg-surface-hover text-text-secondary border border-border',
+    secondary: 'bg-surface-hover text-text-secondary border border-border',
+    success: 'bg-surface-hover text-text-secondary border border-border',
+    warning: 'bg-surface-hover text-text-secondary border border-border',
+    danger: 'bg-surface-hover text-text-secondary border border-border',
+    info: 'bg-surface-hover text-text-secondary border border-border',
+    accent: 'bg-surface-hover text-text-secondary border border-border',
     outline: 'bg-transparent text-text-secondary border border-border',
   };
 
   const pulseColors = {
-    primary: 'bg-primary',
+    primary: 'bg-text-secondary',
     secondary: 'bg-text-secondary',
-    success: 'bg-success',
-    warning: 'bg-warning',
+    success: 'bg-[var(--status-active)]',
+    warning: 'bg-[var(--status-experimental)]',
     danger: 'bg-danger',
     info: 'bg-info',
-    accent: 'bg-accent',
+    accent: 'bg-text-secondary',
     outline: 'bg-text-tertiary',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center font-sans select-none shrink-0',
+        'inline-flex items-center justify-center font-mono select-none shrink-0',
         sizeClasses[size],
         variantClasses[variant],
         className
       )}
       {...props}
     >
-      {pulse && (
-        <span className="relative flex h-1.5 w-1.5 shrink-0">
-          <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', pulseColors[variant])} />
-          <span className={cn('relative inline-flex rounded-full h-1.5 w-1.5', pulseColors[variant])} />
-        </span>
-      )}
+      {(pulse || ['success', 'warning', 'danger'].includes(variant)) && <span aria-hidden="true" className={cn('inline-flex h-1.5 w-1.5 shrink-0 rounded-full', pulseColors[variant])} />}
       {children}
     </span>
   );

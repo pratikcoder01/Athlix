@@ -14,8 +14,8 @@ export function PolicyDocument({ title, reviewStatus, children }: {
       <Navbar />
       <main id="policy-content" className="mx-auto max-w-3xl px-4 pb-24 pt-36 sm:px-6">
         <header className="mb-10">
-          <p className="mb-4 text-sm font-semibold">Draft · {reviewStatus}</p>
-          <h1 className="mb-6 font-display text-4xl font-bold tracking-tight">{title}</h1>
+          <p className="mb-4 font-mono text-xs text-text-secondary">Draft · {reviewStatus}</p>
+          <h1 className="mb-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
           <div role="note" className="rounded-xl border border-border bg-surface p-5 leading-relaxed">
             <p className="font-semibold">For review before a real-data pilot</p>
             <p className="mt-2 text-text-secondary">This technical draft describes the development build. It is not a reviewed, complete policy or a statement of legal approval, regulatory compliance, or a commercial service commitment.</p>

@@ -16,13 +16,13 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     text: 'h-4 w-full rounded-md',
     avatar: 'h-10 w-10 rounded-full',
     circle: 'rounded-full',
-    rectangular: 'rounded-2xl',
+    rectangular: 'rounded-lg',
   };
 
   return (
     <div
       className={cn(
-        'animate-pulse bg-surface-hover/80 border border-border/10',
+        'animate-pulse motion-reduce:animate-none bg-surface-hover/80 border border-border/10',
         variantClasses[variant],
         className
       )}

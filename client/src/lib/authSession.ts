@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { useAuthStore } from '../store/authStore';
+import { sessionChangeTime, useAuthStore } from '../store/authStore';
+import { publishSessionSignOut } from './sessionEvents';
 
 const authResponse = z.object({ success: z.literal(true), token: z.string().min(1).max(8192), user: z.object({
   id: z.string(), name: z.string(), email: z.string(), phone: z.string().optional(),
@@ -17,6 +18,19 @@ export const accessExpiresAt = (token: string | null) => {
 };
 
 let renewing: Promise<boolean> | null = null;
+export const withSessionLock = async <T>(run: () => Promise<T>): Promise<T> => {
+  if (typeof navigator !== 'undefined' && navigator.locks) return await navigator.locks.request('athlix-session', run);
+  return await run();
+};
+
+export const applySessionSignOut = (startedAt: number) => {
+  const state = useAuthStore.getState();
+  // A delayed response/hint from an earlier logout must not clear a fresh login.
+  if (state.lastSignInAt > startedAt) return false;
+  state.logout();
+  return true;
+};
+
 export const renewSession = (): Promise<boolean> => {
   if (renewing) return renewing;
   const run = async () => {
@@ -30,26 +44,27 @@ export const renewSession = (): Promise<boolean> => {
     if (!response.ok) throw new Error('Unable to renew your session. Check your connection and try again.');
     const result = authResponse.safeParse(await response.json());
     if (!result.success) throw new Error('ATHLIX returned an unexpected session response. Sign in again.');
-    if (useAuthStore.getState().revision === revision) useAuthStore.getState().setAuth(result.data.user, result.data.token);
+    if (useAuthStore.getState().revision === revision) useAuthStore.getState().setAuth(result.data.user, result.data.token, { renewal: true });
     return true;
   };
   // Coordinate tabs so single-use cookies do not race. Browsers without Web
   // Locks still fail closed on a concurrent rotation and may require a new login.
-  const operation = (async (): Promise<boolean> => {
-    if (typeof navigator !== 'undefined' && navigator.locks) return await navigator.locks.request('athlix-session', run);
-    return await run();
-  })().finally(() => { renewing = null; });
+  const operation = withSessionLock(run).finally(() => { renewing = null; });
   renewing = operation;
   return operation;
 };
 
 export const logoutSession = async (everywhere = false) => {
-  const token = useAuthStore.getState().token;
-  const response = await fetch(`/api/auth/${everywhere ? 'logout-all' : 'logout'}`, {
-    method: 'POST', credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000),
-    headers: { 'X-ATHLIX-Session': '1', ...(everywhere && token ? { Authorization: `Bearer ${token}` } : {}) },
+  await withSessionLock(async () => {
+    const startedAt = sessionChangeTime();
+    const token = useAuthStore.getState().token;
+    const response = await fetch(`/api/auth/${everywhere ? 'logout-all' : 'logout'}`, {
+      method: 'POST', credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000),
+      headers: { 'X-ATHLIX-Session': '1', ...(everywhere && token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!response.ok) throw new Error('Server sign-out could not be confirmed. Check your connection and retry.');
+    applySessionSignOut(startedAt);
+    publishSessionSignOut(startedAt);
+    try { localStorage.removeItem('athlix-auth'); } catch { /* Browser storage may be unavailable. */ }
   });
-  if (!response.ok) throw new Error('Server sign-out could not be confirmed. Check your connection and retry.');
-  useAuthStore.getState().logout();
-  try { localStorage.removeItem('athlix-auth'); } catch { /* Browser storage may be unavailable. */ }
 };

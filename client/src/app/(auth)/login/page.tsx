@@ -19,7 +19,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { useAuthStore } from '../../../store/authStore';
-import { cn } from '../../../lib/utils';
+import { withSessionLock } from '../../../lib/authSession';
 
 
 const loginSchema = z.object({
@@ -36,8 +36,8 @@ const featureList = [
 ];
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
 
@@ -53,22 +53,27 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFields>({ resolver: zodResolver(loginSchema) });
 
+  const exchangeIdentity = (body: { idToken: string; name?: string }, errorMessage: string) => withSessionLock(async () => {
+    const res = await fetch('/api/auth/firebase', {
+      credentials: 'include',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || errorMessage);
+    setAuth(json.user, json.token);
+    router.push('/dashboard');
+  });
+
   const handleGoogleSignIn = async () => {
     setAuthError(null);
     try {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Google Authentication failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken }, 'Google Authentication failed');
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e.code !== 'auth/popup-closed-by-user') {
@@ -82,16 +87,7 @@ export default function LoginPage() {
     try {
       const cred = await signInAnonymously(auth);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: 'Anonymous Athlete' }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Anonymous Authentication failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken, name: 'Anonymous Athlete' }, 'Anonymous Authentication failed');
     } catch (err: unknown) {
       const e = err as { message?: string };
       setAuthError(e.message || 'Anonymous Login failed.');
@@ -103,16 +99,7 @@ export default function LoginPage() {
     try {
       const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
       const idToken = await cred.user.getIdToken();
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Authentication failed');
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
+      await exchangeIdentity({ idToken }, 'Authentication failed');
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       const code = e.code || '';
@@ -130,8 +117,8 @@ export default function LoginPage() {
     <main className="min-h-screen bg-background flex">
       {/* ── Left Branding Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col items-center justify-center p-12 bg-surface border-r border-border">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-accent/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -148,8 +135,8 @@ export default function LoginPage() {
         >
           <motion.div variants={fadeIn} className="mb-12">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-md border border-border bg-background flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-text-primary" />
               </div>
               <span className="text-2xl font-extrabold font-display tracking-tight text-text-primary">Athlix</span>
             </Link>
@@ -163,7 +150,7 @@ export default function LoginPage() {
           </motion.blockquote>
           <motion.cite
             variants={fadeIn}
-            className="block not-italic text-xs font-bold tracking-widest text-accent uppercase mb-10"
+            className="block not-italic text-xs font-bold tracking-widest text-text-secondary uppercase mb-10 font-mono"
           >
             Theodore Roosevelt
           </motion.cite>
@@ -173,10 +160,10 @@ export default function LoginPage() {
               <motion.div
                 key={i}
                 variants={fadeIn}
-                className="flex items-center gap-4 p-3.5 rounded-xl border border-border bg-background/60"
+                className="flex items-center gap-4 p-3.5 rounded-md border border-border bg-background/60"
               >
-                <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                  <Icon className="w-4.5 h-4.5 text-accent" />
+                <div className="w-9 h-9 rounded-lg border border-border bg-background flex items-center justify-center shrink-0">
+                  <Icon className="w-4.5 h-4.5 text-text-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{label}</p>
@@ -187,13 +174,6 @@ export default function LoginPage() {
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-8 flex items-center gap-2.5">
-            <div className="flex -space-x-2">
-              {[['SC', 'bg-orange-500'], ['MR', 'bg-blue-500'], ['EW', 'bg-green-500']].map(([av, bg], i) => (
-                <div key={i} className={cn('w-7 h-7 rounded-full flex items-center justify-center text-black text-[9px] font-black border-2 border-background', bg)}>
-                  {av}
-                </div>
-              ))}
-            </div>
             <p className="text-xs text-text-secondary">
               <span className="font-semibold text-text-primary">Build your profile</span> and follow your training journey
             </p>
@@ -211,8 +191,8 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <motion.div variants={fadeIn} className="flex lg:hidden items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg border border-border bg-background flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-text-primary" />
             </div>
             <span className="text-xl font-extrabold font-display text-text-primary">Athlix</span>
           </motion.div>
@@ -223,7 +203,7 @@ export default function LoginPage() {
             </h1>
             <p className="text-sm text-text-secondary">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-accent hover:text-accent-light font-semibold transition-colors">
+              <Link href="/signup" className="text-text-primary hover:text-text-secondary underline underline-offset-4 font-semibold transition-colors">
                 Sign up free
               </Link>
             </p>
@@ -243,7 +223,7 @@ export default function LoginPage() {
                   autoComplete="username"
                   {...register('email')}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-md border border-border-strong bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
               </div>
               {errors.email && <p className="text-xs text-danger mt-1">{errors.email.message}</p>}
@@ -253,7 +233,7 @@ export default function LoginPage() {
             <motion.div variants={fadeIn}>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-semibold text-text-primary" htmlFor="login-password">Password</label>
-                <Link href="/forgot-password" className="text-xs text-accent hover:text-accent-light font-medium transition-colors">
+                <Link href="/forgot-password" className="text-xs text-text-primary hover:text-text-secondary underline underline-offset-4 font-medium transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -265,7 +245,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   {...register('password')}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-border bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
+                  className="w-full pl-10 pr-11 py-3 rounded-md border border-border-strong bg-surface text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all"
                 />
                 <button
                   type="button"
@@ -286,7 +266,7 @@ export default function LoginPage() {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2.5 p-3.5 bg-danger/10 border border-danger/20 rounded-xl"
+                className="flex items-center gap-2.5 p-3.5 bg-danger/10 border border-danger/20 rounded-md"
               >
                 <AlertCircle className="w-4 h-4 text-danger shrink-0" />
                 <p className="text-xs text-danger">{authError}</p>
@@ -298,9 +278,9 @@ export default function LoginPage() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-accent via-accent-light to-accent-gold text-black shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                whileHover={undefined}
+                whileTap={undefined}
+                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-md font-semibold text-sm bg-accent text-accent-ink hover:bg-accent-hover transition-colors duration-150 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
               >
                 {isSubmitting ? (
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -329,7 +309,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleGoogleSignIn}
                 aria-label="Sign in with Google"
-                className="flex items-center justify-center gap-2 py-3 rounded-full border border-border bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-all duration-200"
+                className="flex items-center justify-center gap-2 py-3 rounded-md border border-border-strong bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-colors duration-150"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
@@ -343,7 +323,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleAnonymousSignIn}
                 aria-label="Sign in as guest"
-                className="flex items-center justify-center gap-2 py-3 rounded-full border border-border bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-all duration-200"
+                className="flex items-center justify-center gap-2 py-3 rounded-md border border-border-strong bg-surface text-sm font-semibold text-text-primary hover:border-accent/30 hover:bg-surface-hover transition-colors duration-150"
               >
                 <User className="w-4 h-4 text-text-tertiary" />
                 Guest
@@ -354,7 +334,7 @@ export default function LoginPage() {
             <motion.div variants={fadeIn} className="text-center">
               <Link
                 href="/login/phone"
-                className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-accent transition-colors font-medium"
+                className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 Sign in with phone number

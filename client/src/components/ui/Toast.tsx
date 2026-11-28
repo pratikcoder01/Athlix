@@ -73,18 +73,18 @@ export const ToastContainer: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none select-none">
+    <div className="pointer-events-none fixed inset-x-4 bottom-4 z-[9999] flex flex-col gap-2.5 select-none sm:left-auto sm:right-6 sm:w-full sm:max-w-sm">
       <AnimatePresence>
         {toasts.map((item) => (
           <motion.div
             key={item.id}
             layout
-            initial={{ opacity: 0, y: 15, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              'pointer-events-auto flex items-start gap-3 p-4 bg-surface-elevated border border-border border-l-4 rounded-xl shadow-xl w-full',
+              'pointer-events-auto flex w-full items-start gap-3 rounded-md border border-border border-l-2 bg-surface-elevated p-4',
               item.type && borderColors[item.type]
             )}
           >
@@ -94,7 +94,7 @@ export const ToastContainer: React.FC = () => {
             </div>
             <button
               onClick={() => removeToast(item.id)}
-              className="p-0.5 text-text-tertiary hover:text-text-primary rounded-full hover:bg-surface-hover transition-colors shrink-0"
+              className="p-0.5 text-text-tertiary hover:text-text-primary rounded-md hover:bg-surface-hover transition-colors shrink-0"
             >
               <X className="w-3.5 h-3.5" />
             </button>

@@ -66,7 +66,7 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
                       <motion.div
                         layoutId={`radio-dot-${radioGroupName}`}
                         className="w-2.5 h-2.5 rounded-full bg-accent"
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
                       />
                     )}
                   </motion.div>

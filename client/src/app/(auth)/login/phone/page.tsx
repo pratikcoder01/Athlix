@@ -8,15 +8,42 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   ConfirmationResult,
-  ApplicationVerifier,
+  type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth } from '../../../../lib/firebase';
 import { useAuthStore } from '../../../../store/authStore';
+import { withSessionLock } from '../../../../lib/authSession';
 import MagneticButton from '../../../../components/shared/MagneticButton';
 import SpotlightCard from '../../../../components/shared/SpotlightCard';
 
 
-type Step = 'phone' | 'otp' | 'role';
+type Step = 'phone' | 'otp';
+type Operation = { controller: AbortController; exchanging: boolean };
+
+function phoneAuthError(error: unknown, fallback: string): string {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : '';
+  switch (code) {
+    case 'auth/invalid-phone-number':
+      return 'Enter a valid international phone number, including its country code.';
+    case 'auth/too-many-requests':
+    case 'auth/quota-exceeded':
+      return 'Too many requests. Please wait before requesting another code.';
+    case 'auth/network-request-failed':
+      return 'Connection failed. Check your connection and try again.';
+    case 'auth/captcha-check-failed':
+    case 'auth/invalid-app-credential':
+      return 'Phone verification could not start. Please try again.';
+    case 'auth/invalid-verification-code':
+      return 'Incorrect code. Check your SMS and try again.';
+    case 'auth/code-expired':
+    case 'auth/session-expired':
+    case 'auth/invalid-verification-id':
+    case 'auth/missing-verification-id':
+      return 'Code expired. Please request a new one.';
+    default:
+      return fallback;
+  }
+}
 
 export default function PhoneLoginPage() {
   const router = useRouter();
@@ -24,41 +51,79 @@ export default function PhoneLoginPage() {
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
+  const [sentPhone, setSentPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'athlete' | 'coach' | 'academy_owner' | 'tournament_organizer'>('athlete');
   const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exchanging, setExchanging] = useState(false);
+  const [codeVerified, setCodeVerified] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const mountedRef = useRef(false);
+  const operationRef = useRef<Operation | null>(null);
+  const verifiedUserRef = useRef<FirebaseUser | null>(null);
 
-  // Initialize invisible reCAPTCHA on mount
+  // Verification starts only after an explicit request for a code. Cleanup also
+  // invalidates continuations that Firebase itself cannot cancel.
   useEffect(() => {
-    if (!recaptchaContainerRef.current) return;
-    if (recaptchaVerifierRef.current) return; // already set
-
-    recaptchaVerifierRef.current = new RecaptchaVerifier(
-      auth,
-      recaptchaContainerRef.current,
-      {
-        size: 'invisible',
-        callback: () => {
-          // reCAPTCHA solved, phone send will proceed
-        },
-      }
-    );
-    recaptchaVerifierRef.current.render();
-
+    mountedRef.current = true;
     return () => {
-      recaptchaVerifierRef.current?.clear();
+      mountedRef.current = false;
+      operationRef.current?.controller.abort();
+      operationRef.current = null;
+      verifiedUserRef.current = null;
+      const verifier = recaptchaVerifierRef.current;
       recaptchaVerifierRef.current = null;
+      verifier?.clear();
     };
   }, []);
 
+  const isCurrent = (operation: Operation) => mountedRef.current && operationRef.current === operation;
+
+  const beginOperation = (): Operation | null => {
+    if (!mountedRef.current || operationRef.current) return null;
+    const operation = { controller: new AbortController(), exchanging: false };
+    operationRef.current = operation;
+    setAuthError(null);
+    setLoading(true);
+    return operation;
+  };
+
+  const finishOperation = (operation: Operation) => {
+    if (!isCurrent(operation)) return;
+    operationRef.current = null;
+    setLoading(false);
+  };
+
+  const clearVerifier = (verifier: RecaptchaVerifier | null) => {
+    if (!verifier || recaptchaVerifierRef.current !== verifier) return;
+    recaptchaVerifierRef.current = null;
+    verifier.clear();
+  };
+
+  const handleChangeNumber = () => {
+    // An exchange may already have committed its HttpOnly cookie. Keep this
+    // attempt until its response settles instead of discarding its local auth.
+    if (operationRef.current?.exchanging) return;
+    operationRef.current?.controller.abort();
+    operationRef.current = null;
+    clearVerifier(recaptchaVerifierRef.current);
+    setLoading(false);
+    verifiedUserRef.current = null;
+    setCodeVerified(false);
+    setConfirmationResult(null);
+    setStep('phone');
+    setSentPhone('');
+    setOtp('');
+    setAuthError(null);
+  };
+
   // ── Step 1: Send OTP ─────────────────────────────────────────────────────
   const handleSendOtp = async () => {
+    if (operationRef.current) return;
     setAuthError(null);
 
     const e164 = phone.trim();
@@ -66,70 +131,114 @@ export default function PhoneLoginPage() {
       setAuthError('Enter a valid international phone number (e.g. +919876543210)');
       return;
     }
+    if (name.trim().length > 100) {
+      setAuthError('Enter a name of 100 characters or fewer.');
+      return;
+    }
 
-    setLoading(true);
+    const operation = beginOperation();
+    if (!operation) return;
+    verifiedUserRef.current = null;
+    setCodeVerified(false);
+    setConfirmationResult(null);
+    let verifier: RecaptchaVerifier | null = null;
     try {
-      const result = await signInWithPhoneNumber(
-        auth,
-        e164,
-        recaptchaVerifierRef.current as ApplicationVerifier
-      );
+      if (!recaptchaContainerRef.current) throw new Error('Phone verification is unavailable');
+      verifier = recaptchaVerifierRef.current ?? new RecaptchaVerifier(auth, recaptchaContainerRef.current, { size: 'invisible' });
+      recaptchaVerifierRef.current = verifier;
+      await verifier.render();
+      if (!isCurrent(operation)) return;
+      const result = await signInWithPhoneNumber(auth, e164, verifier);
+      if (!isCurrent(operation)) return;
       setConfirmationResult(result);
+      setSentPhone(e164);
+      setOtp('');
       setStep('otp');
-    } catch (err: any) {
-      setAuthError(err.message || 'Failed to send OTP. Try again.');
-      // Reset reCAPTCHA on failure so it can be used again
-      recaptchaVerifierRef.current?.clear();
-      recaptchaVerifierRef.current = null;
+    } catch (error: unknown) {
+      if (!isCurrent(operation)) return;
+      // clear() destroys the instance. The next attempt creates a fresh one.
+      clearVerifier(verifier);
+      setAuthError(phoneAuthError(error, 'Failed to send a code. Please try again or use email.'));
     } finally {
-      setLoading(false);
+      finishOperation(operation);
     }
   };
 
   // ── Step 2: Verify OTP ───────────────────────────────────────────────────
   const handleVerifyOtp = async () => {
+    if (operationRef.current) return;
     setAuthError(null);
     if (!confirmationResult) return;
-    if (otp.length !== 6) {
+    if (!verifiedUserRef.current && otp.length !== 6) {
       setAuthError('Enter the 6-digit code from your SMS');
       return;
     }
 
-    setLoading(true);
+    const operation = beginOperation();
+    if (!operation) return;
     try {
-      const firebaseUserCred = await confirmationResult.confirm(otp);
-      const idToken = await firebaseUserCred.user.getIdToken();
+      let firebaseUser = verifiedUserRef.current;
+      if (!firebaseUser) {
+        const firebaseUserCred = await confirmationResult.confirm(otp);
+        if (!isCurrent(operation)) return;
+        firebaseUser = firebaseUserCred.user;
+        verifiedUserRef.current = firebaseUser;
+        setCodeVerified(true);
+      }
+      // A successful confirmation consumes the SMS session. Transport retries
+      // must reuse this verified identity, rather than consume the code again.
+      const idToken = await firebaseUser.getIdToken();
+      if (!isCurrent(operation)) return;
 
-      // Exchange Firebase ID token for ATHLIX JWT
-      const res = await fetch('/api/auth/firebase', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, name: name || 'Athlete', role }),
+      // Cookie writes share the renewal/logout lock. A canceled attempt may
+      // have waited in its queue, so check ownership again before dispatch.
+      await withSessionLock(async () => {
+        if (!isCurrent(operation)) return;
+        operation.exchanging = true;
+        setExchanging(true);
+        const timeout = setTimeout(() => operation.controller.abort(), 15_000);
+        try {
+          const res = await fetch('/api/auth/firebase', {
+            credentials: 'include',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: operation.controller.signal,
+            body: JSON.stringify({ idToken, name: name.trim() || 'Athlete' }),
+          });
+          if (!isCurrent(operation)) return;
+
+          const json = await res.json();
+          if (!isCurrent(operation)) return;
+          if (!res.ok) throw new Error('Authentication failed');
+
+          setAuth(json.user, json.token);
+          router.push('/dashboard');
+        } finally {
+          clearTimeout(timeout);
+          operation.exchanging = false;
+          if (isCurrent(operation)) setExchanging(false);
+        }
       });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Authentication failed');
-
-      setAuth(json.user, json.token);
-      router.push('/dashboard');
-    } catch (err: any) {
-      const code: string = err.code || '';
-      if (code === 'auth/invalid-verification-code') {
-        setAuthError('Incorrect code. Check your SMS and try again.');
-      } else if (code === 'auth/code-expired') {
-        setAuthError('Code expired. Please request a new one.');
+    } catch (error: unknown) {
+      if (!isCurrent(operation)) return;
+      setAuthError(phoneAuthError(error, 'Sign-in could not be completed. Please try again or use email.'));
+      if (typeof error === 'object' && error !== null && 'code' in error &&
+        ['auth/code-expired', 'auth/session-expired', 'auth/invalid-verification-id', 'auth/missing-verification-id'].includes(String(error.code))) {
+        clearVerifier(recaptchaVerifierRef.current);
+        verifiedUserRef.current = null;
+        setCodeVerified(false);
+        setConfirmationResult(null);
+        setOtp('');
+        setSentPhone('');
         setStep('phone');
-      } else {
-        setAuthError(err.message || 'Verification failed. Try again.');
       }
     } finally {
-      setLoading(false);
+      finishOperation(operation);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background text-text-primary overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center px-4 py-12 sm:p-8 bg-background text-text-primary overflow-hidden">
       <div className="absolute inset-0 mat-grid opacity-20 pointer-events-none" />
 
       {/* Invisible reCAPTCHA container — required by Firebase */}
@@ -152,10 +261,10 @@ export default function PhoneLoginPage() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
+          <h1 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-wide">
             SIGN IN WITH<br />
             <span className="text-primary">PHONE NUMBER</span>
-          </h2>
+          </h1>
           <p className="text-text-secondary text-xs mt-2">
             {step === 'phone'
               ? 'Enter your phone number to receive a one-time verification code.'
@@ -168,9 +277,9 @@ export default function PhoneLoginPage() {
           {(['phone', 'otp'] as Step[]).map(s => (
             <React.Fragment key={s}>
               <div
-                className={`h-1.5 flex-1 rounded-full transition-colors ${
+                className={`h-1 flex-1 transition-colors ${
                   step === s || (step === 'otp' && s === 'phone')
-                    ? 'bg-primary'
+                    ? 'bg-accent'
                     : 'bg-border'
                 }`}
               />
@@ -178,84 +287,67 @@ export default function PhoneLoginPage() {
           ))}
         </div>
 
-        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm shadow-xl">
+        <SpotlightCard className="bg-secondary p-6 sm:p-8 border border-border rounded-sm">
 
           {/* ── Step 1: Phone Number ── */}
           {step === 'phone' && (
             <div className="flex flex-col gap-6">
               {/* Name */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                <label htmlFor="phone-name" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
                   Your Name
                 </label>
                 <input
+                  id="phone-name"
                   type="text"
+                  autoComplete="name"
+                  maxLength={100}
+                  disabled={loading}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Lucas Vianna"
-                  className="w-full bg-surface border border-border rounded-sm px-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
+                  className="w-full bg-surface border border-border-strong rounded-md px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all font-sans"
                 />
               </div>
 
-              {/* Role */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
-                  Platform Role
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: 'athlete', label: 'ATHLETE' },
-                    { id: 'coach', label: 'COACH' },
-                    { id: 'academy_owner', label: 'GYM OWNER' },
-                    { id: 'tournament_organizer', label: 'ORGANIZER' },
-                  ].map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setRole(r.id as typeof role)}
-                      className={`py-2 text-[10px] font-bold font-mono tracking-wider border rounded-sm transition-all ${
-                        role === r.id
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border bg-surface text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-xs leading-relaxed text-text-secondary">
+                New accounts start as athletes. Existing accounts keep their reviewed access permissions.
+              </p>
 
               {/* Phone */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                <label htmlFor="phone-number" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
                   Phone Number (E.164 format)
                 </label>
                 <div className="relative">
                   <Smartphone className="absolute left-3 top-3 h-5 w-5 text-text-secondary" />
                   <input
+                    id="phone-number"
                     type="tel"
+                    autoComplete="tel"
+                    disabled={loading}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+919876543210"
-                    className="w-full bg-surface border border-border rounded-sm pl-11 pr-4 py-3 text-xs text-text-primary focus:outline-none focus:border-primary transition-all font-sans font-mono"
+                    className="w-full bg-surface border border-border-strong rounded-md pl-11 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all font-sans font-mono"
                   />
                 </div>
-                <span className="text-[9px] text-text-tertiary font-mono">
+                <span className="text-[10px] text-text-tertiary font-mono">
                   Include country code, e.g. +91 for India, +1 for US
                 </span>
               </div>
 
               {authError && (
-                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
+                <div className="flex items-center gap-2 p-3 bg-surface border border-border rounded-sm">
                   <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                  <span className="text-xs text-danger font-mono font-medium">{authError}</span>
                 </div>
               )}
 
               <MagneticButton
                 onClick={handleSendOtp}
                 disabled={loading}
-                className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-ink py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase"
               >
                 {loading ? 'SENDING CODE...' : 'SEND OTP'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
               </MagneticButton>
@@ -267,44 +359,48 @@ export default function PhoneLoginPage() {
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
+                  <label htmlFor="phone-otp" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest font-mono">
                     6-Digit Code
                   </label>
                   <button
                     type="button"
-                    onClick={() => { setStep('phone'); setOtp(''); setAuthError(null); }}
-                    className="text-[10px] font-mono font-bold text-primary hover:underline uppercase"
+                    onClick={handleChangeNumber}
+                    disabled={exchanging}
+                    className="text-[10px] font-mono font-bold text-primary hover:underline uppercase disabled:cursor-wait disabled:opacity-40 disabled:no-underline"
                   >
                     Change number
                   </button>
                 </div>
                 <p className="text-[10px] text-text-tertiary font-mono">
-                  Code sent to <span className="text-text-secondary">{phone}</span>
+                  Code sent to <span className="text-text-secondary">{sentPhone}</span>
                 </p>
                 <input
+                  id="phone-otp"
                   type="text"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
+                  disabled={loading || codeVerified}
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="● ● ● ● ● ●"
-                  className="w-full bg-surface border border-border rounded-sm px-4 py-4 text-xl text-text-primary focus:outline-none focus:border-primary transition-all font-mono text-center tracking-[0.75em]"
+                  className="w-full bg-surface border border-border-strong rounded-md px-4 py-4 text-xl text-text-primary focus:outline-none focus:border-primary transition-all font-mono text-center tracking-[0.75em]"
                 />
               </div>
 
               {authError && (
-                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-sm">
+                <div className="flex items-center gap-2 p-3 bg-surface border border-border rounded-sm">
                   <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-[10px] text-primary font-mono font-bold uppercase">{authError}</span>
+                  <span className="text-xs text-danger font-mono font-medium">{authError}</span>
                 </div>
               )}
 
               <MagneticButton
                 onClick={handleVerifyOtp}
-                disabled={loading || otp.length !== 6}
-                className="w-full bg-primary hover:bg-opacity-95 text-white py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase shadow-md"
+                disabled={loading || (!codeVerified && otp.length !== 6)}
+                className="w-full bg-accent hover:bg-accent-hover text-accent-ink py-3.5 rounded-sm font-bold font-mono tracking-wider text-xs uppercase"
               >
-                {loading ? 'VERIFYING...' : 'CONFIRM CODE'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
+                {loading ? 'VERIFYING...' : codeVerified ? 'COMPLETE SIGN-IN' : 'CONFIRM CODE'} <ChevronRight className="h-4.5 w-4.5 ml-1 inline" />
               </MagneticButton>
             </div>
           )}
@@ -317,6 +413,6 @@ export default function PhoneLoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

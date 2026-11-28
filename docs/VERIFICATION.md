@@ -1,10 +1,83 @@
 # Verification record
 
-## Current deployed candidate (2026-11-22)
+## Review corrections and refreshed checks (2026-11-28)
 
-The production Vercel frontend and new free Render API both run
-`24aafcc7f2e70e557e30cc4014fec5c8c2a9ac32`. The old vulnerable API remains
-suspended; the June artifact is not an approved safe rollback.
+The account candidate `89d5e6b` passed both
+[PR CI](https://github.com/pratikcoder01/Athlix/actions/runs/45131099742) and
+[push CI](https://github.com/pratikcoder01/Athlix/actions/runs/45131088718):
+**549 JavaScript tests** (60 client, 481 server/database, eight dedicated demo
+Firebase tests), 37 Python tests, both builds, lint/types, 40 accessibility cases,
+63 production hydration visits and 189 development visits. The server phase's
+one intentional emulator skip was covered by its dedicated step. The actual
+Next browser fixture passed strict rotation, both tab-hint transports and the
+renewal/logout/guest-sign-in ordering case. Vercel preview also passed. These
+results apply to that revision, before the corrections below.
+
+Follow-up review corrections use a native modal mobile menu to block background
+pointer/focus interaction, show logout failures inside the drawer, keep both
+video timeline focus outlines inside their clipped tracks, prevent Change number
+from abandoning a dispatched phone exchange, and replace sleep-sensitive
+performance timestamps with wall-clock/local-monotonic ordering. Clock changes
+can still disturb ordering across tabs; server authorization remains authoritative.
+The new phone and clock regressions exercise actual components/modules with
+controlled boundaries, rather than real SMS or OS-sleep automation.
+
+The compiled, listener-free mobile430 browser scope passed modal isolation,
+failed logout/retry, Escape and focus/scroll restoration. Generated CSS and
+keyboard-focus geometry verified the timeline's inset outline in both themes.
+All 65 client unit tests, lint, both type checks and the production client build
+passed locally for this follow-up. The new phone/clock regressions failed
+against the previous source and passed after their fixes.
+Actual Next/server acceptance for the final follow-up head is tracked in
+[PR #3](https://github.com/pratikcoder01/Athlix/pull/3).
+
+Fresh full and production-only audits again reported zero findings without any
+lockfile change. All five public host contracts passed on a bounded retry; the
+initial post-idle backend probes timed out while the frontend passed. No host
+settings were changed. This is readiness/CORS evidence, not continuous uptime,
+deployed-SHA identification or authenticated acceptance of the new source.
+
+## Account reliability and dependency cleanup (2026-11-23)
+
+[PR #3](https://github.com/pratikcoder01/Athlix/pull/3) contains the presentation
+refactor and subsequent account fixes. Its exact head checks are the authority
+for the current CI outcome; the dated results below do not qualify later source.
+
+The follow-up repairs destroyed reCAPTCHA retries, rejected phone role payloads,
+reconfirmation of consumed SMS codes, abandoned phone continuations and stale
+signed-in UI in other tabs after logout. Login/signup/phone exchanges, renewal
+and logout share a Web Lock where the browser supports it; credential verification happens outside it,
+cookie exchanges and memory-auth commits inside it. Tests cover queued login/
+logout order, late provider results, failed logout and secret-free tab hints.
+
+Local verification passed a clean locked install, all client unit tests, client
+lint, both type checks and both builds. The server suite passed **428 tests**
+with **nine explicit local-service skips**. Real MongoDB, the demo Auth emulator
+and actual Next rewrite/browser checks are supplied to CI; their absence locally
+is not counted as passing integration coverage. The expanded emulator phone case
+checks incorrect codes, email-less identity isolation, renewal and approved roles.
+The two-tab browser fixture uses exact single-use cookie rotation and tests both
+BroadcastChannel and storage-event sign-out propagation.
+
+The targeted TypeScript-ESLint cleanup removed unused nodemon and resolved the
+remaining tooling advisory without framework upgrades. Both full and
+production-only audits reported **zero findings** on 23 November; see
+[dependency review](DEPENDENCY_REVIEW.md). All five unauthenticated public host
+contracts passed on that date. This probe does not identify the deployed SHA or
+qualify the new auth source against real providers.
+
+No production promotion, real SMS/email delivery or paid provider call is part
+of this milestone. The owner merged PR #2 on 22 November; PR #3 remains a separate
+review. Genuine provider delivery, reviewed policies/support ownership,
+off-device backup/full hosted restore and optional CV hosting/evaluation remain
+launch gates.
+
+## Hosted acceptance revision (2026-11-22)
+
+The production Vercel frontend and new free Render API were both verified at
+`24aafcc7f2e70e557e30cc4014fec5c8c2a9ac32` during this acceptance. The old
+vulnerable API was suspended; the June artifact is not an approved safe rollback.
+This dated record does not establish a later deployment's source revision.
 
 [PR run 44987854947](https://github.com/pratikcoder01/Athlix/actions/runs/44987854947)
 and [push run 44987850735](https://github.com/pratikcoder01/Athlix/actions/runs/44987850735)

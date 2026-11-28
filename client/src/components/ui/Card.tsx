@@ -1,15 +1,12 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'glass-strong' | 'glow' | 'accent' | 'flat';
   hoverable?: boolean;
 }
-
-const MotionDiv = motion.div;
 
 export const Card: React.FC<CardProps> = ({
   className,
@@ -19,35 +16,22 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variantClasses: Record<string, string> = {
-    default: 'bg-surface border border-border shadow-xs',
-    glass: 'glass-panel border border-border shadow-md',
-    'glass-strong': 'glass-panel-strong border border-border-strong shadow-xl',
-    glow: 'glass-panel border border-border/80 shadow-glow',
-    accent: 'bg-surface border-l-4 border-l-accent border-r border-t border-b border-border shadow-sm',
-    flat: 'bg-surface/50 border border-transparent shadow-none',
+    default: 'bg-surface border border-border',
+    glass: 'bg-surface border border-border',
+    'glass-strong': 'bg-surface border border-border-strong',
+    glow: 'bg-surface border border-border-strong',
+    accent: 'bg-surface border border-border-strong',
+    flat: 'bg-surface/50 border border-transparent ',
   };
 
   const baseClass = cn(
-    'rounded-2xl overflow-hidden p-6 transition-all duration-300',
+    'rounded-lg overflow-hidden p-6 transition-colors duration-150',
     variantClasses[variant],
     className
   );
 
-  if (hoverable) {
-    return (
-      <MotionDiv
-        whileHover={{ y: -4, scale: 1.005 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={baseClass}
-        {...(props as React.ComponentProps<typeof MotionDiv>)}
-      >
-        {children}
-      </MotionDiv>
-    );
-  }
-
   return (
-    <div className={baseClass} {...props}>
+    <div className={cn(baseClass, hoverable && 'hover:border-border-strong hover:bg-surface-hover')} {...props}>
       {children}
     </div>
   );

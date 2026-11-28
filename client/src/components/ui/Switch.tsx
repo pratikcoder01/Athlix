@@ -39,15 +39,15 @@ export const Switch: React.FC<SwitchProps> = ({ checked, onChange, label, disabl
             borderColor: checked ? 'var(--brand-accent)' : 'var(--color-border)',
           }}
           transition={{ duration: 0.2 }}
-          className="w-10 h-6 rounded-full border flex items-center p-0.5 transition-colors shadow-inner"
+          className="w-10 h-6 rounded-full border flex items-center p-0.5 transition-colors "
         >
           <motion.div
             layout
             animate={{
               x: checked ? 16 : 0,
             }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="w-4.5 h-4.5 rounded-full bg-white shadow-md"
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="w-4.5 h-4.5 rounded-full bg-white "
           />
         </motion.div>
       </div>
