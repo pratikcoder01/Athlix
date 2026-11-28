@@ -115,10 +115,10 @@ export const Navbar: React.FC<{ announcement?: boolean }> = ({ announcement = fa
           <div className="mb-7 flex items-center justify-between border-b border-border pb-5"><span className="font-mono text-xs uppercase tracking-[0.14em] text-text-secondary">Navigation</span><button type="button" onClick={closeMenu} aria-label="Close menu" className={iconButton}><X aria-hidden="true" className="h-5 w-5" /></button></div>
           <div className="mb-8 flex flex-col">{links.map(link => <Link key={link.href} href={link.href} onClick={closeMenu} aria-current={pathname === link.href ? 'page' : undefined} className={cn('border-b border-border py-4 font-display text-xl font-semibold', pathname === link.href ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary', focus)}>{link.name}</Link>)}</div>
           <div className="mt-auto flex flex-col gap-1">
+            {logoutError && <p role="alert" className="rounded-md border border-danger/40 px-3 py-3 text-sm text-danger">{logoutError}</p>}
             {isAuthenticated ? <>
               {[['/training', 'Training history'], ['/bookings', 'My sessions'], ['/feed', 'Community'], ['/notifications', `Notifications${!notificationError && unreadCount > 0 ? ` (${unreadCount})` : ''}`], ...(user?.role === 'coach' ? [['/clients', 'My clients']] : [])].map(([href, label]) => <Link key={href} href={href} onClick={closeMenu} className={cn('rounded-md py-2 text-sm text-text-secondary hover:text-text-primary', focus)}>{label}</Link>)}
               <Link href="/dashboard" onClick={closeMenu} className={cn(primaryLink, 'mt-5')}>Go to Console</Link>
-              {logoutError && <p role="alert" className="rounded-md border border-danger/40 px-3 py-3 text-sm text-danger">{logoutError}</p>}
               <button type="button" disabled={signingOut} onClick={() => { void handleLogout(); }} className={cn('min-h-11 rounded-md border border-border px-4 text-sm text-text-secondary hover:text-text-primary disabled:opacity-40', focus)}>Log out</button>
             </> : <><Link href="/login" onClick={closeMenu} className={cn('inline-flex min-h-11 items-center justify-center rounded-md border border-border-strong text-sm font-medium text-text-primary', focus)}>Log in</Link><Link href="/signup" onClick={closeMenu} className={primaryLink}>Get Started</Link></>}
           </div>
