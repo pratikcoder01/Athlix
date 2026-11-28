@@ -72,6 +72,9 @@ jobs:
           GCLOUD_PROJECT: demo-athlix
       - name: Build client and server
         run: npm run build
+        env:
+          # Font compilation must use the licensed assets in the repository.
+          NODE_OPTIONS: '--require="${{ github.workspace }}/client/test/helpers/block-google-font-network.cjs"'
       - name: Restore a synthetic Mongo backup into a separate disposable deployment
         timeout-minutes: 4
         run: node server/test/backup-restore.ci.cjs

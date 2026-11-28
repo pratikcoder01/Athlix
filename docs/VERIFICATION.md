@@ -1,5 +1,25 @@
 # Verification record
 
+## Production font-build recovery (2026-11-28)
+
+The owner merged PR #3 as `f701116`; the subsequent Vercel build failed in the
+upstream `next/font/google` URL parser. The follow-up uses licensed local
+variable fonts instead of another download retry. See [font build](FONT_BUILD.md)
+and the pinned asset/license manifest for the source and exact scope.
+
+A fresh client build, with the previous `.next` output preserved outside the
+repository and Google-font hosts blocked through an inherited Node preload,
+passed. All 65 client tests, lint and both type checks passed. The compiled
+landing browser suite passed in dark/light with three real loaded font families,
+nine requested family/weight combinations and three same-origin WOFF2 responses
+per theme, zero Google-font requests, and all 12 responsive screenshots. These
+local browser checks use the listener-free compiled transport; actual Next
+server behavior is checked separately in CI.
+
+CI now applies the same Google-font network guard to its build step. Its current
+review-head outcome must be checked independently of the historical runs below.
+No framework version, deployment environment variable or backend behavior changed.
+
 ## Review corrections and refreshed checks (2026-11-28)
 
 The account candidate `89d5e6b` passed both
