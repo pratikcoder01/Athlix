@@ -8,3 +8,5 @@
 *.woff2 binary
 *.ttf binary
 *.pdf binary
+# Preserve pinned third-party license bytes, including upstream line endings.
+/client/src/assets/fonts/*-OFL.txt -text
