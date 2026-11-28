@@ -1,0 +1,129 @@
+{
+  "formatVersion": 1,
+  "retrievedOn": "2026-11-28",
+  "assets": [
+    {
+      "family": "DM Sans",
+      "file": "dm-sans-latin-variable.woff2",
+      "requestedWeightRange": [
+        400,
+        600
+      ],
+      "style": "normal",
+      "subset": "latin",
+      "bytes": 36932,
+      "sha256": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+      "cssSource": "https://fonts.googleapis.com/css2?family=DM+Sans%3Awght%40400..600&display=swap",
+      "fontSource": "https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2",
+      "licenseFile": "dmsans-OFL.txt",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/dmsans/OFL.txt",
+      "licenseSha256": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1",
+      "binaryMetadata": {
+        "familyNames": [
+          "DM Sans 9pt"
+        ],
+        "axes": [
+          {
+            "tag": "wght",
+            "min": 100,
+            "default": 400,
+            "max": 1000
+          }
+        ],
+        "notices": [
+          {
+            "id": 0,
+            "value": "Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)"
+          },
+          {
+            "id": 14,
+            "value": "https://scripts.sil.org/OFL"
+          }
+        ]
+      },
+      "licenseRevision": "5026800714d07231937d92eb4cceabf06e05d74e"
+    },
+    {
+      "family": "JetBrains Mono",
+      "file": "jetbrains-mono-latin-variable.woff2",
+      "requestedWeightRange": [
+        400,
+        600
+      ],
+      "style": "normal",
+      "subset": "latin",
+      "bytes": 31432,
+      "sha256": "83c005d49d8a6a50474c73a5a36ac0468076e9c4a29da7bdb14995d80560a5be",
+      "cssSource": "https://fonts.googleapis.com/css2?family=JetBrains+Mono%3Awght%40400..600&display=swap",
+      "fontSource": "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2",
+      "licenseFile": "jetbrainsmono-OFL.txt",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/jetbrainsmono/OFL.txt",
+      "licenseSha256": "b2fe5e8987594e9ffd1d2ca52a2f5d73eb8335243893c5d6254b5ad69269591d",
+      "binaryMetadata": {
+        "familyNames": [
+          "JetBrains Mono"
+        ],
+        "axes": [
+          {
+            "tag": "wght",
+            "min": 400,
+            "default": 400,
+            "max": 800
+          }
+        ],
+        "notices": [
+          {
+            "id": 0,
+            "value": "Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)"
+          },
+          {
+            "id": 14,
+            "value": "https://scripts.sil.org/OFL"
+          }
+        ]
+      },
+      "licenseRevision": "5026800714d07231937d92eb4cceabf06e05d74e"
+    },
+    {
+      "family": "Plus Jakarta Sans",
+      "file": "plus-jakarta-sans-latin-variable.woff2",
+      "requestedWeightRange": [
+        600,
+        800
+      ],
+      "style": "normal",
+      "subset": "latin",
+      "bytes": 27348,
+      "sha256": "153fc85b70298beeb1d61a5f723331649e7f23bb77302a66e61cb3e2fbdb5e79",
+      "cssSource": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans%3Awght%40600..800&display=swap",
+      "fontSource": "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2",
+      "licenseFile": "plusjakartasans-OFL.txt",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/plusjakartasans/OFL.txt",
+      "licenseSha256": "995c7199cab65954f545996326755daee7b63cc6b42b06c13da1f9502ab08a99",
+      "binaryMetadata": {
+        "familyNames": [
+          "Plus Jakarta Sans"
+        ],
+        "axes": [
+          {
+            "tag": "wght",
+            "min": 200,
+            "default": 400,
+            "max": 800
+          }
+        ],
+        "notices": [
+          {
+            "id": 0,
+            "value": "Copyright 2020 The Plus Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans)"
+          },
+          {
+            "id": 14,
+            "value": "https://scripts.sil.org/OFL"
+          }
+        ]
+      },
+      "licenseRevision": "5026800714d07231937d92eb4cceabf06e05d74e"
+    }
+  ]
+}

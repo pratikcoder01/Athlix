@@ -5,6 +5,10 @@ presentation refactor of the existing pilot, not an expansion of its commercial
 or measurement claims. Review/CI outcomes are tracked on
 [PR #3](https://github.com/pratikcoder01/Athlix/pull/3).
 
+After the owner merged PR #3, the production build exposed the upstream Google
+font URL-parser failure again. The follow-up [bundled-font fix](FONT_BUILD.md)
+keeps the same typography while removing Google-font downloads from compilation.
+
 Review corrections on 28 November make the mobile drawer a native modal dialog,
 keep logout errors visible inside it, and use inset keyboard focus outlines on
 both clipped video timeline tracks. The mobile430 compiled browser check passed

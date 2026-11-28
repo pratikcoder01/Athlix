@@ -17,13 +17,21 @@ let browser;
   for (const theme of ['dark', 'light']) {
     const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 1000 } });
     await installSession(context, null);
+    await context.route(/^https?:\/\/fonts\.(?:googleapis|gstatic)\.com(?:\/|$)/, route => route.abort());
     await context.addInitScript(theme => localStorage.setItem('athlix-theme-storage', JSON.stringify({ state: { theme }, version: 0 })), theme);
     const page = await context.newPage();
+    const localFontResponses = new Map();
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => {
       if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(request.url())) fontRequests.push(request.url());
       const url = new URL(request.url());
       if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()) && url.pathname !== '/api/auth/session') unexpectedWrites.push(url.pathname);
+    });
+    page.on('response', response => {
+      const url = new URL(response.url());
+      if (url.origin === new URL(base).origin && /^\/_next\/static\/media\/[^/]+\.woff2$/.test(url.pathname)) {
+        localFontResponses.set(url.pathname, response.status());
+      }
     });
     const response = await page.goto(base, { waitUntil: 'networkidle', timeout: 60000 });
     assert.equal(response.status(), 200);
@@ -71,6 +79,32 @@ let browser;
     assert.equal(await page.getByRole('link', { name: 'Create Athlete Account', exact: true }).count(), 2, 'One hero action and one closing action');
     assert.equal(await page.locator('footer a[href="/signup"]').count(), 0, 'Footer does not add a duplicate CTA banner');
     await page.evaluate(() => document.fonts.ready);
+    const fonts = await page.evaluate(async () => {
+      const clean = value => value.trim().replace(/^(['"])(.*)\1$/, '$2');
+      const definitions = [
+        { variable: '--font-athlix-sans', weights: [400, 500, 600], selector: 'body' },
+        { variable: '--font-athlix-mono', weights: [400, 500, 600], selector: '.font-mono' },
+        { variable: '--font-athlix-display', weights: [600, 700, 800], selector: 'h1' },
+      ];
+      return await Promise.all(definitions.map(async definition => {
+        const family = clean(getComputedStyle(document.documentElement).getPropertyValue(definition.variable).split(',')[0]);
+        const usedFamily = clean(getComputedStyle(document.querySelector(definition.selector)).fontFamily.split(',')[0]);
+        const weights = await Promise.all(definition.weights.map(async weight => {
+          const faces = await document.fonts.load(`${weight} 16px "${family}"`, 'ATHLIX 0123456789');
+          return { weight, loaded: faces.filter(face => clean(face.family) === family && face.status === 'loaded').length };
+        }));
+        return { variable: definition.variable, family, usedFamily, weights };
+      }));
+    });
+    assert.equal(new Set(fonts.map(font => font.family)).size, 3, 'Body, display and telemetry use three distinct bundled font families');
+    for (const font of fonts) {
+      assert.ok(font.family, `${font.variable} must resolve to a font family`);
+      assert.equal(font.usedFamily, font.family, `${font.variable} must be used by its actual UI text`);
+      for (const weight of font.weights) assert.ok(weight.loaded > 0, `${font.variable} ${weight.weight} must load a real FontFace, not a system fallback`);
+    }
+    assert.ok(localFontResponses.size >= 3, 'All three bundled fonts must be requested from the application');
+    assert.ok([...localFontResponses.values()].every(status => status === 200), 'Bundled font assets must load successfully');
+    console.log('PASS bundled font loading', theme, { families: fonts.length, requestedWeights: fonts.reduce((count, font) => count + font.weights.length, 0), sameOriginWoff2Assets: localFontResponses.size });
     for (const width of [1440, 768, 360]) {
       await page.setViewportSize({ width, height: 1000 });
       await page.evaluate(() => scrollTo(0, 0));
@@ -79,7 +113,7 @@ let browser;
       await page.screenshot({ path: path.join(output, 'landing-' + theme + '-' + width + '.png'), fullPage: true });
       await page.screenshot({ path: path.join(output, 'hero-' + theme + '-' + width + '.png') });
     }
-    console.log('PASS landing telemetry, keyboard workflow/FAQ, native anchor, CTA hierarchy and responsive screenshots', theme);
+    console.log('PASS landing telemetry, keyboard workflow/FAQ, native anchor, CTA hierarchy, bundled font weights and responsive screenshots', theme);
     await context.close();
   }
   assert.deepEqual(errors, []);

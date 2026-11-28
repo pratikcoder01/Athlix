@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import QueryProvider from '../context/QueryProvider';
 import AuthSessionProvider from '../context/AuthSessionProvider';
@@ -9,22 +9,25 @@ import PageTransitionProvider from '../components/shared/PageTransitionProvider'
 import { ToastContainer } from '../components/ui/Toast';
 import { cn } from '../lib/utils';
 
-const bodyFont = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const bodyFont = localFont({
+  src: '../assets/fonts/dm-sans-latin-variable.woff2',
+  weight: '400 600',
+  style: 'normal',
   variable: '--font-athlix-sans',
   display: 'swap',
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const jetbrainsMono = localFont({
+  src: '../assets/fonts/jetbrains-mono-latin-variable.woff2',
+  weight: '400 600',
+  style: 'normal',
   variable: '--font-athlix-mono',
   display: 'swap',
 });
-const displayFont = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
+const displayFont = localFont({
+  src: '../assets/fonts/plus-jakarta-sans-latin-variable.woff2',
+  weight: '600 800',
+  style: 'normal',
   variable: '--font-athlix-display',
   display: 'swap',
 });
