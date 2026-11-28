@@ -22,6 +22,16 @@ function moduleFor(fetch, navigator = {}, store = authStore) {
   return { ...context.exports, removed, events };
 }
 const response = (status = 200, token = 'fixture-new-token') => Response.json(status === 200 ? { success: true, token, user } : { success: false }, { status });
+const storeFilename = path.resolve(__dirname, '../src/store/authStore.ts');
+const storeSource = ts.transpileModule(fs.readFileSync(storeFilename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+function storeForClock(clock) {
+  // Execute the real store in a separate tab realm. Only its clock is controlled;
+  // retaining a paused performance clock models browsers that stop it in sleep.
+  const context = vm.createContext({ exports: {}, require: createRequire(storeFilename), Date: { now: () => clock.wallTime },
+    performance: { timeOrigin: clock.timeOrigin, now: () => clock.performanceNow } });
+  new vm.Script(storeSource, { filename: storeFilename }).runInContext(context);
+  return context.exports;
+}
 const providerFilename = path.resolve(__dirname, '../src/context/AuthSessionProvider.tsx');
 const providerSource = ts.transpileModule(fs.readFileSync(providerFilename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function mountProvider(api) {
@@ -141,6 +151,47 @@ test('automatic rotation is not a fresh sign-in and cannot suppress a pending pe
   const startedAt = sessionChangeTime(); const f = moduleFor(async () => response());
   await f.renewSession(); assert.equal(useAuthStore.getState().lastSignInAt, signInAt);
   assert.equal(f.applySessionSignOut(startedAt), true); assert.equal(useAuthStore.getState().token, null);
+});
+
+test('a pre-sleep tab can invalidate a newer post-wake tab despite a paused performance clock', async () => {
+  const beforeSleep = 1_800_000_000_000;
+  const senderClock = { wallTime: beforeSleep, timeOrigin: beforeSleep - 5000, performanceNow: 5000 };
+  const senderStore = storeForClock(senderClock);
+  senderStore.useAuthStore.getState().setAuth(user, 'pre-sleep-token');
+  senderClock.wallTime += 60 * 60_000; // performanceNow deliberately stays paused.
+  const receiverStore = storeForClock({ wallTime: senderClock.wallTime, timeOrigin: senderClock.wallTime, performanceNow: 0 });
+  receiverStore.useAuthStore.getState().setAuth(user, 'post-wake-token');
+  senderClock.wallTime++;
+  const sender = moduleFor(async () => Response.json({ success: true }), {}, senderStore);
+  const receiver = moduleFor(() => { throw Error('No receiver request expected'); }, {}, receiverStore);
+  await sender.logoutSession();
+  assert.equal(sender.events[0].startedAt, senderClock.wallTime);
+  assert.equal(receiver.applySessionSignOut(sender.events[0].startedAt), true);
+  assert.equal(receiverStore.useAuthStore.getState().token, null);
+  assert.equal(senderClock.performanceNow, 5000);
+});
+
+test('same-tab sign-in ordering survives repeated milliseconds and a backward wall-clock adjustment', async () => {
+  const clock = { wallTime: 1000, timeOrigin: 1000, performanceNow: 0 };
+  const store = storeForClock(clock); let release;
+  const api = moduleFor(url => url.endsWith('/logout') ? new Promise(resolve => { release = resolve; }) : Promise.resolve(response()), {}, store);
+  store.useAuthStore.getState().setAuth(user, 'old-login');
+  const pending = api.logoutSession();
+  store.useAuthStore.getState().setAuth(user, 'new-login-in-same-millisecond');
+  release(Response.json({ success: true })); await pending;
+  assert.equal(store.useAuthStore.getState().token, 'new-login-in-same-millisecond');
+  assert.equal(api.applySessionSignOut(api.events[0].startedAt), false);
+  const previousSignIn = store.useAuthStore.getState().lastSignInAt;
+  clock.wallTime = 500;
+  store.useAuthStore.getState().setAuth(user, 'new-login-after-clock-adjustment');
+  const adjustedSignIn = store.useAuthStore.getState().lastSignInAt;
+  assert.ok(adjustedSignIn > previousSignIn);
+  await api.renewSession();
+  assert.equal(store.useAuthStore.getState().lastSignInAt, adjustedSignIn, 'Rotation must not become a fresh explicit sign-in');
+  const laterLogout = store.sessionChangeTime();
+  assert.ok(laterLogout > adjustedSignIn);
+  assert.equal(api.applySessionSignOut(laterLogout), true);
+  assert.equal(store.useAuthStore.getState().token, null);
 });
 
 test('peer sign-out cancels pending provider success/error continuations and retry timers', async () => {

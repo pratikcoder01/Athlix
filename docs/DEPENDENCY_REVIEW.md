@@ -1,6 +1,6 @@
 # Dependency and CI review
 
-Updated 23 November 2026. Historical findings below retain their original dates.
+Updated 28 November 2026. Historical findings below retain their original dates.
 
 Use Node.js 24 (`.nvmrc`) and the **root** workspace lockfile. Install with
 `npm ci --legacy-peer-deps`; the old independent client/server lockfiles were
@@ -72,6 +72,10 @@ Firebase, Tailwind and the existing overrides did not change. A clean root
 Both full `npm audit --json` and production-only `npm audit --omit=dev --json`
 reported **zero findings in all severities** on 23 November. This is a dated
 dependency audit result, not a claim that the application has no security defects.
+
+A read-only refresh on 28 November again reported zero findings in both the full
+and production-only audits. The lockfile hash was unchanged; no install or
+additional dependency changes were made during that refresh.
 
 ## Provider client reliability
 

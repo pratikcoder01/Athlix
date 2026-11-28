@@ -5,6 +5,12 @@ presentation refactor of the existing pilot, not an expansion of its commercial
 or measurement claims. Review/CI outcomes are tracked on
 [PR #3](https://github.com/pratikcoder01/Athlix/pull/3).
 
+Review corrections on 28 November make the mobile drawer a native modal dialog,
+keep logout errors visible inside it, and use inset keyboard focus outlines on
+both clipped video timeline tracks. The mobile430 compiled browser check passed
+background isolation and focus/scroll/error recovery; actual Next CI remains
+bound to the reviewed PR head.
+
 ## Discovery and preserved boundaries
 
 For the presentation milestone (`d1365ef` through `a688403`), the audit mapped

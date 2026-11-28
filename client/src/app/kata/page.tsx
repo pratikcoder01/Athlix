@@ -690,7 +690,7 @@ export default function KataAnalyzerPage() {
                             type="button"
                             aria-label={`Seek to ${seg.name} at ${seg.start_time} seconds`}
                             onClick={() => jumpToTime(seg.start_time)}
-                            className="absolute top-0 h-full bg-surface-hover border-x border-border-strong hover:bg-surface-elevated cursor-pointer flex items-center justify-center text-[10px] font-mono text-text-primary truncate px-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent"
+                            className="absolute top-0 h-full bg-surface-hover border-x border-border-strong hover:bg-surface-elevated cursor-pointer flex items-center justify-center text-[10px] font-mono text-text-primary truncate px-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2!"
                             style={{ left: `${startPct}%`, width: `${widthPct}%` }}
                             title={`${seg.name} (${seg.start_time}s - ${seg.end_time}s)`}
                           >
@@ -716,7 +716,7 @@ export default function KataAnalyzerPage() {
                             type="button"
                             aria-label={`Seek to ${seg.name} at ${seg.start_time} seconds`}
                             onClick={() => jumpToTime(seg.start_time)}
-                            className="absolute top-0 h-full bg-surface-hover border-x border-border-strong hover:bg-surface-elevated cursor-pointer flex items-center justify-center text-[10px] font-mono text-text-primary truncate px-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent"
+                            className="absolute top-0 h-full bg-surface-hover border-x border-border-strong hover:bg-surface-elevated cursor-pointer flex items-center justify-center text-[10px] font-mono text-text-primary truncate px-1 transition-colors focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2!"
                             style={{ left: `${startPct}%`, width: `${widthPct}%` }}
                             title={`${seg.name} (${seg.start_time}s - ${seg.end_time}s)`}
                           >

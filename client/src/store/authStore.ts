@@ -26,10 +26,15 @@ interface AuthState {
 
 // Access credentials stay in memory. A server-owned HttpOnly cookie restores the
 // account after reload; old localStorage bearers are never read or trusted.
-// Epoch-based monotonic browser time lets tabs discard a delayed sign-out hint
-// after a newer explicit sign-in. It never authorizes a server request.
-export const sessionChangeTime = () => typeof performance !== 'undefined'
-  ? performance.timeOrigin + performance.now() : Date.now();
+// Wall time advances across system sleep, unlike some performance clocks. The
+// local clamp preserves ordering when milliseconds repeat or the clock goes
+// backward. Adjustments can still skew ordering between tabs; these are UI hints,
+// never server authorization or a globally synchronized clock.
+let lastSessionChangeTime = 0;
+export const sessionChangeTime = () => {
+  lastSessionChangeTime = Math.max(Date.now(), lastSessionChangeTime + 1);
+  return lastSessionChangeTime;
+};
 
 export const useAuthStore = create<AuthState>()(set => ({
   user: null, token: null, isAuthenticated: false, revision: 0, lastSignInAt: 0, sessionLoading: true,

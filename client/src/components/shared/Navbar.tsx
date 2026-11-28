@@ -31,7 +31,7 @@ export const Navbar: React.FC<{ announcement?: boolean }> = ({ announcement = fa
   const [isOpen, setIsOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
   const [signingOut, setSigningOut] = useState(false);
-  const drawerRef = useRef<HTMLElement>(null);
+  const drawerRef = useRef<HTMLDialogElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const reduceMotion = useReducedMotion();
 
@@ -39,10 +39,14 @@ export const Navbar: React.FC<{ announcement?: boolean }> = ({ announcement = fa
     if (!isOpen) return;
     const previousOverflow = document.body.style.overflow;
     const menuButton = menuButtonRef.current;
+    const drawer = drawerRef.current;
     document.body.style.overflow = 'hidden';
-    drawerRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    // The browser's modal top layer makes the rest of the document inert,
+    // including the exposed strip beside the panel on wider mobile screens.
+    if (drawer && !drawer.open) drawer.showModal();
+    drawer?.querySelector<HTMLButtonElement>('button')?.focus();
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setIsOpen(false); return; }
+      if (event.key === 'Escape') { event.preventDefault(); setIsOpen(false); return; }
       if (event.key !== 'Tab') return;
       const items = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])') || []);
       const first = items[0], last = items.at(-1);
@@ -52,6 +56,7 @@ export const Navbar: React.FC<{ announcement?: boolean }> = ({ announcement = fa
     document.addEventListener('keydown', handleKey);
     return () => {
       document.removeEventListener('keydown', handleKey);
+      drawer?.close();
       document.body.style.overflow = previousOverflow;
       menuButton?.focus();
     };
@@ -98,22 +103,27 @@ export const Navbar: React.FC<{ announcement?: boolean }> = ({ announcement = fa
           </div>
         </div>
       </nav>
-      {logoutError && <p role="alert" className="border-b border-danger/40 bg-background px-4 py-3 text-center text-sm text-danger">{logoutError}</p>}
+      {logoutError && !isOpen && <p role="alert" className="border-b border-danger/40 bg-background px-4 py-3 text-center text-sm text-danger">{logoutError}</p>}
       <AnimatePresence>
-        {isOpen && <motion.aside id="athlix-mobile-menu" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu"
+        {isOpen && <motion.dialog id="athlix-mobile-menu" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Navigation menu"
+          onCancel={event => { event.preventDefault(); closeMenu(); }}
+          onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}
           initial={{ opacity: 0, x: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: reduceMotion ? 0 : 12 }}
           transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-y-0 right-0 z-[100] flex h-dvh w-full max-w-sm flex-col overflow-y-auto border-l border-border-strong bg-background p-6">
+          className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-transparent p-0 text-text-primary backdrop:bg-black/60">
+          <aside className="ml-auto flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-border-strong bg-background p-6">
           <div className="mb-7 flex items-center justify-between border-b border-border pb-5"><span className="font-mono text-xs uppercase tracking-[0.14em] text-text-secondary">Navigation</span><button type="button" onClick={closeMenu} aria-label="Close menu" className={iconButton}><X aria-hidden="true" className="h-5 w-5" /></button></div>
           <div className="mb-8 flex flex-col">{links.map(link => <Link key={link.href} href={link.href} onClick={closeMenu} aria-current={pathname === link.href ? 'page' : undefined} className={cn('border-b border-border py-4 font-display text-xl font-semibold', pathname === link.href ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary', focus)}>{link.name}</Link>)}</div>
           <div className="mt-auto flex flex-col gap-1">
             {isAuthenticated ? <>
               {[['/training', 'Training history'], ['/bookings', 'My sessions'], ['/feed', 'Community'], ['/notifications', `Notifications${!notificationError && unreadCount > 0 ? ` (${unreadCount})` : ''}`], ...(user?.role === 'coach' ? [['/clients', 'My clients']] : [])].map(([href, label]) => <Link key={href} href={href} onClick={closeMenu} className={cn('rounded-md py-2 text-sm text-text-secondary hover:text-text-primary', focus)}>{label}</Link>)}
               <Link href="/dashboard" onClick={closeMenu} className={cn(primaryLink, 'mt-5')}>Go to Console</Link>
+              {logoutError && <p role="alert" className="rounded-md border border-danger/40 px-3 py-3 text-sm text-danger">{logoutError}</p>}
               <button type="button" disabled={signingOut} onClick={() => { void handleLogout(); }} className={cn('min-h-11 rounded-md border border-border px-4 text-sm text-text-secondary hover:text-text-primary disabled:opacity-40', focus)}>Log out</button>
             </> : <><Link href="/login" onClick={closeMenu} className={cn('inline-flex min-h-11 items-center justify-center rounded-md border border-border-strong text-sm font-medium text-text-primary', focus)}>Log in</Link><Link href="/signup" onClick={closeMenu} className={primaryLink}>Get Started</Link></>}
           </div>
-        </motion.aside>}
+          </aside>
+        </motion.dialog>}
       </AnimatePresence>
     </header>
   );

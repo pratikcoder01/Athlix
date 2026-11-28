@@ -18,7 +18,7 @@ import SpotlightCard from '../../../../components/shared/SpotlightCard';
 
 
 type Step = 'phone' | 'otp';
-type Operation = { controller: AbortController };
+type Operation = { controller: AbortController; exchanging: boolean };
 
 function phoneAuthError(error: unknown, fallback: string): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : '';
@@ -56,6 +56,7 @@ export default function PhoneLoginPage() {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exchanging, setExchanging] = useState(false);
   const [codeVerified, setCodeVerified] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
@@ -84,7 +85,7 @@ export default function PhoneLoginPage() {
 
   const beginOperation = (): Operation | null => {
     if (!mountedRef.current || operationRef.current) return null;
-    const operation = { controller: new AbortController() };
+    const operation = { controller: new AbortController(), exchanging: false };
     operationRef.current = operation;
     setAuthError(null);
     setLoading(true);
@@ -104,6 +105,9 @@ export default function PhoneLoginPage() {
   };
 
   const handleChangeNumber = () => {
+    // An exchange may already have committed its HttpOnly cookie. Keep this
+    // attempt until its response settles instead of discarding its local auth.
+    if (operationRef.current?.exchanging) return;
     operationRef.current?.controller.abort();
     operationRef.current = null;
     clearVerifier(recaptchaVerifierRef.current);
@@ -190,6 +194,8 @@ export default function PhoneLoginPage() {
       // have waited in its queue, so check ownership again before dispatch.
       await withSessionLock(async () => {
         if (!isCurrent(operation)) return;
+        operation.exchanging = true;
+        setExchanging(true);
         const timeout = setTimeout(() => operation.controller.abort(), 15_000);
         try {
           const res = await fetch('/api/auth/firebase', {
@@ -209,6 +215,8 @@ export default function PhoneLoginPage() {
           router.push('/dashboard');
         } finally {
           clearTimeout(timeout);
+          operation.exchanging = false;
+          if (isCurrent(operation)) setExchanging(false);
         }
       });
     } catch (error: unknown) {
@@ -357,7 +365,8 @@ export default function PhoneLoginPage() {
                   <button
                     type="button"
                     onClick={handleChangeNumber}
-                    className="text-[10px] font-mono font-bold text-primary hover:underline uppercase"
+                    disabled={exchanging}
+                    className="text-[10px] font-mono font-bold text-primary hover:underline uppercase disabled:cursor-wait disabled:opacity-40 disabled:no-underline"
                   >
                     Change number
                   </button>

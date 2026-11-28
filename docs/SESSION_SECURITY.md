@@ -1,6 +1,6 @@
 # Session lifecycle and identity recovery
 
-Updated 2026-11-23. Source verification and the earlier hosted acceptance are
+Updated 2026-11-28. Source verification and the earlier hosted acceptance are
 separate; a later source change requires its own release and hosted checks.
 
 ## Credentials and revocation
@@ -93,8 +93,8 @@ across tabs where supported. A concurrent cookie rotation in a browser without
 Web Locks fails closed and can require sign-in. Revisions prevent a delayed
 bootstrap from clearing a new login or restoring an account after sign-out.
 
-All browser Firebase exchanges (email, Google, guest and phone), renewal and
-logout use the same Web Lock. Provider popup/SMS operations happen outside it;
+Where the browser supports Web Locks, Firebase exchanges (email, Google, guest
+and phone), renewal and logout use the same lock. Provider popup/SMS operations happen outside it;
 the server exchange, response parsing and memory-auth commit happen inside it.
 Exchange requests have a 15-second abort deadline. Logout captures its timestamp
 and access token after acquiring the lock, so queued operations follow actual
@@ -110,7 +110,10 @@ server revocation still applies.
 
 An in-memory explicit-sign-in timestamp prevents an older pending sign-out hint
 from clearing a newer explicit login. Automatic renewal does not count as a new
-sign-in. Provider continuations are invalidated when identity changes, so a late
+sign-in. Ordering uses the shared wall-clock epoch with strictly increasing
+per-tab timestamps, rather than performance clocks that can pause during OS
+sleep. System-clock adjustments can still disturb ordering across tabs; these
+hints do not replace server revocation. Provider continuations are invalidated when identity changes, so a late
 renewal success/error cannot recreate old retry banners or timers after sign-out.
 This coordinates ATHLIX's own client operations where Web Locks is supported;
 independent callers and browsers without that API do not share this guarantee.
@@ -125,9 +128,11 @@ requests. CSP/content validation and operational controls remain relevant.
 Phone login creates and awaits reCAPTCHA only when the user requests a code.
 A failed initialization/send destroys that verifier and the next attempt creates
 a fresh instance. Duplicate requests are guarded synchronously. Changing the
-number or leaving the page invalidates pending Firebase continuations and aborts
-the ATHLIX exchange. An already issued server cookie cannot be undone by aborting
-a browser request.
+number invalidates pending Firebase continuations or an exchange still waiting
+for the lock. Once the exchange dispatches, Change number is disabled until its
+response and JSON settle, so the UI cannot deliberately discard a committed
+cookie. Leaving the page still aborts the request and ignores late local results;
+an already issued server cookie cannot be undone by aborting a browser request.
 
 After successful code confirmation, the page retains that verified Firebase
 user only in the current attempt's memory. Token/exchange retries reuse it rather
@@ -183,4 +188,5 @@ Primary references: [Next rewrites](https://nextjs.org/docs/app/api-reference/co
 [Firebase persistence](https://firebase.google.com/docs/auth/web/auth-state-persistence),
 [cookie attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie),
 [Firebase Auth emulator](https://firebase.google.com/docs/emulator-suite/connect_auth),
-[phone-code emulator REST endpoint](https://firebase.google.com/docs/reference/rest/auth#retrieve_sms_verification_codes).
+[phone-code emulator REST endpoint](https://firebase.google.com/docs/reference/rest/auth#retrieve_sms_verification_codes),
+[WebKit performance-clock sleep behavior](https://bugs.webkit.org/show_bug.cgi?id=225610).

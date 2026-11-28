@@ -427,17 +427,74 @@ test('unmount aborts a pending exchange and ignores even a transport that comple
   assert.equal(f.writes.length, writes);
 });
 
-test('change number while response JSON is pending cannot authenticate the abandoned attempt', async () => {
+test('a dispatched exchange keeps its committed cookie and local identity together while response JSON is pending', async () => {
   const body = deferred(); let bodyRequested = false;
-  const f = pageFixture({ fetch: async () => ({ ok: true, json: () => { bodyRequested = true; return body.promise; } }) });
+  // Model headers committing the HttpOnly cookie before JavaScript receives the
+  // response body. Aborting or discarding that body would not undo this cookie.
+  let cookie = null;
+  const f = pageFixture({ fetch: async () => {
+    cookie = 'committed-phone-session';
+    return { ok: true, json: () => { bodyRequested = true; return body.promise; } };
+  } });
   await f.send(); f.input('phone-otp', '123456');
+  const changeBeforeRender = f.button('Change number').props.onClick;
   const pending = f.button('CONFIRM CODE').props.onClick();
   await reached(() => bodyRequested);
-  f.button('Change number').props.onClick(); f.render();
-  body.resolve({ user: actor, token: 'late-token' }); await pending;
+  changeBeforeRender(); // Exercise the synchronous guard before disabled renders.
+  assert.equal(f.calls.fetch[0].init.signal.aborted, false, 'Changing the number must not abandon an exchange that committed a cookie');
+  f.render();
+  assert.equal(f.button('Change number').props.disabled, true);
+  assert.equal(cookie, 'committed-phone-session');
   assert.equal(f.calls.setAuth.length, 0);
-  assert.equal(f.calls.push.length, 0);
-  assert.equal(f.calls.fetch[0].init.signal.aborted, true);
+  body.resolve({ user: actor, token: 'committed-session-access' }); await pending; f.render();
+  assert.deepEqual(f.calls.setAuth, [[actor, 'committed-session-access']]);
+  assert.deepEqual(f.calls.push, ['/dashboard']);
+  assert.equal(cookie, 'committed-phone-session');
+  assert.equal(Boolean(f.button('Change number').props.disabled), false);
+  f.unmount();
+});
+
+for (const recovery of ['retry', 'change number']) {
+  test(`a failed dispatched exchange releases the change-number guard and allows ${recovery}`, async () => {
+    const body = deferred(); let bodyRequested = false, requests = 0;
+    const f = pageFixture({ fetch: async () => {
+      if (++requests > 1) return response();
+      return { ok: false, json: () => { bodyRequested = true; return body.promise; } };
+    } });
+    await f.send(); f.input('phone-otp', '123456');
+    const pending = f.button('CONFIRM CODE').props.onClick();
+    await reached(() => bodyRequested); f.render();
+    assert.equal(f.button('Change number').props.disabled, true);
+    body.resolve({ message: 'fixture temporarily unavailable' }); await pending; f.render();
+    assert.match(f.text(), /Sign-in could not be completed/);
+    assert.equal(Boolean(f.button('Change number').props.disabled), false);
+    assert.equal(f.calls.setAuth.length, 0);
+    if (recovery === 'retry') {
+      await f.button('COMPLETE SIGN-IN').props.onClick(); f.render();
+      assert.equal(f.calls.confirm.length, 1, 'Recovery reuses the already verified identity');
+    } else {
+      f.button('Change number').props.onClick(); f.render();
+      assert.ok(f.button('SEND OTP'));
+      await f.send('+15555550456'); await f.verify('654321');
+      assert.deepEqual(f.calls.confirm, ['123456', '654321']);
+    }
+    assert.equal(f.calls.fetch.length, 2);
+    assert.equal(f.calls.setAuth.length, 1);
+    f.unmount();
+  });
+}
+
+test('change number stays available while token retrieval is pending before exchange dispatch', async () => {
+  const token = deferred(); let tokenRequested = false;
+  const f = pageFixture({ confirm: async () => ({ user: { getIdToken: () => { tokenRequested = true; return token.promise; } } }) });
+  await f.send(); f.input('phone-otp', '123456');
+  const pending = f.button('CONFIRM CODE').props.onClick();
+  await reached(() => tokenRequested); f.render();
+  assert.equal(Boolean(f.button('Change number').props.disabled), false);
+  f.button('Change number').props.onClick(); f.render();
+  token.resolve('abandoned-provider-token'); await pending;
+  assert.equal(f.calls.fetch.length, 0);
+  assert.equal(f.calls.setAuth.length, 0);
   assert.ok(f.button('SEND OTP'));
   f.unmount();
 });

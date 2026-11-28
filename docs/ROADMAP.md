@@ -1,17 +1,17 @@
 # ATHLIX execution roadmap
 
-Updated 2026-11-23. The owner merged PR #2 into `main` at `949ea7b` on
+Updated 2026-11-28. The owner merged PR #2 into `main` at `949ea7b` on
 22 November. Follow-up design and account reliability changes remain under
 review in [PR #3](https://github.com/pratikcoder01/Athlix/pull/3) on
 `codex/athlix-market-ready`.
 
-Latest verification: 2026-11-23. See [VERIFICATION.md](VERIFICATION.md) and
+Latest verification: 2026-11-28. See [VERIFICATION.md](VERIFICATION.md) and
 [FEATURE_STATUS.md](FEATURE_STATUS.md). Initial priorities below are retained as
 the release roadmap, not a claim that every phase is complete.
 
 Current evidence supersedes the dated discovery and milestone entries below:
-the design candidate `a688403` passed both application CI runs, including
-508 JavaScript and 37 Python tests, builds, lint/types, 40 accessibility cases,
+the account candidate `89d5e6b` passed both application CI runs, including
+549 JavaScript and 37 Python tests, builds, lint/types, 40 accessibility cases,
 63 production hydration visits and 189 development visits. These results qualify
 that exact source; the current PR records subsequent changes. Approved encrypted backup,
 additive catalog provisioning, restricted runtime access and database ingress
@@ -19,7 +19,7 @@ are complete. Hosted browser login/reload/logout and actual password-reset UI
 with old-credential/session rejection passed using temporary QA identities;
 no recovery email or SMS was sent. The live feature-journey scope and cleanup
 are recorded in [HOST_ROLLOUT_REVIEW.md](HOST_ROLLOUT_REVIEW.md) for `24aafcc`.
-All five unauthenticated public host contracts passed again on 23 November;
+All five unauthenticated public host contracts passed again on 28 November after a bounded retry;
 that probe does not determine the currently deployed source revision.
 
 Remaining launch work depends on owner/operator inputs: real delivery/provider

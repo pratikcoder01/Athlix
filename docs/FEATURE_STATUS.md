@@ -1,14 +1,14 @@
 # Product feature status
 
-Updated 2026-11-23 for source and hosted evidence. The implementation column
+Updated 2026-11-28 for source and hosted evidence. The implementation column
 describes code behavior and its regression/fixture coverage; it does **not** mean
 the feature was deployed or accepted against live services. Latest aggregate
 test counts and remote run outcomes are tracked in [verification](VERIFICATION.md)
 and [PR #3](https://github.com/pratikcoder01/Athlix/pull/3). The owner merged PR #2
 on 22 November. Older green CI runs do not establish the result of later source.
-The last authenticated hosted qualification covered `24aafcc`; the design
-candidate `a688403` passed both CI runs with 508 JavaScript and 37 Python tests.
-All five public host contracts passed again on 23 November; this unauthenticated
+The last authenticated hosted qualification covered `24aafcc`; the account
+candidate `89d5e6b` passed both CI runs with 549 JavaScript and 37 Python tests.
+All five public host contracts passed again on 28 November after a bounded retry; this unauthenticated
 probe does not determine the deployed source revision.
 Approved backup/catalog preparation, runtime database privileges and restricted
 network acceptance are complete. Expanded HTTPS QA passed 66 assertions across
